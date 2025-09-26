@@ -1,0 +1,31 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.shine {
+  position: absolute;
+  top: -80%;       /* más arriba para cubrir diagonal completa */
+  left: -200%;     /* empieza mucho más afuera */
+  width: 250%;     /* más ancho para cubrir toda la tarjeta */
+  height: 250%;    /* más alto para cubrir también el corte */
+  background: linear-gradient(
+    120deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.5),
+    transparent 60%
+  );
+  filter: blur(20px); /* difuminar el haz */
+  animation: shine-move 3s ease forwards;
+}
+
+@keyframes shine-move {
+  0% {
+    left: -200%;
+    top: -80%;
+  }
+  100% {
+    left: 200%;
+    top: 80%;
+  }
+}
