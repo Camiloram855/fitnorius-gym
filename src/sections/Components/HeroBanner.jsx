@@ -23,7 +23,7 @@ export default function HeroBanner({ image }) {
         
             
         {/* Content */}
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center px-4 max-w-9x1 mx-auto">
           <br />
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance">

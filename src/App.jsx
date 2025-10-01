@@ -38,7 +38,8 @@ function App() {
         />
 
         {/* Ruta para el Catálogo */}
-        <Route path="/catalog" element={<Catalog />} />
+        <Route path="/catalog/*" element={<Catalog />} />
+        
         
       </Routes>
     </Router>

@@ -1,35 +1,26 @@
-// src/pages/Catalog.jsx
-import { Routes, Route } from "react-router-dom";
+/*
 import HeroBanner from "../sections/Components/HeroBanner";
 import { Footer } from "../Layout/Footer";
 import ScrollingHeader from "../sections/Components/ScrollingHeader";
+
 import WhatsAppButton from "../components/WhatsAppButton";
 import FAQ from "../sections/FAQ";
 import ScrollToTop from "../sections/Components/ScrollToTop";
-import DetalleProduct from "./DetalleProduct"; // importa el detalle
+
+
 
 export default function Catalog() {
   return (
     <div className="App">
+      
       <ScrollToTop />
       <ScrollingHeader />
-
-      {/* Rutas del catálogo */}
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <HeroBanner />
-              <FAQ />
-            </>
-          }
-        />
-        <Route path="/producto/:id" element={<DetalleProduct />} />
-      </Routes>
-
+      <HeroBanner />
+      <FAQ />
       <WhatsAppButton />
       <Footer />
+      
     </div>
   );
 }
+*/

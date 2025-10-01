@@ -54,9 +54,7 @@ const ProductList = ({ category }) => {
 
   return (
     <div className="mt-6">
-      <h3 className="text-xl font-semibold text-white mb-4">
-        {category.name} - Productos
-      </h3>
+
 
       <div className="flex gap-4 flex-wrap">
         {products.length === 0 && (
