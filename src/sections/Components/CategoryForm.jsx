@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const CategoryForm = ({ setShowForm, onCategorySaved }) => {
+const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const [newCategory, setNewCategory] = useState({ name: "", image: null });
   const [previewImage, setPreviewImage] = useState(null);
 
@@ -29,7 +29,7 @@ const CategoryForm = ({ setShowForm, onCategorySaved }) => {
         if (!response.ok) throw new Error("Error al guardar la categoría");
 
         const savedCategory = await response.json();
-        onCategorySaved(savedCategory);
+        onCategoryCreated(savedCategory);
 
         setNewCategory({ name: "", image: null });
         setPreviewImage(null);

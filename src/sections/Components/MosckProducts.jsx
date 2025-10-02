@@ -1,4 +1,4 @@
-
+/*
 
 const mockProducts = [
   {
@@ -72,9 +72,9 @@ export default function ProductCatalog() {
     <section className="relative bg-gradient-to-bl from-black via-black-900 to-purple-700 py-12 px-4 sm:px-6 lg:px-8">
 
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header }
 
-        {/* Products Grid */}
+        {/* Products Grid }
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {mockProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
@@ -88,7 +88,7 @@ export default function ProductCatalog() {
 function ProductCard({ product }) {
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-in-out overflow-hidden group">
-      {/* Image Container */}
+      {/* Image Container }
       <div className="relative overflow-hidden">
         <img
           src={product.image}
@@ -96,7 +96,7 @@ function ProductCard({ product }) {
           className="w-full h-48 sm:h-56 object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-300"
         />
 
-        {/* Promo Badge */}
+        {/* Promo Badge }
         {product.hasPromo && (
           <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full">
             <span className="text-white font-bold text-xs sm:text-sm">
@@ -106,14 +106,14 @@ function ProductCard({ product }) {
         )}
       </div>
 
-      {/* Content */}
+      {/* Content }
       <div className="p-4 sm:p-6">
-        {/* Title */}
+        {/* Title }
         <h3 className="text-gray-800 font-semibold text-sm sm:text-base mb-3 uppercase tracking-wide leading-tight">
           {product.title}
         </h3>
 
-        {/* Prices */}
+        {/* Prices }
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-green-500 font-bold text-lg sm:text-xl">
@@ -124,7 +124,7 @@ function ProductCard({ product }) {
             </span>
           </div>
 
-          {/* Savings Badge */}
+          {/* Savings Badge }
           <div className="text-xs text-purple-600 font-semibold bg-purple-50 px-2 py-1 rounded-full self-start sm:self-auto">
             AHORRA ${(product.originalPrice - product.currentPrice).toFixed(2)}
           </div>
@@ -136,5 +136,4 @@ function ProductCard({ product }) {
   )
   
 }
-
-
+*/

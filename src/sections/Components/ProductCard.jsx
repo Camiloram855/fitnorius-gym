@@ -1,15 +1,26 @@
 import { Link } from "react-router-dom";
 
 export default function ProductCard({ product }) {
-  const hasPromo = product.oldPrice && product.price < product.oldPrice;
-  const ahorro =
-    hasPromo && product.oldPrice
-      ? (product.oldPrice - product.price).toFixed(2)
-      : null;
+  const hasPromo =
+    product.oldPrice !== null &&
+    product.oldPrice !== undefined &&
+    Number(product.price) < Number(product.oldPrice);
+
+  const ahorro = hasPromo
+    ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
+    : null;
+
+  console.log("Debug Promo:", {
+    name: product.name,
+    price: product.price,
+    oldPrice: product.oldPrice,
+    hasPromo,
+    ahorro,
+  });
 
   return (
     <Link
-      to={`producto/${product.id}`} // 👈 ruta relativa a /catalog
+      to={`producto/${product.id}`}
       className="block w-full max-w-[250px] mx-auto"
     >
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
