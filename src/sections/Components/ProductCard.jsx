@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onDelete }) {
   const hasPromo =
     product.oldPrice !== null &&
     product.oldPrice !== undefined &&
@@ -10,22 +10,30 @@ export default function ProductCard({ product }) {
     ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
     : null;
 
-  console.log("Debug Promo:", {
-    name: product.name,
-    price: product.price,
-    oldPrice: product.oldPrice,
-    hasPromo,
-    ahorro,
-  });
+  const handleDelete = async (e) => {
+    e.preventDefault(); // evita que el Link redireccione
+    if (window.confirm("¿Seguro que deseas eliminar este producto?")) {
+      try {
+        await fetch(`http://localhost:8080/api/products/${product.id}`, {
+          method: "DELETE",
+        });
+        if (onDelete) {
+          onDelete(product.id); // para refrescar lista desde el padre
+        }
+      } catch (error) {
+        console.error("Error eliminando producto:", error);
+      }
+    }
+  };
 
   return (
-    <Link
-      to={`producto/${product.id}`}
-      className="block w-full max-w-[250px] mx-auto"
-    >
+    <div className="block w-full max-w-[250px] mx-auto">
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
-        {/* Imagen */}
-        <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl">
+        {/* Imagen y enlace al detalle */}
+        <Link
+          to={`producto/${product.id}`}
+          className="relative w-full h-[280px] overflow-hidden rounded-t-xl block"
+        >
           <img
             src={
               product.imageUrl
@@ -42,7 +50,7 @@ export default function ProductCard({ product }) {
               </span>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Contenido */}
         <div className="p-4 flex flex-col flex-1 justify-between">
@@ -68,8 +76,16 @@ export default function ProductCard({ product }) {
               </span>
             )}
           </div>
+
+          {/* Botón de eliminar */}
+          <button
+            onClick={handleDelete}
+            className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
+          >
+            Eliminar
+          </button>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

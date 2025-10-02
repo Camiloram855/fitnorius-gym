@@ -27,8 +27,6 @@ export default function HeroBanner({ image }) {
             alt="Banner de oferta por Black Friday"
             className="w-full" 
           />
-
-          
             <SearchSection />
             <CategoryCarousel />
 

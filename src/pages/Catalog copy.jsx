@@ -1,5 +1,5 @@
 // src/pages/Catalog.jsx
-import { Routes, Route, useLocation } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import HeroBanner from "../sections/Components/HeroBanner"
 import { Footer } from "../Layout/Footer"
 import ScrollingHeader from "../sections/Components/ScrollingHeader"
@@ -7,21 +7,15 @@ import WhatsAppButton from "../components/WhatsAppButton"
 import FAQ from "../sections/FAQ"
 import ScrollToTop from "../sections/Components/ScrollToTop"
 import DetalleProduct from "./DetalleProduct"
-import Login from "./Login"
+import Login from "./Login"  // 👈 importa tu login
 
 export default function Catalog() {
-  const location = useLocation()
-
-  // Verifica si estamos en la página de login
-  const isLoginPage = location.pathname === "/catalog/login"
-
   return (
     <div className="App">
       <ScrollToTop />
+      <ScrollingHeader />
 
-      {/* Mostrar solo si no es login */}
-      {!isLoginPage && <ScrollingHeader />}
-
+      {/* Rutas internas de catálogo */}
       <Routes>
         <Route
           path="/"
@@ -32,13 +26,12 @@ export default function Catalog() {
             </>
           }
         />
-        <Route path="producto/:id" element={<DetalleProduct />} />
-        <Route path="login" element={<Login />} />
+        <Route path="producto/:id" element={<DetalleProduct />} />      
+        <Route path="login" element={<Login />} /> {/* 👈 nota: sin / al inicio */}
       </Routes>
 
-      {/* Mostrar solo si no es login */}
-      {!isLoginPage && <WhatsAppButton />}
-      {!isLoginPage && <Footer />}
+      <WhatsAppButton />
+      <Footer />
     </div>
   )
 }
