@@ -178,7 +178,7 @@ const CategoryCarousel = () => {
       {selectedCategory && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold text-white mb-4">
-            {selectedCategory.name} 
+            {selectedCategory.name} - Productos
           </h3>
           <ProductList category={selectedCategory} />
         </div>

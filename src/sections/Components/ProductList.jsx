@@ -1,61 +1,81 @@
-import { useEffect, useState } from "react";
-import ProductCard from "./ProductCard";
-import { Plus } from "lucide-react";
-import ProductForm from "./ProductForm";
+import { useEffect, useState } from "react"
+import ProductCard from "./ProductCard"
+import { Plus } from "lucide-react"
+import ProductForm from "./ProductForm"
+import Swal from "sweetalert2"
 
 const ProductList = ({ category }) => {
-  const [products, setProducts] = useState([]);
-  const [showProductForm, setShowProductForm] = useState(false);
+  const [products, setProducts] = useState([])
+  const [showProductForm, setShowProductForm] = useState(false)
 
   // 🔎 Cargar productos de la categoría seleccionada
   const loadProducts = async () => {
-    if (!category) return;
+    if (!category) return
     try {
-      console.log("🔎 Cargando productos de la categoría:", category.id);
+      console.log("🔎 Cargando productos de la categoría:", category.id)
       const res = await fetch(
         `http://localhost:8080/api/products/category/${category.id}`
-      );
+      )
 
-      if (!res.ok) throw new Error("Error cargando productos");
+      if (!res.ok) throw new Error("Error cargando productos")
 
-      const data = await res.json();
-      console.log("✅ Productos recibidos:", data);
+      const data = await res.json()
+      console.log("✅ Productos recibidos:", data)
 
-      setProducts(data);
+      setProducts(data)
     } catch (err) {
-      console.error("❌ Error cargando productos:", err);
+      console.error("❌ Error cargando productos:", err)
     }
-  };
+  }
 
   useEffect(() => {
-    loadProducts();
-  }, [category]);
+    loadProducts()
+  }, [category])
 
-  // 🗑 Eliminar producto
+  // 🗑 Eliminar producto con SweetAlert2
   const handleDeleteProduct = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Error al eliminar producto");
-      setProducts(products.filter((prod) => prod.id !== id));
-    } catch (error) {
-      console.error(error);
+    const confirm = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "No podrás revertir esta acción",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    })
+
+    if (confirm.isConfirmed) {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/products/${id}`,
+          {
+            method: "DELETE",
+          }
+        )
+
+        if (!response.ok) throw new Error("Error al eliminar producto")
+
+        setProducts((prev) => prev.filter((prod) => prod.id !== id))
+
+        Swal.fire("Eliminado", "El producto fue eliminado con éxito.", "success")
+      } catch (error) {
+        console.error(error)
+        Swal.fire("Error", "Hubo un problema al eliminar el producto.", "error")
+      }
     }
-  };
+  }
 
   // ➕ Agregar producto nuevo
   const handleProductCreated = (savedProduct) => {
-    console.log("📦 Nuevo producto creado:", savedProduct);
+    console.log("📦 Nuevo producto creado:", savedProduct)
     // Se agrega directamente al state para no recargar todo
-    setProducts((prev) => [...prev, savedProduct]);
-    setShowProductForm(false);
-  };
+    setProducts((prev) => [...prev, savedProduct])
+    setShowProductForm(false)
+  }
 
   return (
     <div className="mt-6">
-
-
       <div className="flex gap-4 flex-wrap">
         {products.length === 0 && (
           <p className="text-gray-400">No hay productos en esta categoría</p>
@@ -88,7 +108,7 @@ const ProductList = ({ category }) => {
         />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ProductList;
+export default ProductList
