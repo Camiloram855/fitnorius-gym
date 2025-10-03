@@ -8,19 +8,22 @@ import FAQ from "../sections/FAQ"
 import ScrollToTop from "../sections/Components/ScrollToTop"
 import DetalleProduct from "./DetalleProduct"
 import Login from "./Login"
+import Checkout from "./Checkout"   // 👈 importa bien tu componente de Checkout
 
 export default function Catalog() {
   const location = useLocation()
 
-  // Verifica si estamos en la página de login
-  const isLoginPage = location.pathname === "/catalog/login"
+  // Verifica si estamos en login o checkout
+  const isSpecialPage =
+    location.pathname === "/catalog/login" ||
+    location.pathname === "/catalog/checkout"
 
   return (
     <div className="App">
       <ScrollToTop />
 
-      {/* Mostrar solo si no es login */}
-      {!isLoginPage && <ScrollingHeader />}
+      {/* Mostrar solo si no es login ni checkout */}
+      {!isSpecialPage && <ScrollingHeader />}
 
       <Routes>
         <Route
@@ -34,11 +37,12 @@ export default function Catalog() {
         />
         <Route path="producto/:id" element={<DetalleProduct />} />
         <Route path="login" element={<Login />} />
+        <Route path="checkout" element={<Checkout />} /> {/* 👈 nueva ruta */}
       </Routes>
 
-      {/* Mostrar solo si no es login */}
-      {!isLoginPage && <WhatsAppButton />}
-      {!isLoginPage && <Footer />}
+      {/* Mostrar solo si no es login ni checkout */}
+      {!isSpecialPage && <WhatsAppButton />}
+      {!isSpecialPage && <Footer />}
     </div>
   )
 }

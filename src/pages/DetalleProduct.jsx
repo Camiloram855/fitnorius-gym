@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom"
+
 
 export default function ProductDetail() {
   const { id } = useParams(); 
@@ -279,6 +281,15 @@ function ProductDetailContent({ product, onAddToCart }) {
                   >
                     {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
                   </button>
+
+              {/* 👇 Botón "Finalizar compra / Ir al carrito" */}
+            <Link
+              to="/catalog/checkout" // 👈 Ruta absoluta correcta
+              className="w-full py-4 text-center bg-gradient-to-r from-green-500 to-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-900/60 hover:scale-105 transition-all"
+            >
+              Finalizar compra
+            </Link>
+
                 </>
               )}
             </div>
