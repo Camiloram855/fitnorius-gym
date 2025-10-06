@@ -18,7 +18,7 @@ export default function ProductCard({ product, onDelete }) {
           method: "DELETE",
         });
         if (onDelete) {
-          onDelete(product.id); // para refrescar lista desde el padre
+          onDelete(product.id); // refresca la lista desde el padre
         }
       } catch (error) {
         console.error("Error eliminando producto:", error);
@@ -29,10 +29,10 @@ export default function ProductCard({ product, onDelete }) {
   return (
     <div className="block w-full max-w-[250px] mx-auto">
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
-        {/* Imagen y enlace al detalle */}
+        {/* ✅ Imagen y enlace al detalle */}
         <Link
-          to={`producto/${product.id}`}
-          className="relative w-full h-[280px] overflow-hidden rounded-t-xl block"
+          to={`/catalog/producto/${product.id}`} // 🔥 ruta consistente con DetalleProduct
+          className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group"
         >
           <img
             src={
@@ -42,6 +42,7 @@ export default function ProductCard({ product, onDelete }) {
             }
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => (e.target.src = "/img/default.jpg")}
           />
           {hasPromo && (
             <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
@@ -52,7 +53,7 @@ export default function ProductCard({ product, onDelete }) {
           )}
         </Link>
 
-        {/* Contenido */}
+        {/* ✅ Contenido */}
         <div className="p-4 flex flex-col flex-1 justify-between">
           <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
             {product.name}
@@ -77,7 +78,7 @@ export default function ProductCard({ product, onDelete }) {
             )}
           </div>
 
-          {/* Botón de eliminar */}
+          {/* ✅ Botón de eliminar */}
           <button
             onClick={handleDelete}
             className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"

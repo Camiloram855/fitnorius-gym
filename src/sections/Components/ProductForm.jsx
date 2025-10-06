@@ -25,13 +25,15 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     formData.append(
       "product",
       new Blob(
-        [JSON.stringify({
-          name: newProduct.name,
-          price: parseFloat(newProduct.price) || 0,
-          oldPrice: newProduct.oldPrice ? parseFloat(newProduct.oldPrice) : null,
-          discount: newProduct.discount ? parseFloat(newProduct.discount) : null,
-          categoryId: selectedCategory.id,
-        })],
+        [
+          JSON.stringify({
+            name: newProduct.name,
+            price: parseFloat(newProduct.price) || 0,
+            oldPrice: newProduct.oldPrice ? parseFloat(newProduct.oldPrice) : null,
+            discount: newProduct.discount ? parseFloat(newProduct.discount) : null,
+            categoryId: selectedCategory?.id || null,
+          }),
+        ],
         { type: "application/json" }
       )
     );
@@ -41,7 +43,8 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/products", {
+      // ✅ Ruta correcta según tu backend
+      const response = await fetch("http://localhost:8080/api/products/upload", {
         method: "POST",
         body: formData,
       });
@@ -51,12 +54,12 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       const savedProduct = await response.json();
       console.log("✅ Producto creado:", savedProduct);
 
-      // 🚀 Avisamos al padre para que lo pinte como tarjeta
+      // 🚀 Avisamos al padre para que actualice la lista
       if (onProductCreated) {
         onProductCreated(savedProduct);
       }
 
-      // Resetear formulario
+      // 🔄 Resetear formulario
       setNewProduct({
         name: "",
         price: "",
@@ -68,6 +71,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       setShowProductForm(false);
     } catch (error) {
       console.error("❌ Error:", error);
+      alert("Error al guardar el producto. Revisa la consola para más detalles.");
     }
   };
 
@@ -91,9 +95,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
           {/* Precio actual */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
-              Precio Actual
-            </label>
+            <label className="block text-sm text-gray-300 mb-2">Precio Actual</label>
             <input
               type="number"
               value={newProduct.price}
@@ -107,9 +109,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
           {/* Precio anterior */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
-              Precio Anterior (opcional)
-            </label>
+            <label className="block text-sm text-gray-300 mb-2">Precio Anterior (opcional)</label>
             <input
               type="number"
               value={newProduct.oldPrice}

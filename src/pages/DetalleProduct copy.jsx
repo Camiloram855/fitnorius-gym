@@ -2,18 +2,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 
+
+
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-
-    // ✅ Obtener el producto
     fetch(`http://localhost:8080/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -31,16 +30,6 @@ export default function ProductDetail() {
       })
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
-
-    // ✅ Obtener productos recomendados
-    fetch("http://localhost:8080/api/products")
-      .then((res) => res.json())
-      .then((data) => {
-        setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5) // excluye el actual
-        );
-      })
-      .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
 
   if (loading) {
@@ -62,16 +51,11 @@ export default function ProductDetail() {
   }
 
   return (
-    <ProductDetailContent
-      product={product}
-      recommended={recommended}
-      addToCart={addToCart}
-      navigate={navigate}
-    />
+    <ProductDetailContent product={product} addToCart={addToCart} navigate={navigate} />
   );
 }
 
-function ProductDetailContent({ product, recommended, addToCart, navigate }) {
+function ProductDetailContent({ product, addToCart, navigate }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -94,6 +78,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
+  // ✅ Agregar al carrito
   const handleAddToCart = () => {
     addToCart({
       id: product.id,
@@ -106,8 +91,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
+  // ✅ Ir al checkout (usa ruta correcta)
   const handleAdd = () => {
-    navigate("/catalog/checkout");
+  navigate("/catalog/checkout"); // 👈 Ir a Checkout
   };
 
   const handleChange = (e) => {
@@ -152,7 +138,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-10 px-6">
       <div className="max-w-7xl mx-auto">
-        <br />
+        <br></br>
         <button
           onClick={() => window.history.back()}
           className="mb-6 px-5 py-2 bg-purple-700/30 hover:bg-purple-700/50 text-white rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/50"
@@ -160,10 +146,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
           ← Volver
         </button>
 
-        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* Imagen principal */}
+            {/* Imagen */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
                 {isEditing && formData.image ? (
@@ -288,6 +273,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
                     </button>
                   </div>
 
+                  {/* ✅ Botones corregidos */}
                   <button
                     onClick={handleAddToCart}
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all"
@@ -306,40 +292,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
             </div>
           </div>
         </div>
-
-        {/* 🔥 Sección de productos recomendados */}
-        {recommended.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
-              Productos Recomendados
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {recommended.map((item) => {
-                const imgSrc = item.imageUrl
-                  ? `http://localhost:8080${item.imageUrl}`
-                  : "/img/default.jpg";
-
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => navigate(`/catalog/producto/${item.id}`)}
-                    className="cursor-pointer bg-[#181818] rounded-2xl p-4 shadow-lg hover:shadow-purple-500/20 hover:scale-105 transition-all duration-300"
-                  >
-                    <img
-                      src={imgSrc}
-                      alt={item.name}
-                      className="w-full h-48 object-cover rounded-xl mb-3"
-                    />
-                    <h3 className="text-white text-lg font-semibold mb-1">
-                      {item.name}
-                    </h3>
-                    <p className="text-purple-400 font-bold">${item.price}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
