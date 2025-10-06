@@ -8,7 +8,8 @@ import FAQ from "../sections/FAQ"
 import ScrollToTop from "../sections/Components/ScrollToTop"
 import DetalleProduct from "./DetalleProduct"
 import Login from "./Login"
-import Checkout from "./Checkout"   // 👈 importa bien tu componente de Checkout
+import Checkout from "./Checkout"
+import { CartProvider } from "./CartContext" // ✅ Importa tu contexto desde pages
 
 export default function Catalog() {
   const location = useLocation()
@@ -19,30 +20,32 @@ export default function Catalog() {
     location.pathname === "/catalog/checkout"
 
   return (
-    <div className="App">
-      <ScrollToTop />
+    <CartProvider>
+      <div className="App">
+        <ScrollToTop />
 
-      {/* Mostrar solo si no es login ni checkout */}
-      {!isSpecialPage && <ScrollingHeader />}
+        {/* Mostrar solo si no es login ni checkout */}
+        {!isSpecialPage && <ScrollingHeader />}
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <HeroBanner />
-              <FAQ />
-            </>
-          }
-        />
-        <Route path="producto/:id" element={<DetalleProduct />} />
-        <Route path="login" element={<Login />} />
-        <Route path="checkout" element={<Checkout />} /> {/* 👈 nueva ruta */}
-      </Routes>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <HeroBanner />
+                <FAQ />
+              </>
+            }
+          />
+          <Route path="producto/:id" element={<DetalleProduct />} />
+          <Route path="login" element={<Login />} />
+          <Route path="checkout" element={<Checkout />} /> {/* ✅ Ruta checkout */}
+        </Routes>
 
-      {/* Mostrar solo si no es login ni checkout */}
-      {!isSpecialPage && <WhatsAppButton />}
-      {!isSpecialPage && <Footer />}
-    </div>
+        {/* Mostrar solo si no es login ni checkout */}
+        {!isSpecialPage && <WhatsAppButton />}
+        {!isSpecialPage && <Footer />}
+      </div>
+    </CartProvider>
   )
 }

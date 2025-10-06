@@ -5,8 +5,7 @@ import { useCart } from "./CartContext"
 import { X } from "lucide-react" // Ícono para eliminar
 
 export default function Checkout() {
-  const { cartItems, removeFromCart /*, clearCart*/ } = useCart()
-
+  const { cartItems, removeFromCart } = useCart()
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -20,7 +19,11 @@ export default function Checkout() {
     comentario: "",
   })
 
-  // ✅ Manejo del cambio de los inputs
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    console.log("Form submitted:", formData)
+  }
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -36,70 +39,6 @@ export default function Checkout() {
     if (!imagePath) return "/placeholder.jpg" // Imagen de respaldo
     if (imagePath.startsWith("http")) return imagePath // Ya tiene URL completa
     return `http://localhost:8080/${imagePath}` // Ajusta si usas otro dominio
-  }
-
-  // ✅ Función para enviar el pedido por WhatsApp
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
-    if (cartItems.length === 0) {
-      alert("Tu carrito está vacío 🛒")
-      return
-    }
-
-    if (!formData.telefono.match(/^\d{10}$/)) {
-      alert("Por favor ingresa un número de teléfono válido (10 dígitos).")
-      return
-    }
-
-    // 🧾 Crear resumen del pedido
-    const orderDetails = cartItems
-      .map(
-        (item) =>
-          `• ${item.name} (x${item.quantity}) - $${(
-            item.price * item.quantity
-          ).toLocaleString()}`
-      )
-      .join("\n")
-
-    const totalPrice = total.toLocaleString()
-
-    // 💬 Mensaje completo para WhatsApp
-    const message = `
-📦 *NUEVO PEDIDO - FITNORIUS*
-
-👤 *Cliente:*
-Nombre: ${formData.nombre} ${formData.apellido}
-Teléfono: ${formData.telefono}
-Email: ${formData.email}
-
-🏠 *Dirección de envío:*
-Departamento: ${formData.departamento}
-Ciudad: ${formData.ciudad}
-Dirección: ${formData.direccion}
-Barrio: ${formData.barrio || "-"}
-Apartamento/Torre: ${formData.apartamento || "-"}
-Comentario: ${formData.comentario || "-"}
-
-🛍️ *Productos:*
-${orderDetails}
-
-💰 *Total: $${totalPrice}*
-
-🚚 Gracias por tu compra 💜
-    `.trim()
-
-    // 📲 Número de WhatsApp (formato internacional sin + ni espacios)
-    const phone = "573043317223" // 57 (Colombia) + número
-
-    // 🧠 Codificar mensaje para la URL
-    const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-
-    // 🔗 Abrir WhatsApp
-    window.open(whatsappURL, "_blank")
-
-    // 🧹 (Opcional) limpiar el carrito después del envío
-    // clearCart()
   }
 
   return (
@@ -153,7 +92,6 @@ ${orderDetails}
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
-                  placeholder="Ej: 3001234567"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   required
                 />
@@ -189,12 +127,12 @@ ${orderDetails}
                   required
                 >
                   <option value="">Seleccione un departamento</option>
-                  <option value="Antioquia">Antioquia</option>
-                  <option value="Cundinamarca">Cundinamarca</option>
-                  <option value="Valle del Cauca">Valle del Cauca</option>
-                  <option value="Atlántico">Atlántico</option>
-                  <option value="Santander">Santander</option>
-                  <option value="Bolívar">Bolívar</option>
+                  <option value="antioquia">Antioquia</option>
+                  <option value="cundinamarca">Cundinamarca</option>
+                  <option value="valle">Valle del Cauca</option>
+                  <option value="atlantico">Atlántico</option>
+                  <option value="santander">Santander</option>
+                  <option value="bolivar">Bolívar</option>
                 </select>
               </div>
 
@@ -311,14 +249,16 @@ ${orderDetails}
                     </button>
 
                     <img
-                      src={getImageUrl(item.image || item.imageUrl)}
+                      src={getImageUrl(item.image || item.imageUrl)} // 👈 soporte universal
                       alt={item.name}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
 
                     <div className="flex-1">
                       <h4 className="font-semibold text-purple-900">{item.name}</h4>
-                      <p className="text-sm text-purple-700">Cantidad: {item.quantity}</p>
+                      <p className="text-sm text-purple-700">
+                        Cantidad: {item.quantity}
+                      </p>
                     </div>
 
                     <p className="font-semibold text-purple-900">

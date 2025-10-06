@@ -237,7 +237,13 @@ const PurchaseButton = () => {
                   Selecciona un departamento
                 </option>
                 {[
-                  "Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca","Cesar","Chocó","Córdoba","Cundinamarca","Guainía","Guaviare","Huila","La Guajira","Magdalena","Meta","Nariño","Norte de Santander","Putumayo","Quindío","Risaralda","San Andrés y Providencia","Santander","Sucre","Tolima","Valle del Cauca","Vaupés","Vichada",
+                  "Amazonas","Antioquia","Arauca","Atlántico","Bolívar",
+                  "Boyacá","Caldas","Caquetá","Casanare","Cauca","Cesar",
+                  "Chocó","Córdoba","Cundinamarca","Guainía","Guaviare",
+                  "Huila","La Guajira","Magdalena","Meta","Nariño",
+                  "Norte de Santander","Putumayo","Quindío","Risaralda",
+                  "San Andrés y Providencia","Santander","Sucre","Tolima",
+                  "Valle del Cauca","Vaupés","Vichada",
                 ].map((dep) => (
                   <option key={dep} value={dep}>
                     {dep}
