@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
+import { useAuth } from "../pages/AuthContext"; // ✅ Importamos el contexto
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -37,7 +38,7 @@ export default function ProductDetail() {
       .then((res) => res.json())
       .then((data) => {
         setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5) // excluye el actual
+          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
         );
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
@@ -76,6 +77,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { isAdmin } = useAuth(); // ✅ Saber si el usuario es admin
 
   const [formData, setFormData] = useState({
     name: product.name,
@@ -261,12 +263,15 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
                   )}
                   <p className="text-gray-200">{product.description}</p>
 
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg"
-                  >
-                    Editar producto ✏️
-                  </button>
+                  {/* 🔒 Solo admins pueden editar */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg"
+                    >
+                      Editar producto ✏️
+                    </button>
+                  )}
                 </>
               )}
 

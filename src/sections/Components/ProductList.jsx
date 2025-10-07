@@ -3,10 +3,12 @@ import ProductCard from "./ProductCard";
 import { Plus } from "lucide-react";
 import ProductForm from "./ProductForm";
 import Swal from "sweetalert2";
+import { useAuth } from "../../pages/AuthContext"; // ✅ Importamos el contexto
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
+  const { isAdmin } = useAuth(); // ✅ Saber si el admin está logueado
 
   // 🔎 Cargar productos de la categoría seleccionada
   const loadProducts = async () => {
@@ -81,18 +83,20 @@ const ProductList = ({ category }) => {
           <ProductCard
             key={product.id}
             product={product}
-            onDelete={handleDeleteProduct} // ✅ Confirmación bonita aquí
+            onDelete={handleDeleteProduct}
           />
         ))}
 
-        {/* 📌 Botón Agregar Producto */}
-        <div
-          onClick={() => setShowProductForm(true)}
-          className="w-60 h-40 rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300"
-        >
-          <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
-          <p className="mt-2 text-sm text-gray-400">Agregar Producto</p>
-        </div>
+        {/* 🔒 Botón Agregar Producto solo visible si el admin está logueado */}
+        {isAdmin && (
+          <div
+            onClick={() => setShowProductForm(true)}
+            className="w-60 h-40 rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300"
+          >
+            <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
+            <p className="mt-2 text-sm text-gray-400">Agregar Producto</p>
+          </div>
+        )}
       </div>
 
       {/* 📌 Modal de Formulario Producto */}

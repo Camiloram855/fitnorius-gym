@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import SearchSection from "./SearchSection";
 import CategoryCarousel from "./CategoryCarousel";
+import { useAuth } from "../../pages/AuthContext"; // ✅ Importamos el contexto de autenticación
 
 export default function HeroBanner({ image }) {
   const [bannerImage, setBannerImage] = useState(image || null);
   const [preview, setPreview] = useState(null);
+  const { isAdmin } = useAuth(); // ✅ Saber si el usuario es administrador
 
   // 🔄 Cargar imagen guardada si existe
   useEffect(() => {
@@ -58,27 +60,29 @@ export default function HeroBanner({ image }) {
             className="w-full"
           />
 
-          {/* Botón de carga */}
-          <div className="absolute top-5 right-5 z-20 flex gap-2">
-            <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-              Cambiar banner
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleBannerUpload}
-                className="hidden"
-              />
-            </label>
+          {/* 🔒 Solo visible para administradores */}
+          {isAdmin && (
+            <div className="absolute top-5 right-5 z-20 flex gap-2">
+              <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+                Cambiar banner
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerUpload}
+                  className="hidden"
+                />
+              </label>
 
-            {bannerImage && (
-              <button
-                onClick={handleResetBanner}
-                className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-              >
-                Restablecer
-              </button>
-            )}
-          </div>
+              {bannerImage && (
+                <button
+                  onClick={handleResetBanner}
+                  className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                >
+                  Restablecer
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Secciones internas */}
           <SearchSection />

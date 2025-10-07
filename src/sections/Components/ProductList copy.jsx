@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { Plus } from "lucide-react";
 import ProductForm from "./ProductForm";
+import Swal from "sweetalert2";
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
@@ -31,31 +32,46 @@ const ProductList = ({ category }) => {
     loadProducts();
   }, [category]);
 
-  // 🗑 Eliminar producto
+  // 🗑 Eliminar producto con confirmación SweetAlert2
   const handleDeleteProduct = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Error al eliminar producto");
-      setProducts(products.filter((prod) => prod.id !== id));
-    } catch (error) {
-      console.error(error);
+    const confirm = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción eliminará el producto permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/products/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Error al eliminar producto");
+
+        // ✅ Actualiza en tiempo real
+        setProducts((prev) => prev.filter((prod) => prod.id !== id));
+
+        Swal.fire("Eliminado", "El producto fue eliminado con éxito.", "success");
+      } catch (error) {
+        console.error(error);
+        Swal.fire("Error", "Hubo un problema al eliminar el producto.", "error");
+      }
     }
   };
 
   // ➕ Agregar producto nuevo
   const handleProductCreated = (savedProduct) => {
     console.log("📦 Nuevo producto creado:", savedProduct);
-    // Se agrega directamente al state para no recargar todo
-    setProducts((prev) => [...prev, savedProduct]);
+    setProducts((prev) => [...prev, savedProduct]); // Se agrega directo al state
     setShowProductForm(false);
   };
 
   return (
     <div className="mt-6">
-
-
       <div className="flex gap-4 flex-wrap">
         {products.length === 0 && (
           <p className="text-gray-400">No hay productos en esta categoría</p>
@@ -65,7 +81,7 @@ const ProductList = ({ category }) => {
           <ProductCard
             key={product.id}
             product={product}
-            onDelete={handleDeleteProduct}
+            onDelete={handleDeleteProduct} // ✅ Confirmación bonita aquí
           />
         ))}
 
