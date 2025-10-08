@@ -123,33 +123,59 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
+
+      // ✅ Construimos el JSON del producto incluyendo su ID
       const productJson = {
+        id: product.id,
         name: formData.name,
-        price: formData.price,
-        oldPrice: formData.oldPrice,
-        discount: formData.discount,
+        price: parseFloat(formData.price),
+        oldPrice: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
+        discount: formData.discount ? parseFloat(formData.discount) : null,
         description: formData.description,
       };
 
+      // ✅ Agregamos el JSON correctamente al FormData
       formDataToSend.append(
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
-      if (formData.image) formDataToSend.append("image", formData.image);
 
-      const res = await fetch(`http://localhost:8080/api/products/${product.id}`, {
-        method: "PUT",
-        body: formDataToSend,
+      // ✅ Solo agregamos imagen si se cambió
+      if (formData.image) {
+        formDataToSend.append("image", formData.image);
+      }
+
+      // ✅ NO agregues headers: el navegador define el boundary automáticamente
+      const res = await fetch(
+        `http://localhost:8080/api/products/${product.id}/upload`,
+        {
+          method: "PUT",
+          body: formDataToSend,
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Respuesta del backend:", text);
+        throw new Error("Error al actualizar producto");
+      }
+
+      const updated = await res.json();
+      setProduct({
+        ...updated,
+        images: updated.imageUrl
+          ? [`http://localhost:8080${updated.imageUrl}`]
+          : product.images,
       });
 
-      if (!res.ok) throw new Error("Error al actualizar producto");
       alert("Producto actualizado correctamente ✅");
       setIsEditing(false);
     } catch (err) {
-      console.error(err);
+      console.error("❌ Error al guardar:", err);
       alert("Error al guardar cambios ❌");
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-10 px-6">

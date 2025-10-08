@@ -34,36 +34,42 @@ const ProductList = ({ category }) => {
     loadProducts();
   }, [category]);
 
-  // 🗑 Eliminar producto con confirmación SweetAlert2
-  const handleDeleteProduct = async (id) => {
-    const confirm = await Swal.fire({
-      title: "¿Estás seguro?",
-      text: "Esta acción eliminará el producto permanentemente.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    });
+// 🗑 Eliminar producto con confirmación SweetAlert2
+const handleDeleteProduct = async (id) => {
+  const confirm = await Swal.fire({
+    title: "¿Estás seguro?",
+    text: "Esta acción eliminará el producto permanentemente.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+  });
 
-    if (confirm.isConfirmed) {
-      try {
-        const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-          method: "DELETE",
-        });
-        if (!response.ok) throw new Error("Error al eliminar producto");
+  if (confirm.isConfirmed) {
+    try {
+      const response = await fetch(`http://localhost:8080/api/products/${id}`, {
+        method: "DELETE",
+      });
 
-        // ✅ Actualiza en tiempo real
+      // ✅ Si el backend devuelve 204 o 200, se considera éxito
+      if (response.ok) {
         setProducts((prev) => prev.filter((prod) => prod.id !== id));
 
         Swal.fire("Eliminado", "El producto fue eliminado con éxito.", "success");
-      } catch (error) {
-        console.error(error);
+      } else {
+        const errorText = await response.text(); // leer texto en lugar de JSON
+        console.error("❌ Error del servidor:", errorText);
         Swal.fire("Error", "Hubo un problema al eliminar el producto.", "error");
       }
+    } catch (error) {
+      console.error("❌ Error al eliminar producto:", error);
+      Swal.fire("Error", "Hubo un problema al eliminar el producto.", "erroring");
     }
-  };
+  }
+};
+
 
   // ➕ Agregar producto nuevo
   const handleProductCreated = (savedProduct) => {

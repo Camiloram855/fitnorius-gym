@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
+import { useAuth } from "../../pages/AuthContext";
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
@@ -16,6 +17,7 @@ const CategoryCarousel = () => {
   const [editForm, setEditForm] = useState({ name: "", image: null });
 
   const scrollRef = useRef(null);
+  const { isAdmin } = useAuth(); // ✅ obtenemos si el usuario es admin
 
   // Cargar categorías desde el backend
   useEffect(() => {
@@ -58,9 +60,9 @@ const CategoryCarousel = () => {
   const handleEditCategory = async () => {
     try {
       const formData = new FormData();
-      formData.append("name", editForm.name); // aquí va como RequestParam
+      formData.append("name", editForm.name);
       if (editForm.image) {
-        formData.append("image", editForm.image); // aquí la imagen opcional
+        formData.append("image", editForm.image);
       }
 
       const response = await fetch(
@@ -81,7 +83,7 @@ const CategoryCarousel = () => {
           cat.id === updatedCategory.id ? updatedCategory : cat
         )
       );
-      setCategoryToEdit(null); // cerrar modal
+      setCategoryToEdit(null);
     } catch (error) {
       console.error("Error editando categoría:", error);
     }
@@ -129,29 +131,33 @@ const CategoryCarousel = () => {
                   alt={category.name}
                   className="w-28 h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
                 />
-                {/* Botón eliminar */}
-                {categories.length > 1 && (
+
+                {/* Botón eliminar (solo admin) */}
+                {isAdmin && categories.length > 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCategoryToDelete(category); // abrir modal eliminar
+                      setCategoryToDelete(category);
                     }}
                     className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 )}
-                {/* Botón editar */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditForm({ name: category.name, image: null });
-                    setCategoryToEdit(category);
-                  }}
-                  className="absolute -top-2 -left-2 bg-blue-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
+
+                {/* Botón editar (solo admin) */}
+                {isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditForm({ name: category.name, image: null });
+                      setCategoryToEdit(category);
+                    }}
+                    className="absolute -top-2 -left-2 bg-blue-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                )}
               </div>
               <p className="text-center mt-3 text-sm font-medium text-white uppercase tracking-wide">
                 {category.name}
@@ -159,18 +165,20 @@ const CategoryCarousel = () => {
             </div>
           ))}
 
-          {/* + AGREGAR CATEGORÍA */}
-          <div className="flex-shrink-0">
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-28 h-28 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
-            >
-              <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
-            </button>
-            <p className="text-center mt-3 text-sm font-medium text-gray-400 uppercase tracking-wide">
-              Agregar
-            </p>
-          </div>
+          {/* + AGREGAR CATEGORÍA (solo admin) */}
+          {isAdmin && (
+            <div className="flex-shrink-0">
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-28 h-28 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
+              >
+                <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
+              </button>
+              <p className="text-center mt-3 text-sm font-medium text-gray-400 uppercase tracking-wide">
+                Agregar
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -178,19 +186,19 @@ const CategoryCarousel = () => {
       {selectedCategory && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold text-white mb-4">
-            {selectedCategory.name} 
+            {selectedCategory.name}
           </h3>
           <ProductList category={selectedCategory} />
         </div>
       )}
 
       {/* ====== MODAL CATEGORÍA ====== */}
-      {showForm && (
+      {isAdmin && showForm && (
         <CategoryForm setShowForm={setShowForm} onCategoryCreated={handleCategoryCreated} />
       )}
 
       {/* ====== MODAL CONFIRMACIÓN ELIMINAR ====== */}
-      {categoryToDelete && (
+      {isAdmin && categoryToDelete && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
             <h3 className="text-lg font-bold text-white mb-4">Confirmar eliminación</h3>
@@ -218,7 +226,7 @@ const CategoryCarousel = () => {
       )}
 
       {/* ====== MODAL EDITAR ====== */}
-      {categoryToEdit && (
+      {isAdmin && categoryToEdit && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
             <h3 className="text-lg font-bold text-white mb-4">Editar categoría</h3>

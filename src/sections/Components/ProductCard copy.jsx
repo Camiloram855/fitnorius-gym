@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../../pages/AuthContext"; // ✅ importa el contexto
 
 export default function ProductCard({ product, onDelete }) {
+  const { isAdmin } = useAuth(); // ✅ saber si el admin está logueado
+
   const hasPromo =
     product.oldPrice !== null &&
     product.oldPrice !== undefined &&
@@ -31,7 +34,7 @@ export default function ProductCard({ product, onDelete }) {
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
         {/* ✅ Imagen y enlace al detalle */}
         <Link
-          to={`/catalog/producto/${product.id}`} // 🔥 ruta consistente con DetalleProduct
+          to={`/catalog/producto/${product.id}`}
           className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group"
         >
           <img
@@ -78,13 +81,15 @@ export default function ProductCard({ product, onDelete }) {
             )}
           </div>
 
-          {/* ✅ Botón de eliminar */}
-          <button
-            onClick={handleDelete}
-            className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
-          >
-            Eliminar
-          </button>
+          {/* 🔒 Mostrar botón eliminar solo si el admin ha iniciado sesión */}
+          {isAdmin && (
+            <button
+              onClick={handleDelete}
+              className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
+            >
+              Eliminar
+            </button>
+          )}
         </div>
       </div>
     </div>
