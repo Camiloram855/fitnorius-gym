@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Button } from "../components/ui/Button";
-import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button"; // Ajusta la ruta según tu proyecto
+import { Badge } from "../components/ui/Badge";  // Ajusta la ruta según tu proyecto
 import { Star, Gift } from "lucide-react";
 import PurchaseButton from "../components/ui/PurchaseButton";
+
+
 
 export default function Hero() {
   const [isZoomed, setIsZoomed] = useState(false);
@@ -16,17 +18,17 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden w-full">
+    <section className="relative min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden">
       {/* Fondo decorativo */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-20 left-10 sm:left-20 w-24 sm:w-32 h-24 sm:h-32 border border-purple-500 rounded-full"></div>
-        <div className="absolute bottom-20 sm:bottom-40 right-10 sm:right-20 w-16 sm:w-24 h-16 sm:h-24 border border-purple-400 rounded-full"></div>
-        <div className="absolute top-1/2 left-1/4 w-12 sm:w-16 h-12 sm:h-16 border border-purple-300 rounded-full"></div>
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-20 w-32 h-32 border border-purple-500 rounded-full"></div>
+        <div className="absolute bottom-40 right-20 w-24 h-24 border border-purple-400 rounded-full"></div>
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 border border-purple-300 rounded-full"></div>
       </div>
 
-      <div className="relative z-10 max-w-[1280px] w-full mx-auto px-6 sm:px-4 py-16 sm:py-20 overflow-hidden">
-        {/* Logo */}
-        <div className="text-center mb-10 sm:mb-12">
+      <div className="relative z-10 max-w-[1280px] w-full mx-auto px-6 sm:px-4 py-20 overflow-hidden">
+        {/* Logo con efectos */}
+        <div className="text-center mb-12">
           <div className="flex justify-center mb-8">
             <div className="relative group cursor-pointer">
               {/* Glow externo */}
@@ -35,8 +37,8 @@ export default function Hero() {
               {/* Glow interno */}
               <div className="absolute -inset-2 bg-gradient-to-r from-purple-400 to-yellow-300 rounded-full opacity-75 group-hover:opacity-100 blur transition-all duration-300"></div>
 
-              {/* Contenedor del logo */}
-              <div className="relative w-32 sm:w-40 md:w-44 h-32 sm:h-40 md:h-44 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl group-hover:shadow-purple-500/50 transition-all duration-500 group-hover:scale-110 group-hover:border-white/50">
+              {/* Contenedor principal del logo */}
+              <div className="relative w-44 h-44 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl group-hover:shadow-purple-500/50 transition-all duration-500 group-hover:scale-110 group-hover:border-white/50">
                 {/* Brillo en movimiento */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out skew-x-12"></div>
 
@@ -65,14 +67,14 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Contenido Izquierdo */}
-          <div className="space-y-8 text-center lg:text-left">
+          <div className="space-y-8">
             <div className="space-y-4">
-              <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-sm sm:text-base">
+              <Badge className="bg-purple-600 text-white hover:bg-purple-700">
                 ¡NUEVA COLECCIÓN!
               </Badge>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight text-balance">
                 BANDAS DE TELA
                 <span className="block text-yellow-400">
                   INCLUYE: 3 BANDAS DE RESISTENCIA
@@ -81,40 +83,36 @@ export default function Hero() {
             </div>
 
             {/* Beneficio 1 */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-black/30 p-5 sm:p-6 rounded-lg border border-purple-500/20">
-              <div className="bg-purple-600 p-3 rounded-lg flex-shrink-0">
+            <div className="flex items-start gap-4 bg-black/30 p-6 rounded-lg border border-purple-500/20">
+              <div className="bg-purple-600 p-3 rounded-lg">
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2 text-center sm:text-left">
+                <h3 className="font-semibold text-lg mb-2">
                   Incluye 6 meses de rutina de entrenamiento con videos
                 </h3>
-                <p className="text-gray-300 text-sm sm:text-base">
+                <p className="text-gray-300">
                   Acceso completo a nuestra plataforma de entrenamiento personalizado
                 </p>
               </div>
             </div>
 
             {/* Beneficio 2 */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-black/30 p-5 sm:p-6 rounded-lg border border-purple-500/20">
-              <div className="bg-yellow-500 p-3 rounded-lg flex-shrink-0">
+            <div className="flex items-start gap-4 bg-black/30 p-6 rounded-lg border border-purple-500/20">
+              <div className="bg-yellow-500 p-3 rounded-lg">
                 <Star className="w-6 h-6 text-black" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2 text-center sm:text-left">
-                  OBSEQUIO:
-                </h3>
-                <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                  1 barra extensora acolchada gratis
-                </p>
+                <h3 className="font-semibold text-lg mb-2">OBSEQUIO:</h3>
+                <p className="text-gray-300">1 barra extensora acolchada gratis</p>
               </div>
             </div>
 
-            {/* Botones */}
+            {/* Botones de compra */}
             <div className="space-y-4">
               <Button
                 size="lg"
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-5 sm:py-6 rounded-lg"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-6 rounded-lg"
               >
                 COMPRAR CON ENTREGA
               </Button>
@@ -122,17 +120,18 @@ export default function Hero() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white font-bold text-lg py-5 sm:py-6 rounded-lg bg-transparent"
+                className="w-full border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white font-bold text-lg py-6 rounded-lg bg-transparent"
               >
                 COMPRAR A CRÉDITO
               </Button>
             </div>
+
           </div>
 
-          {/* Contenido Derecho */}
-          <div className="relative overflow-hidden w-full max-w-[500px] mx-auto lg:mx-0">
+          {/* Contenido Derecho - Imagen con zoom */}
+          <div className="relative">
             <div
-              className="relative z-10 w-full rounded-lg"
+              className="relative z-10 w-full h-auto"
               style={{
                 backgroundImage: `url('/img/bandas-4.png')`,
                 backgroundRepeat: "no-repeat",
@@ -141,12 +140,14 @@ export default function Hero() {
                   ? `${mousePosition.x}% ${mousePosition.y}%`
                   : "center",
                 cursor: isZoomed ? "zoom-out" : "zoom-in",
-                aspectRatio: "1 / 1",
+                aspectRatio: "1/1",
+                borderRadius: "0.5rem",
               }}
               onMouseEnter={() => setIsZoomed(true)}
               onMouseLeave={() => setIsZoomed(false)}
               onMouseMove={handleMouseMove}
             >
+              {/* Imagen invisible para mantener proporciones */}
               <img
                 src="/img/bandas-fit.png"
                 alt="Set de Bandas de Resistencia"
