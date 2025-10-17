@@ -1,71 +1,75 @@
-import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+// 🌍 Detecta si estás en local o producción (Railway)
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function SearchSection() {
-  const [query, setQuery] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [results, setResults] = useState([])
-  const navigate = useNavigate()
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [results, setResults] = useState([]);
+  const navigate = useNavigate();
 
+  // 🔍 Buscar productos
   const handleSearch = async (searchTerm) => {
-    const trimmedQuery = searchTerm.trim()
+    const trimmedQuery = searchTerm.trim();
 
-    // 🧹 Si está vacío, limpiar resultados
+    // 🧹 Si está vacío, limpiar resultados y errores
     if (!trimmedQuery) {
-      setResults([])
-      setError(null)
-      return
+      setResults([]);
+      setError(null);
+      return;
     }
 
-    // Solo buscar si hay al menos 3 caracteres
+    // 🔠 Solo buscar si hay al menos 3 caracteres
     if (trimmedQuery.length < 3) {
-      setResults([])
-      return
+      setResults([]);
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/products/search?query=${encodeURIComponent(trimmedQuery)}`
-      )
+        `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(trimmedQuery)}`
+      );
 
-      if (!response.ok) throw new Error("Error al buscar productos")
+      if (!response.ok) throw new Error("Error al buscar productos");
 
-      const data = await response.json()
-      setResults(data)
+      const data = await response.json();
+      setResults(data);
     } catch (err) {
-      console.error("Error al buscar productos:", err)
-      setError("Ocurrió un error al buscar productos. Inténtalo de nuevo.")
+      console.error("❌ Error al buscar productos:", err);
+      setError("Ocurrió un error al buscar productos. Inténtalo de nuevo.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // 🕒 Efecto de búsqueda en tiempo real con debounce (espera 400ms)
+  // 🕒 Búsqueda con debounce (espera 400ms tras escribir)
   useEffect(() => {
     const delay = setTimeout(() => {
-      handleSearch(query)
-    }, 400)
-
-    return () => clearTimeout(delay)
-  }, [query])
+      handleSearch(query);
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [query]);
 
   // 🧠 Buscar al presionar Enter
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      e.preventDefault()
-      handleSearch(query)
+      e.preventDefault();
+      handleSearch(query);
     }
-  }
+  };
 
   // 🚀 Ir al detalle del producto
   const handleProductClick = (id) => {
-    navigate(`/catalog/producto/${id}`)
-  }
+    navigate(`/catalog/producto/${id}`);
+  };
 
   return (
     <section className="py-16 px-4">
@@ -79,6 +83,7 @@ export default function SearchSection() {
           </p>
         </div>
 
+        {/* 🔎 Barra de búsqueda */}
         <div className="relative">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-300 w-5 h-5" />
@@ -92,7 +97,6 @@ export default function SearchSection() {
               className="w-full pl-12 pr-24 py-4 bg-transparent border border-white/40 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200"
             />
 
-            {/* 🔍 Botón de buscar */}
             <button
               onClick={() => handleSearch(query)}
               disabled={loading || query.trim().length < 3}
@@ -103,18 +107,21 @@ export default function SearchSection() {
           </div>
         </div>
 
+        {/* ⚠️ Mensaje de error */}
         {error && <p className="text-red-400 text-center mt-4">{error}</p>}
       </div>
 
+      {/* 🧾 Resultados */}
       <div className="mt-12 px-4 md:px-10">
         {results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {results.map((product) => {
-              const imageSrc =
-                product.imageUrl?.startsWith("http") ||
-                product.imageUrl?.startsWith("/uploads")
-                  ? `http://localhost:8080${product.imageUrl}`
-                  : `http://localhost:8080/uploads/products/${product.imageUrl}`
+              // 🖼️ Construcción dinámica del URL de la imagen
+              const imageSrc = product.imageUrl
+                ? product.imageUrl.startsWith("http")
+                  ? product.imageUrl
+                  : `${API_BASE_URL}${product.imageUrl}`
+                : "/no-image.png";
 
               return (
                 <div
@@ -136,7 +143,7 @@ export default function SearchSection() {
                   </p>
                   <p className="text-purple-400 font-bold">${product.price}</p>
                 </div>
-              )
+              );
             })}
           </div>
         ) : (
@@ -149,5 +156,5 @@ export default function SearchSection() {
         )}
       </div>
     </section>
-  )
+  );
 }

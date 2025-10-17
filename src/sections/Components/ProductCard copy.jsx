@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../../pages/AuthContext"; // ✅ importa el contexto
+import { useAuth } from "../../pages/AuthContext";
 
 export default function ProductCard({ product, onDelete }) {
-  const { isAdmin } = useAuth(); // ✅ saber si el admin está logueado
+  const { isAdmin } = useAuth();
 
   const hasPromo =
     product.oldPrice !== null &&
@@ -13,19 +13,11 @@ export default function ProductCard({ product, onDelete }) {
     ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
     : null;
 
+  // 👇 Ya no hacemos el fetch DELETE aquí.
   const handleDelete = async (e) => {
-    e.preventDefault(); // evita que el Link redireccione
-    if (window.confirm("¿Seguro que deseas eliminar este producto?")) {
-      try {
-        await fetch(`http://localhost:8080/api/products/${product.id}`, {
-          method: "DELETE",
-        });
-        if (onDelete) {
-          onDelete(product.id); // refresca la lista desde el padre
-        }
-      } catch (error) {
-        console.error("Error eliminando producto:", error);
-      }
+    e.preventDefault();
+    if (onDelete) {
+      onDelete(product.id); // delega la acción al padre
     }
   };
 
@@ -81,7 +73,7 @@ export default function ProductCard({ product, onDelete }) {
             )}
           </div>
 
-          {/* 🔒 Mostrar botón eliminar solo si el admin ha iniciado sesión */}
+          {/* 🔒 Botón eliminar visible solo si el admin ha iniciado sesión */}
           {isAdmin && (
             <button
               onClick={handleDelete}

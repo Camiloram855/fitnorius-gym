@@ -6,7 +6,7 @@ const PurchaseButton = () => {
   const [productos, setProductos] = useState([]);
   const [selectedExtras, setSelectedExtras] = useState([]);
   const [selectedDepartamento, setSelectedDepartamento] = useState("");
-  const [total, setTotal] = useState(0); // 👈 estado para el total
+  const [total, setTotal] = useState(0);
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -19,44 +19,48 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
+  // 🔧 URL dinámica según entorno
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:8080";
+
   // Abrir / cerrar modal
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   // Bloquear scroll cuando el modal está abierto
   useEffect(() => {
-    if (isModalOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-    }
+    document.body.classList.toggle("overflow-hidden", isModalOpen);
   }, [isModalOpen]);
 
   // Traer productos del backend
   useEffect(() => {
-    fetch("http://localhost:8080/api/productos")
-      .then((res) => {
+    const fetchProductos = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/productos`);
         if (!res.ok) throw new Error("Error al obtener productos");
-        return res.json();
-      })
-      .then((data) => {
+
+        const data = await res.json();
         const productosConNumeros = data.map((p) => ({
           ...p,
           idProducto: Number(p.idProducto),
           precio: Number(p.precio) || 0,
         }));
-        console.log("Productos desde backend ✅:", productosConNumeros);
+        console.log("✅ Productos desde backend:", productosConNumeros);
         setProductos(productosConNumeros);
-      })
-      .catch((err) => console.error("Error cargando productos:", err));
-  }, []);
+      } catch (err) {
+        console.error("❌ Error cargando productos:", err);
+      }
+    };
+
+    fetchProductos();
+  }, [API_BASE_URL]);
 
   // Manejar inputs del formulario
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Toggle productos (solo actualiza selectedExtras)
+  // Toggle de productos seleccionados
   const toggleExtra = (idProducto) => {
     const id = Number(idProducto);
     setSelectedExtras((prev) =>
@@ -66,59 +70,54 @@ const PurchaseButton = () => {
 
   // Calcular total en tiempo real
   useEffect(() => {
-  console.log("🔥 selectedExtras:", selectedExtras);
-  console.log("🔥 productos:", productos);
     if (productos.length > 0) {
       const nuevoTotal = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .reduce((sum, p) => sum + (p.precio || 0), 0);
 
-      console.log("Extras seleccionados:", selectedExtras, "Total:", nuevoTotal); // ✅ Debug
       setTotal(nuevoTotal);
     }
   }, [selectedExtras, productos]);
 
   // Enviar orden al backend
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-const orderRequest = {
-  nombre: formData.nombre,
-  apellido: formData.apellido,
-  telefono: formData.telefono,
-  correo: formData.correo,
-  ciudad: formData.ciudad,
-  direccion: formData.direccion,
-  barrio: formData.barrio,
-  torreApto: formData.torre || null,
-  comentario: formData.comentario || null,
-  departamento: selectedDepartamento,
-  items: selectedExtras.map((idProducto) => ({
-    productoId: Number(idProducto),
-    cantidad: 1,
-  })),
-  total: total,
-};
+    const orderRequest = {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      telefono: formData.telefono,
+      correo: formData.correo,
+      ciudad: formData.ciudad,
+      direccion: formData.direccion,
+      barrio: formData.barrio,
+      torreApto: formData.torre || null,
+      comentario: formData.comentario || null,
+      departamento: selectedDepartamento,
+      items: selectedExtras.map((idProducto) => ({
+        productoId: Number(idProducto),
+        cantidad: 1,
+      })),
+      total: total,
+    };
 
-
-    fetch("http://localhost:8080/api/ordenes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderRequest),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al registrar orden");
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Orden registrada ✅:", data);
-        alert("¡Compra realizada con éxito!");
-        closeModal();
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Hubo un problema al registrar la orden.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/ordenes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderRequest),
       });
+
+      if (!res.ok) throw new Error("Error al registrar orden");
+
+      const data = await res.json();
+      console.log("✅ Orden registrada:", data);
+      alert("¡Compra realizada con éxito!");
+      closeModal();
+    } catch (err) {
+      console.error("❌ Error enviando orden:", err);
+      alert("Hubo un problema al registrar la orden.");
+    }
   };
 
   return (
@@ -289,8 +288,7 @@ const orderRequest = {
               {/* Total */}
               <div className="text-right font-bold text-lg text-purple-800">
                 Total: ${total.toLocaleString()}
-                
-              </div >
+              </div>
 
               {/* Botón Confirmar */}
               <button

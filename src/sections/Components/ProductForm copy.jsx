@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-// ✅ Base URL dinámica para local o producción
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
-
 const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated }) => {
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -47,8 +43,8 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
 
     try {
-      // ✅ Usa la URL dinámica (funciona en local y Railway)
-      const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
+      // ✅ Ruta correcta según tu backend
+      const response = await fetch("http://localhost:8080/api/products/upload", {
         method: "POST",
         body: formData,
       });
@@ -58,8 +54,10 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       const savedProduct = await response.json();
       console.log("✅ Producto creado:", savedProduct);
 
-      // 🚀 Avisamos al padre para actualizar la lista
-      if (onProductCreated) onProductCreated(savedProduct);
+      // 🚀 Avisamos al padre para que actualice la lista
+      if (onProductCreated) {
+        onProductCreated(savedProduct);
+      }
 
       // 🔄 Resetear formulario
       setNewProduct({

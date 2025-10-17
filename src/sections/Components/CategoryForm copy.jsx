@@ -1,8 +1,5 @@
 import { useState } from "react";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080"; // ✅ URL global configurable
-
 const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const [newCategory, setNewCategory] = useState({ name: "", image: null });
   const [previewImage, setPreviewImage] = useState(null);
@@ -24,7 +21,7 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
       formData.append("image", newCategory.image);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`, {
+        const response = await fetch("http://localhost:8080/api/categories", {
           method: "POST",
           body: formData,
         });
@@ -38,11 +35,8 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
         setPreviewImage(null);
         setShowForm(false);
       } catch (error) {
-        console.error("Error guardando categoría:", error);
-        alert("Hubo un error al crear la categoría. Intenta nuevamente ❌");
+        console.error("Error:", error);
       }
-    } else {
-      alert("Por favor completa todos los campos antes de continuar ⚠️");
     }
   };
 

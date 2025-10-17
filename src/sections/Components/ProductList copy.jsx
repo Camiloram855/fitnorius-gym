@@ -34,7 +34,6 @@ const ProductList = ({ category }) => {
     loadProducts();
   }, [category]);
 
-  // 🗑 Eliminar producto con confirmación SweetAlert2
 // 🗑 Eliminar producto con confirmación SweetAlert2
 const handleDeleteProduct = async (id) => {
   const confirm = await Swal.fire({
@@ -66,7 +65,7 @@ const handleDeleteProduct = async (id) => {
       }
     } catch (error) {
       console.error("❌ Error al eliminar producto:", error);
-      Swal.fire("Error", "Hubo un problema al eliminar el producto.", "error");
+      Swal.fire("Error", "Hubo un problema al eliminar el producto.", "erroring");
     }
   }
 };

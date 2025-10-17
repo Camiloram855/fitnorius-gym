@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../pages/AuthContext";
 
+// ✅ Base URL dinámica: usa la del backend en producción o localhost en desarrollo
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function ProductCard({ product, onDelete }) {
   const { isAdmin } = useAuth();
 
@@ -13,12 +17,9 @@ export default function ProductCard({ product, onDelete }) {
     ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
     : null;
 
-  // 👇 Ya no hacemos el fetch DELETE aquí.
   const handleDelete = async (e) => {
     e.preventDefault();
-    if (onDelete) {
-      onDelete(product.id); // delega la acción al padre
-    }
+    if (onDelete) onDelete(product.id);
   };
 
   return (
@@ -32,7 +33,7 @@ export default function ProductCard({ product, onDelete }) {
           <img
             src={
               product.imageUrl
-                ? `http://localhost:8080${product.imageUrl}`
+                ? `${API_BASE_URL}${product.imageUrl}` // ✅ Usa la URL dinámica
                 : "/img/default.jpg"
             }
             alt={product.name}

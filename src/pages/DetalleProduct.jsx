@@ -1,7 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
-import { useAuth } from "../pages/AuthContext"; // ✅ Importamos el contexto
+import { useAuth } from "../pages/AuthContext";
+
+// ✅ Detecta si estás en local o en Railway
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:8080"
+    : "https://fitnorius-production.up.railway.app");
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -15,15 +22,15 @@ export default function ProductDetail() {
     setLoading(true);
 
     // ✅ Obtener el producto
-    fetch(`http://localhost:8080/api/products/${id}`)
+    fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct({
           ...data,
           images: data.images?.length
-            ? data.images.map((img) => `http://localhost:8080${img}`)
+            ? data.images.map((img) => `${API_URL}${img}`)
             : data.imageUrl
-            ? [`http://localhost:8080${data.imageUrl}`]
+            ? [`${API_URL}${data.imageUrl}`]
             : ["/img/default.jpg"],
           variants: data.variants || [],
           features: data.features || [],
@@ -34,7 +41,7 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
 
     // ✅ Obtener productos recomendados
-    fetch("http://localhost:8080/api/products")
+    fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
         setRecommended(
@@ -68,16 +75,17 @@ export default function ProductDetail() {
       recommended={recommended}
       addToCart={addToCart}
       navigate={navigate}
+      API_URL={API_URL}
     />
   );
 }
 
-function ProductDetailContent({ product, recommended, addToCart, navigate }) {
+function ProductDetailContent({ product, recommended, addToCart, navigate, API_URL }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const { isAdmin } = useAuth(); // ✅ Saber si el usuario es admin
+  const { isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
     name: product.name,
@@ -137,7 +145,8 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
       );
       if (formData.image) formDataToSend.append("image", formData.image);
 
-      const res = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      // ✅ PUT global adaptable
+      const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
       });
@@ -263,7 +272,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
                   )}
                   <p className="text-gray-200">{product.description}</p>
 
-                  {/* 🔒 Solo admins pueden editar */}
                   {isAdmin && (
                     <button
                       onClick={() => setIsEditing(true)}
@@ -312,7 +320,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
           </div>
         </div>
 
-        {/* 🔥 Sección de productos recomendados */}
+        {/* 🔥 Productos Recomendados */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
@@ -321,7 +329,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {recommended.map((item) => {
                 const imgSrc = item.imageUrl
-                  ? `http://localhost:8080${item.imageUrl}`
+                  ? `${API_URL}${item.imageUrl}`
                   : "/img/default.jpg";
 
                 return (

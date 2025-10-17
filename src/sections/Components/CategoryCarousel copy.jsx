@@ -3,23 +3,20 @@ import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
 import { useAuth } from "../../pages/AuthContext";
+import Swal from "sweetalert2"; // ✅ agregado para modales bonitos
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // estado para confirmar eliminación
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
-
-  // estado para editar
   const [categoryToEdit, setCategoryToEdit] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", image: null });
 
   const scrollRef = useRef(null);
-  const { isAdmin } = useAuth(); // ✅ obtenemos si el usuario es admin
+  const { isAdmin } = useAuth();
 
-  // Cargar categorías desde el backend
+  // ✅ Cargar categorías
   useEffect(() => {
     fetch("http://localhost:8080/api/categories")
       .then((res) => res.json())
@@ -37,23 +34,62 @@ const CategoryCarousel = () => {
     }
   };
 
+  // ✅ MODIFICADO: confirmación con SweetAlert2
   const handleDeleteCategory = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/categories/${id}`, {
-        method: "DELETE",
-      });
+    const category = categories.find((c) => c.id === id);
 
-      if (!response.ok) throw new Error("Error al eliminar la categoría");
+    const result = await Swal.fire({
+      title: "¿Eliminar categoría?",
+      html: `
+        <p class="text-gray-200 mb-2">
+          ¿Seguro que deseas eliminar la categoría 
+          <b style="color:#a855f7;">${category?.name}</b>?
+        </p>
+        <p class="text-gray-400 text-sm">(Esto también eliminará sus productos asociados)</p>
+      `,
+      icon: "warning",
+      background: "#1f1f1f",
+      color: "#fff",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
 
-      // actualizar frontend
-      setCategories(categories.filter((cat) => cat.id !== id));
-      if (selectedCategory?.id === id) {
-        setSelectedCategory(null); // limpiar si borramos la categoría seleccionada
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/categories/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) throw new Error("Error al eliminar la categoría");
+
+        setCategories(categories.filter((cat) => cat.id !== id));
+
+        if (selectedCategory?.id === id) {
+          setSelectedCategory(null);
+        }
+
+        await Swal.fire({
+          icon: "success",
+          title: "Eliminada",
+          text: "La categoría se ha eliminado correctamente.",
+          timer: 1500,
+          showConfirmButton: false,
+          background: "#1f1f1f",
+          color: "#fff",
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un problema al eliminar la categoría.",
+          background: "#1f1f1f",
+          color: "#fff",
+        });
       }
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setCategoryToDelete(null); // cerrar modal siempre
     }
   };
 
@@ -61,9 +97,7 @@ const CategoryCarousel = () => {
     try {
       const formData = new FormData();
       formData.append("name", editForm.name);
-      if (editForm.image) {
-        formData.append("image", editForm.image);
-      }
+      if (editForm.image) formData.append("image", editForm.image);
 
       const response = await fetch(
         `http://localhost:8080/api/categories/${categoryToEdit.id}`,
@@ -77,7 +111,6 @@ const CategoryCarousel = () => {
 
       const updatedCategory = await response.json();
 
-      // actualizar frontend
       setCategories(
         categories.map((cat) =>
           cat.id === updatedCategory.id ? updatedCategory : cat
@@ -102,7 +135,6 @@ const CategoryCarousel = () => {
       </div>
 
       <div className="relative">
-        {/* Botones de scroll */}
         <button
           onClick={() => scroll("left")}
           className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-2 hover:bg-purple-600 transition-colors duration-200"
@@ -117,7 +149,6 @@ const CategoryCarousel = () => {
           <ChevronRight className="w-5 h-5 text-white" />
         </button>
 
-        {/* Carrusel */}
         <div ref={scrollRef} className="flex gap-6 px-20 py-4 overflow-hidden scroll-smooth">
           {categories.map((category) => (
             <div
@@ -132,12 +163,12 @@ const CategoryCarousel = () => {
                   className="w-28 h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* Botón eliminar (solo admin) */}
+                {/* Botón eliminar */}
                 {isAdmin && categories.length > 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCategoryToDelete(category);
+                      handleDeleteCategory(category.id);
                     }}
                     className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   >
@@ -145,7 +176,7 @@ const CategoryCarousel = () => {
                   </button>
                 )}
 
-                {/* Botón editar (solo admin) */}
+                {/* Botón editar */}
                 {isAdmin && (
                   <button
                     onClick={(e) => {
@@ -165,7 +196,7 @@ const CategoryCarousel = () => {
             </div>
           ))}
 
-          {/* + AGREGAR CATEGORÍA (solo admin) */}
+          {/* + AGREGAR CATEGORÍA */}
           {isAdmin && (
             <div className="flex-shrink-0">
               <button
@@ -182,7 +213,7 @@ const CategoryCarousel = () => {
         </div>
       </div>
 
-      {/* ====== PRODUCTOS DE LA CATEGORÍA ====== */}
+      {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold text-white mb-4">
@@ -195,34 +226,6 @@ const CategoryCarousel = () => {
       {/* ====== MODAL CATEGORÍA ====== */}
       {isAdmin && showForm && (
         <CategoryForm setShowForm={setShowForm} onCategoryCreated={handleCategoryCreated} />
-      )}
-
-      {/* ====== MODAL CONFIRMACIÓN ELIMINAR ====== */}
-      {isAdmin && categoryToDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-            <h3 className="text-lg font-bold text-white mb-4">Confirmar eliminación</h3>
-            <p className="text-gray-300 mb-6">
-              ¿Seguro que deseas eliminar la categoría{" "}
-              <span className="font-semibold text-purple-400">{categoryToDelete.name}</span>?
-              <br /> Esto también eliminará sus productos.
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setCategoryToDelete(null)}
-                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDeleteCategory(categoryToDelete.id)}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ====== MODAL EDITAR ====== */}

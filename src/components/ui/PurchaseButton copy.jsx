@@ -6,7 +6,7 @@ const PurchaseButton = () => {
   const [productos, setProductos] = useState([]);
   const [selectedExtras, setSelectedExtras] = useState([]);
   const [selectedDepartamento, setSelectedDepartamento] = useState("");
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(0); // 👈 estado para el total
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -19,49 +19,44 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
-  // 🔧 URL base dinámica (para local y Railway)
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:8080";
-
   // Abrir / cerrar modal
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   // Bloquear scroll cuando el modal está abierto
   useEffect(() => {
-    document.body.classList.toggle("overflow-hidden", isModalOpen);
+    if (isModalOpen) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
   }, [isModalOpen]);
 
   // Traer productos del backend
   useEffect(() => {
-    const fetchProductos = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/productos`);
+    fetch("http://localhost:8080/api/productos")
+      .then((res) => {
         if (!res.ok) throw new Error("Error al obtener productos");
-
-        const data = await res.json();
+        return res.json();
+      })
+      .then((data) => {
         const productosConNumeros = data.map((p) => ({
           ...p,
           idProducto: Number(p.idProducto),
           precio: Number(p.precio) || 0,
         }));
-
-        console.log("✅ Productos desde backend:", productosConNumeros);
+        console.log("Productos desde backend ✅:", productosConNumeros);
         setProductos(productosConNumeros);
-      } catch (err) {
-        console.error("❌ Error cargando productos:", err);
-      }
-    };
-
-    fetchProductos();
-  }, [API_BASE_URL]);
+      })
+      .catch((err) => console.error("Error cargando productos:", err));
+  }, []);
 
   // Manejar inputs del formulario
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Toggle productos
+  // Toggle productos (solo actualiza selectedExtras)
   const toggleExtra = (idProducto) => {
     const id = Number(idProducto);
     setSelectedExtras((prev) =>
@@ -71,17 +66,20 @@ const PurchaseButton = () => {
 
   // Calcular total en tiempo real
   useEffect(() => {
+    console.log("🔥 selectedExtras:", selectedExtras);
+    console.log("🔥 productos:", productos);
     if (productos.length > 0) {
       const nuevoTotal = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .reduce((sum, p) => sum + (p.precio || 0), 0);
 
+      console.log("Extras seleccionados:", selectedExtras, "Total:", nuevoTotal); // ✅ Debug
       setTotal(nuevoTotal);
     }
   }, [selectedExtras, productos]);
 
   // Enviar orden al backend
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     const orderRequest = {
@@ -102,51 +100,52 @@ const PurchaseButton = () => {
       total: total,
     };
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ordenes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderRequest),
-      });
+    fetch("http://localhost:8080/api/ordenes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderRequest),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al registrar orden");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Orden registrada ✅:", data);
 
-      if (!res.ok) throw new Error("Error al registrar orden");
-
-      const data = await res.json();
-      console.log("✅ Orden registrada:", data);
-
-      // ✅ Generar mensaje de WhatsApp
-      const productosSeleccionados = productos
-        .filter((p) => selectedExtras.includes(p.idProducto))
-        .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
-        .join("\n");
+        // 🔥 Armar mensaje de WhatsApp
+        const productosSeleccionados = productos
+          .filter((p) => selectedExtras.includes(p.idProducto))
+          .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
+          .join("\n");
 
       const mensaje = `
-🤩 *Nueva Orden de Compra*
+      🤩 *Nueva Orden de Compra*
 
-👤 Cliente: ${formData.nombre} ${formData.apellido}
-📞 Teléfono: ${formData.telefono}
-✉️ Correo: ${formData.correo}
+      👤 Cliente: ${formData.nombre} ${formData.apellido}
+      📞 Teléfono: ${formData.telefono}
+      ✉️ Correo: ${formData.correo}
 
-🏠 Dirección: ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}
-🏢 Torre/Apto: ${formData.torre || "N/A"}
-🗒️ Comentario: ${formData.comentario || "N/A"}
+      🏠 Dirección: ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}
+      🏢 Torre/Apto: ${formData.torre || "N/A"}
+      🗒️ Comentario: ${formData.comentario || "N/A"}
 
-🛒 *Productos:*
-${productosSeleccionados}
+      🛒 *Productos:*
+      ${productosSeleccionados}
 
-💰 *Total:* $${total.toLocaleString()}
-      `.trim();
+      💰 *Total:* $${total.toLocaleString()}
+              `.trim();
 
-      const numero = "573043317223"; // ✅ Número de WhatsApp (prefijo +57)
-      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+        const numero = "573043317223"; // 👈 número con prefijo Colombia (+57)
+        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, "_blank"); // abrir WhatsApp Web / App
 
-      alert("¡Compra realizada con éxito!");
-      closeModal();
-    } catch (err) {
-      console.error("❌ Error registrando orden:", err);
-      alert("Hubo un problema al registrar la orden.");
-    }
+        alert("¡Compra realizada con éxito!");
+        closeModal();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Hubo un problema al registrar la orden.");
+      });
   };
 
   return (
@@ -193,6 +192,7 @@ ${productosSeleccionados}
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-black">
+              {/* Datos cliente */}
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -211,7 +211,6 @@ ${productosSeleccionados}
                   className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
-
               <input
                 type="tel"
                 name="telefono"
@@ -228,7 +227,6 @@ ${productosSeleccionados}
                 placeholder="tu@email.com"
                 className="w-full px-3 py-2 border rounded-lg"
               />
-
               <select
                 required
                 value={selectedDepartamento}
@@ -252,7 +250,6 @@ ${productosSeleccionados}
                   </option>
                 ))}
               </select>
-
               <input
                 type="text"
                 name="ciudad"
@@ -322,10 +319,12 @@ ${productosSeleccionados}
                 </div>
               </div>
 
+              {/* Total */}
               <div className="text-right font-bold text-lg text-purple-800">
                 Total: ${total.toLocaleString()}
-              </div>
+              </div >
 
+              {/* Botón Confirmar */}
               <button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg mt-6"
