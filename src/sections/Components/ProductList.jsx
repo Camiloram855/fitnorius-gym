@@ -5,22 +5,32 @@ import ProductForm from "./ProductForm";
 import Swal from "sweetalert2";
 import { useAuth } from "../../pages/AuthContext";
 
-// 🌍 Define automáticamente si estás en local o en Railway
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
+// 🌍 URL base dinámica (Railway o local)
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
   const { isAdmin } = useAuth();
 
-  // 🔎 Cargar productos según categoría
-  const loadProducts = async () => {
-    if (!category?.id) return;
-    try {
-      console.log(`🔎 Cargando productos de categoría: ${category.id}`);
+  // ✅ Log para verificar variable de entorno
+  console.log("🌍 API_BASE_URL:", API_BASE_URL);
 
-      const res = await fetch(`${API_BASE_URL}/api/products/category/${category.id}`);
+  // 🔎 Cargar productos según categoría o todos
+  const loadProducts = async () => {
+    try {
+      let url;
+      if (category?.id) {
+        // Si hay categoría seleccionada
+        url = `${API_BASE_URL}/api/productos/categoria/${category.id}`;
+        console.log(`🔎 Cargando productos de categoría: ${category.id}`);
+      } else {
+        // Si no hay categoría, carga todos
+        url = `${API_BASE_URL}/api/productos`;
+        console.log("📦 Cargando todos los productos");
+      }
+
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Error cargando productos");
 
       const data = await res.json();
@@ -36,7 +46,7 @@ const ProductList = ({ category }) => {
     loadProducts();
   }, [category]);
 
-  // 🗑 Eliminar producto con confirmación
+  // 🗑 Eliminar producto
   const handleDeleteProduct = async (id) => {
     const confirm = await Swal.fire({
       title: "¿Estás seguro?",
@@ -52,12 +62,12 @@ const ProductList = ({ category }) => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/productos/${id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
+        setProducts((prev) => prev.filter((p) => p.idProducto !== id));
         Swal.fire("Eliminado", "El producto fue eliminado correctamente.", "success");
       } else {
         const errorText = await response.text();
@@ -86,13 +96,13 @@ const ProductList = ({ category }) => {
 
         {products.map((product) => (
           <ProductCard
-            key={product.id}
+            key={product.idProducto}
             product={product}
             onDelete={handleDeleteProduct}
           />
         ))}
 
-        {/* 🔒 Botón visible solo para el admin */}
+        {/* 🔒 Botón visible solo para admin */}
         {isAdmin && (
           <div
             onClick={() => setShowProductForm(true)}
