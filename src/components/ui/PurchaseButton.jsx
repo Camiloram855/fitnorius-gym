@@ -19,7 +19,7 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
-  // 🌍 URL base (usa Railway si existe la variable de entorno)
+  // 🌍 Detecta automáticamente entorno local o Railway
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -32,30 +32,17 @@ const PurchaseButton = () => {
     document.body.classList.toggle("overflow-hidden", isModalOpen);
   }, [isModalOpen]);
 
-  // 🧩 Cargar productos del backend
+  // 🧩 Cargar productos desde el backend (ruta /api/productos)
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        // Intentar ambas rutas posibles
-        const endpoints = [
-          `${API_BASE_URL}/api/products`, // ✅ versión actual del backend
-          `${API_BASE_URL}/api/productos`, // 🕹 versión antigua (compatibilidad)
-        ];
+        const res = await fetch(`${API_BASE_URL}/api/productos`);
+        if (!res.ok) throw new Error("Error al obtener productos");
 
-        let data = null;
-        for (const url of endpoints) {
-          const res = await fetch(url);
-          if (res.ok) {
-            data = await res.json();
-            break;
-          }
-        }
-
-        if (!data) throw new Error("No se pudo obtener productos del backend");
-
+        const data = await res.json();
         const productosConNumeros = data.map((p) => ({
           ...p,
-          idProducto: Number(p.id || p.idProducto),
+          idProducto: Number(p.idProducto || p.id),
           precio: Number(p.precio) || 0,
           nombre: p.nombre || p.name || "Producto sin nombre",
         }));
@@ -93,7 +80,7 @@ const PurchaseButton = () => {
     }
   }, [selectedExtras, productos]);
 
-  // Enviar orden al backend
+  // 🧾 Enviar orden al backend
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -122,12 +109,12 @@ const PurchaseButton = () => {
         body: JSON.stringify(orderRequest),
       });
 
-      if (!res.ok) throw new Error("Error al registrar orden");
+      if (!res.ok) throw new Error("Error al registrar la orden");
 
       const data = await res.json();
       console.log("✅ Orden registrada:", data);
 
-      // Generar mensaje de WhatsApp
+      // 🟢 Generar mensaje de WhatsApp
       const productosSeleccionados = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
@@ -206,7 +193,7 @@ ${productosSeleccionados}
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-black">
-              {/* Campos de datos personales */}
+              {/* Campos personales */}
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -267,7 +254,6 @@ ${productosSeleccionados}
                 ))}
               </select>
 
-              {/* Dirección */}
               <input
                 type="text"
                 name="ciudad"
@@ -320,8 +306,8 @@ ${productosSeleccionados}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedExtras.includes(Number(p.idProducto))}
-                        onChange={() => toggleExtra(Number(p.idProducto))}
+                        checked={selectedExtras.includes(p.idProducto)}
+                        onChange={() => toggleExtra(p.idProducto)}
                         className="w-5 h-5 border-2 border-black"
                       />
                       <div className="flex-1">
