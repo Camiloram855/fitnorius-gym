@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
-// ✅ Detecta si estás en local o en Railway
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
@@ -21,12 +20,15 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // ✅ Obtener el producto
+    // Obtener producto
     fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct({
           ...data,
+          price: parseFloat(data.price).toFixed(2),
+          oldPrice: data.oldPrice ? parseFloat(data.oldPrice).toFixed(2) : null,
+          discount: data.discount ? parseFloat(data.discount).toFixed(2) : null,
           images: data.images?.length
             ? data.images.map((img) => `${API_URL}${img}`)
             : data.imageUrl
@@ -40,13 +42,11 @@ export default function ProductDetail() {
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
 
-    // ✅ Obtener productos recomendados
+    // Obtener recomendados
     fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
-        setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
-        );
+        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
@@ -93,12 +93,13 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    image: null,
+    images: [],
   });
 
-  const savings = product.oldPrice
-    ? (Number.parseFloat(product.oldPrice) - Number.parseFloat(product.price)).toFixed(2)
-    : 0;
+  const savings =
+    product.oldPrice && product.price
+      ? (parseFloat(product.oldPrice) - parseFloat(product.price)).toFixed(2)
+      : 0;
 
   const handleQuantityChange = (delta) => {
     setQuantity((prev) => Math.max(1, prev + delta));
@@ -116,26 +117,41 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleAdd = () => {
-    navigate("/catalog/checkout");
-  };
+  const handleAdd = () => navigate("/catalog/checkout");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (files && name === "images") {
+      setFormData((prev) => ({
+        ...prev,
+        images: Array.from(files),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
+
+      // 🔢 Normalizar decimales
+      const price = parseFloat(formData.price.toString().replace(",", ".")) || 0;
+      const oldPrice = formData.oldPrice
+        ? parseFloat(formData.oldPrice.toString().replace(",", "."))
+        : null;
+      const discount = formData.discount
+        ? parseFloat(formData.discount.toString().replace(",", "."))
+        : null;
+
       const productJson = {
-        name: formData.name,
-        price: formData.price,
-        oldPrice: formData.oldPrice,
-        discount: formData.discount,
+        name: formData.name.trim(),
+        price,
+        oldPrice,
+        discount,
         description: formData.description,
       };
 
@@ -143,9 +159,13 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
-      if (formData.image) formDataToSend.append("image", formData.image);
 
-      // ✅ PUT global adaptable
+      if (formData.images.length > 0) {
+        formData.images.forEach((img) => {
+          formDataToSend.append("images", img);
+        });
+      }
+
       const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
@@ -171,32 +191,52 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           ← Volver
         </button>
 
-        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* Imagen principal */}
+            {/* Galería principal */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
-                {isEditing && formData.image ? (
-                  <img
-                    src={URL.createObjectURL(formData.image)}
-                    alt="preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <img
+                  src={
+                    isEditing && formData.images.length > 0
+                      ? URL.createObjectURL(formData.images[selectedImageIndex])
+                      : product.images[selectedImageIndex]
+                  }
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
+
+              <div className="flex gap-2 overflow-x-auto">
+                {(isEditing && formData.images.length > 0
+                  ? formData.images
+                  : product.images
+                ).map((img, index) => (
+                  <img
+                    key={index}
+                    src={
+                      isEditing && formData.images.length > 0
+                        ? URL.createObjectURL(img)
+                        : img
+                    }
+                    alt={`imagen-${index}`}
+                    className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 ${
+                      selectedImageIndex === index
+                        ? "border-purple-500"
+                        : "border-transparent"
+                    }`}
+                    onClick={() => setSelectedImageIndex(index)}
+                  />
+                ))}
+              </div>
+
               {isEditing && (
                 <input
                   type="file"
-                  name="image"
+                  name="images"
+                  multiple
                   onChange={handleChange}
-                  className="text-white"
+                  className="text-white mt-3"
                 />
               )}
             </div>
@@ -215,6 +255,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="price"
                     type="number"
+                    step="0.01"
                     value={formData.price}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
@@ -223,10 +264,20 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="oldPrice"
                     type="number"
+                    step="0.01"
                     value={formData.oldPrice}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
                     placeholder="Precio anterior"
+                  />
+                  <input
+                    name="discount"
+                    type="number"
+                    step="0.01"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    className="px-3 py-2 rounded-lg"
+                    placeholder="Descuento (%)"
                   />
                   <textarea
                     name="description"
@@ -257,17 +308,32 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   </h1>
                   <div className="flex items-baseline gap-3">
                     <span className="text-5xl font-bold text-purple-400">
-                      ${product.price}
+                      $
+                      {parseFloat(product.price)
+                        .toLocaleString("es-CO", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                     </span>
                     {product.oldPrice && (
                       <span className="text-2xl text-gray-400 line-through">
-                        ${product.oldPrice}
+                        $
+                        {parseFloat(product.oldPrice)
+                          .toLocaleString("es-CO", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                       </span>
                     )}
                   </div>
                   {savings > 0 && (
                     <p className="text-green-400 font-semibold text-lg">
-                      ¡Ahorras ${savings}!
+                      ¡Ahorras $
+                      {parseFloat(savings).toLocaleString("es-CO", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      !
                     </p>
                   )}
                   <p className="text-gray-200">{product.description}</p>
@@ -320,7 +386,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           </div>
         </div>
 
-        {/* 🔥 Productos Recomendados */}
+        {/* Recomendados */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
@@ -346,7 +412,13 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                     <h3 className="text-white text-lg font-semibold mb-1">
                       {item.name}
                     </h3>
-                    <p className="text-purple-400 font-bold">${item.price}</p>
+                    <p className="text-purple-400 font-bold">
+                      $
+                      {parseFloat(item.price).toLocaleString("es-CO", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
                   </div>
                 );
               })}

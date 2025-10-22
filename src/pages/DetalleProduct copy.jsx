@@ -1,7 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
-import { useAuth } from "../pages/AuthContext"; // ✅ Importamos el contexto
+import { useAuth } from "../pages/AuthContext";
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:8080"
+    : "https://fitnorius-production.up.railway.app");
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -14,16 +20,16 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // ✅ Obtener el producto
-    fetch(`http://localhost:8080/api/products/${id}`)
+    // Obtener producto
+    fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct({
           ...data,
           images: data.images?.length
-            ? data.images.map((img) => `http://localhost:8080${img}`)
+            ? data.images.map((img) => `${API_URL}${img}`)
             : data.imageUrl
-            ? [`http://localhost:8080${data.imageUrl}`]
+            ? [`${API_URL}${data.imageUrl}`]
             : ["/img/default.jpg"],
           variants: data.variants || [],
           features: data.features || [],
@@ -33,13 +39,11 @@ export default function ProductDetail() {
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
 
-    // ✅ Obtener productos recomendados
-    fetch("http://localhost:8080/api/products")
+    // Obtener recomendados
+    fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
-        setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
-        );
+        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
@@ -68,16 +72,17 @@ export default function ProductDetail() {
       recommended={recommended}
       addToCart={addToCart}
       navigate={navigate}
+      API_URL={API_URL}
     />
   );
 }
 
-function ProductDetailContent({ product, recommended, addToCart, navigate }) {
+function ProductDetailContent({ product, recommended, addToCart, navigate, API_URL }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const { isAdmin } = useAuth(); // ✅ Saber si el usuario es admin
+  const { isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
     name: product.name,
@@ -85,7 +90,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    image: null,
+    images: [], // ahora soporta múltiples
   });
 
   const savings = product.oldPrice
@@ -108,16 +113,22 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleAdd = () => {
-    navigate("/catalog/checkout");
-  };
+  const handleAdd = () => navigate("/catalog/checkout");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+
+    if (files && name === "images") {
+      setFormData((prev) => ({
+        ...prev,
+        images: Array.from(files),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSave = async () => {
@@ -135,9 +146,15 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
-      if (formData.image) formDataToSend.append("image", formData.image);
 
-      const res = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      // ✅ Enviar todas las imágenes si hay nuevas
+      if (formData.images.length > 0) {
+        formData.images.forEach((img) => {
+          formDataToSend.append("images", img);
+        });
+      }
+
+      const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
       });
@@ -162,37 +179,58 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
           ← Volver
         </button>
 
-        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* Imagen principal */}
+            {/* Galería principal */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
-                {isEditing && formData.image ? (
-                  <img
-                    src={URL.createObjectURL(formData.image)}
-                    alt="preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <img
+                  src={
+                    isEditing && formData.images.length > 0
+                      ? URL.createObjectURL(formData.images[selectedImageIndex])
+                      : product.images[selectedImageIndex]
+                  }
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
+
+              {/* Miniaturas */}
+              <div className="flex gap-2 overflow-x-auto">
+                {(isEditing && formData.images.length > 0
+                  ? formData.images
+                  : product.images
+                ).map((img, index) => (
+                  <img
+                    key={index}
+                    src={
+                      isEditing && formData.images.length > 0
+                        ? URL.createObjectURL(img)
+                        : img
+                    }
+                    alt={`imagen-${index}`}
+                    className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 ${
+                      selectedImageIndex === index
+                        ? "border-purple-500"
+                        : "border-transparent"
+                    }`}
+                    onClick={() => setSelectedImageIndex(index)}
+                  />
+                ))}
+              </div>
+
               {isEditing && (
                 <input
                   type="file"
-                  name="image"
+                  name="images"
+                  multiple
                   onChange={handleChange}
-                  className="text-white"
+                  className="text-white mt-3"
                 />
               )}
             </div>
 
-            {/* Información */}
+            {/* Info */}
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
@@ -263,7 +301,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
                   )}
                   <p className="text-gray-200">{product.description}</p>
 
-                  {/* 🔒 Solo admins pueden editar */}
                   {isAdmin && (
                     <button
                       onClick={() => setIsEditing(true)}
@@ -312,7 +349,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
           </div>
         </div>
 
-        {/* 🔥 Sección de productos recomendados */}
+        {/* Recomendados */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
@@ -321,7 +358,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {recommended.map((item) => {
                 const imgSrc = item.imageUrl
-                  ? `http://localhost:8080${item.imageUrl}`
+                  ? `${API_URL}${item.imageUrl}`
                   : "/img/default.jpg";
 
                 return (

@@ -33,6 +33,15 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         return;
       }
 
+      // 🔢 Convertir comas a puntos antes de parsear
+      const price = parseFloat(newProduct.price.replace(",", ".")) || 0;
+      const oldPrice = newProduct.oldPrice
+        ? parseFloat(newProduct.oldPrice.replace(",", "."))
+        : null;
+      const discount = newProduct.discount
+        ? parseFloat(newProduct.discount.replace(",", "."))
+        : null;
+
       const formData = new FormData();
 
       // ✅ Producto en formato JSON dentro del multipart
@@ -42,13 +51,9 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
           [
             JSON.stringify({
               name: newProduct.name.trim(),
-              price: parseFloat(newProduct.price) || 0,
-              oldPrice: newProduct.oldPrice
-                ? parseFloat(newProduct.oldPrice)
-                : null,
-              discount: newProduct.discount
-                ? parseFloat(newProduct.discount)
-                : null,
+              price,
+              oldPrice,
+              discount,
               categoryId: selectedCategory?.id || null,
             }),
           ],
@@ -117,6 +122,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             <label className="block text-sm text-gray-300 mb-2">Precio Actual</label>
             <input
               type="number"
+              step="0.01"
               value={newProduct.price}
               onChange={(e) =>
                 setNewProduct({ ...newProduct, price: e.target.value })
@@ -133,6 +139,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             </label>
             <input
               type="number"
+              step="0.01"
               value={newProduct.oldPrice}
               onChange={(e) =>
                 setNewProduct({ ...newProduct, oldPrice: e.target.value })
@@ -149,6 +156,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             <label className="block text-sm text-gray-300 mb-2">Descuento (%)</label>
             <input
               type="number"
+              step="0.01"
               value={newProduct.discount}
               onChange={(e) =>
                 setNewProduct({ ...newProduct, discount: e.target.value })
