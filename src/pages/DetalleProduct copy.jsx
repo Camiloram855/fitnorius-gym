@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
+// ✅ Detecta si estás en local o en Railway
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
@@ -20,7 +21,7 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // Obtener producto
+    // ✅ Obtener el producto
     fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -39,11 +40,13 @@ export default function ProductDetail() {
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
 
-    // Obtener recomendados
+    // ✅ Obtener productos recomendados
     fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
-        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
+        setRecommended(
+          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
+        );
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
@@ -90,7 +93,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    images: [], // ahora soporta múltiples
+    image: null,
   });
 
   const savings = product.oldPrice
@@ -113,22 +116,16 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleAdd = () => navigate("/catalog/checkout");
+  const handleAdd = () => {
+    navigate("/catalog/checkout");
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-
-    if (files && name === "images") {
-      setFormData((prev) => ({
-        ...prev,
-        images: Array.from(files),
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
   };
 
   const handleSave = async () => {
@@ -146,14 +143,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
+      if (formData.image) formDataToSend.append("image", formData.image);
 
-      // ✅ Enviar todas las imágenes si hay nuevas
-      if (formData.images.length > 0) {
-        formData.images.forEach((img) => {
-          formDataToSend.append("images", img);
-        });
-      }
-
+      // ✅ PUT global adaptable
       const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
@@ -179,58 +171,37 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           ← Volver
         </button>
 
+        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* Galería principal */}
+            {/* Imagen principal */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
-                <img
-                  src={
-                    isEditing && formData.images.length > 0
-                      ? URL.createObjectURL(formData.images[selectedImageIndex])
-                      : product.images[selectedImageIndex]
-                  }
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Miniaturas */}
-              <div className="flex gap-2 overflow-x-auto">
-                {(isEditing && formData.images.length > 0
-                  ? formData.images
-                  : product.images
-                ).map((img, index) => (
+                {isEditing && formData.image ? (
                   <img
-                    key={index}
-                    src={
-                      isEditing && formData.images.length > 0
-                        ? URL.createObjectURL(img)
-                        : img
-                    }
-                    alt={`imagen-${index}`}
-                    className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 ${
-                      selectedImageIndex === index
-                        ? "border-purple-500"
-                        : "border-transparent"
-                    }`}
-                    onClick={() => setSelectedImageIndex(index)}
+                    src={URL.createObjectURL(formData.image)}
+                    alt="preview"
+                    className="w-full h-full object-cover"
                   />
-                ))}
+                ) : (
+                  <img
+                    src={product.images[selectedImageIndex]}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
-
               {isEditing && (
                 <input
                   type="file"
-                  name="images"
-                  multiple
+                  name="image"
                   onChange={handleChange}
-                  className="text-white mt-3"
+                  className="text-white"
                 />
               )}
             </div>
 
-            {/* Info */}
+            {/* Información */}
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
@@ -349,7 +320,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           </div>
         </div>
 
-        {/* Recomendados */}
+        {/* 🔥 Productos Recomendados */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">

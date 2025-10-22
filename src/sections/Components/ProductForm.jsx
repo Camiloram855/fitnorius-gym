@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// ✅ URL base dinámica y segura (sin barras dobles y con soporte HTTPS)
+// ✅ URL base dinámica y segura
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
@@ -10,16 +10,17 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     price: "",
     oldPrice: "",
     discount: "",
-    image: null,
+    images: [], // ✅ ahora guarda varias imágenes
   });
-  const [previewProductImage, setPreviewProductImage] = useState(null);
 
-  // 🖼️ Vista previa de imagen
+  const [previewImages, setPreviewImages] = useState([]); // ✅ múltiples previews
+
+  // 🖼️ Manejar selección de múltiples imágenes
   const handleProductFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewProduct({ ...newProduct, image: file });
-      setPreviewProductImage(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setNewProduct({ ...newProduct, images: files });
+      setPreviewImages(files.map((file) => URL.createObjectURL(file)));
     }
   };
 
@@ -28,14 +29,14 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     e.preventDefault();
 
     try {
-      if (!newProduct.name || !newProduct.price || !newProduct.image) {
+      if (!newProduct.name || !newProduct.price || newProduct.images.length === 0) {
         alert("Por favor completa todos los campos obligatorios ⚠️");
         return;
       }
 
       const formData = new FormData();
 
-      // ✅ Producto en formato JSON dentro del multipart
+      // ✅ Producto JSON en el multipart
       formData.append(
         "product",
         new Blob(
@@ -43,12 +44,8 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             JSON.stringify({
               name: newProduct.name.trim(),
               price: parseFloat(newProduct.price) || 0,
-              oldPrice: newProduct.oldPrice
-                ? parseFloat(newProduct.oldPrice)
-                : null,
-              discount: newProduct.discount
-                ? parseFloat(newProduct.discount)
-                : null,
+              oldPrice: newProduct.oldPrice ? parseFloat(newProduct.oldPrice) : null,
+              discount: newProduct.discount ? parseFloat(newProduct.discount) : null,
               categoryId: selectedCategory?.id || null,
             }),
           ],
@@ -56,11 +53,10 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         )
       );
 
-      if (newProduct.image) {
-        formData.append("image", newProduct.image);
-      }
+      // ✅ Agregar todas las imágenes seleccionadas
+      newProduct.images.forEach((img) => formData.append("images", img));
 
-      // ✅ Petición dinámica (local o producción)
+      // ✅ Petición al backend
       const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
@@ -75,7 +71,6 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       const savedProduct = await response.json();
       console.log("✅ Producto creado:", savedProduct);
 
-      // 🔁 Notifica al padre
       if (onProductCreated) onProductCreated(savedProduct);
 
       // 🔄 Resetear formulario
@@ -84,9 +79,9 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         price: "",
         oldPrice: "",
         discount: "",
-        image: null,
+        images: [],
       });
-      setPreviewProductImage(null);
+      setPreviewImages([]);
       setShowProductForm(false);
     } catch (error) {
       console.error("❌ Error al guardar producto:", error);
@@ -157,21 +152,30 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             />
           </div>
 
-          {/* Imagen */}
+          {/* Imágenes */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Imagen</label>
+            <label className="block text-sm text-gray-300 mb-2">
+              Imágenes del Producto
+            </label>
             <input
               type="file"
               accept="image/*"
+              multiple // ✅ permite varias imágenes
               onChange={handleProductFileChange}
               required
             />
-            {previewProductImage && (
-              <img
-                src={previewProductImage}
-                alt="Preview"
-                className="mt-4 w-32 h-32 rounded-lg object-cover border border-purple-500"
-              />
+
+            {previewImages.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {previewImages.map((src, index) => (
+                  <img
+                    key={index}
+                    src={src}
+                    alt={`Preview ${index + 1}`}
+                    className="w-24 h-24 rounded-lg object-cover border border-purple-500"
+                  />
+                ))}
+              </div>
             )}
           </div>
 

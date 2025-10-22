@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // ✨ Íconos modernos
 
 // ✅ Detecta entorno
 const API_URL =
@@ -27,11 +28,14 @@ export default function ProductDetail() {
       .then((data) => {
         setProduct({
           ...data,
-          images: data.images?.length
-            ? data.images.map((img) => `${API_URL}${img}`)
-            : data.imageUrl
-            ? [`${API_URL}${data.imageUrl}`]
-            : ["/img/default.jpg"],
+          images:
+            data.imageUrls?.length > 0
+              ? data.imageUrls.map((url) =>
+                  url.startsWith("http") ? url : `${API_URL}${url}`
+                )
+              : data.imageUrl
+              ? [`${API_URL}${data.imageUrl}`]
+              : ["/img/default.jpg"],
           description: data.description || "Sin descripción disponible",
         });
       })
@@ -87,7 +91,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    images: [], // 👈 Soporte múltiple
+    images: [], // 👈 soporte múltiple
   });
 
   const savings = product.oldPrice
@@ -112,31 +116,24 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
 
   const handleAdd = () => navigate("/catalog/checkout");
 
-  // ✅ Maneja cambios de texto e imágenes múltiples
+  // ✅ Cambios en inputs o imágenes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files && name === "images") {
-      setFormData((prev) => ({
-        ...prev,
-        images: Array.from(files),
-      }));
+      setFormData((prev) => ({ ...prev, images: Array.from(files) }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // ✅ Navegación del carrusel
   const handlePrevImage = () => {
     setSelectedImageIndex((prev) =>
-      prev === 0
-        ? (isEditing ? formData.images.length : product.images.length) - 1
-        : prev - 1
+      prev === 0 ? currentImages.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
-    const total = isEditing ? formData.images.length : product.images.length;
-    setSelectedImageIndex((prev) => (prev + 1) % total);
+    setSelectedImageIndex((prev) => (prev + 1) % currentImages.length);
   };
 
   const handleSave = async () => {
@@ -155,7 +152,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
 
-      // ✅ Varias imágenes
       if (formData.images.length > 0) {
         formData.images.forEach((file) => formDataToSend.append("images", file));
       }
@@ -192,33 +188,34 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
             {/* 🖼️ Carrusel */}
-            <div className="relative space-y-4">
+            <div className="relative">
               <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 <img
                   src={currentImages[selectedImageIndex]}
                   alt="producto"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                 />
 
-                {/* Flechas */}
+                {/* ✨ Flechas más bonitas tipo v0 */}
                 {currentImages.length > 1 && (
                   <>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute top-1/2 left-3 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                      className="absolute top-1/2 left-4 -translate-y-1/2 bg-purple-800/60 hover:bg-purple-600/80 p-3 rounded-full text-white backdrop-blur-md shadow-lg transition-all duration-200"
                     >
-                      ◀
+                      <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                      className="absolute top-1/2 right-4 -translate-y-1/2 bg-purple-800/60 hover:bg-purple-600/80 p-3 rounded-full text-white backdrop-blur-md shadow-lg transition-all duration-200"
                     >
-                      ▶
+                      <ChevronRight className="w-6 h-6" />
                     </button>
                   </>
                 )}
               </div>
 
+              {/* Input imágenes nuevas */}
               {isEditing && (
                 <input
                   type="file"
@@ -231,7 +228,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
               )}
             </div>
 
-            {/* Info */}
+            {/* 📝 Info del producto */}
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
@@ -360,7 +357,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {recommended.map((item) => {
-                const imgSrc = item.imageUrl
+                const imgSrc = item.imageUrls?.[0]
+                  ? `${API_URL}${item.imageUrls[0]}`
+                  : item.imageUrl
                   ? `${API_URL}${item.imageUrl}`
                   : "/img/default.jpg";
 
