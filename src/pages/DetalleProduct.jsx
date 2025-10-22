@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
-// ✅ Detecta si estás en local o en Railway
+// ✅ Detecta entorno
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
@@ -21,7 +21,7 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // ✅ Obtener el producto
+    // ✅ Obtener producto
     fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -32,26 +32,22 @@ export default function ProductDetail() {
             : data.imageUrl
             ? [`${API_URL}${data.imageUrl}`]
             : ["/img/default.jpg"],
-          variants: data.variants || [],
-          features: data.features || [],
           description: data.description || "Sin descripción disponible",
         });
       })
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
 
-    // ✅ Obtener productos recomendados
+    // ✅ Obtener recomendados
     fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
-        setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
-        );
+        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
         <p className="text-purple-400 text-xl animate-pulse">
@@ -59,15 +55,13 @@ export default function ProductDetail() {
         </p>
       </div>
     );
-  }
 
-  if (!product) {
+  if (!product)
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
         <p>No se encontró el producto</p>
       </div>
     );
-  }
 
   return (
     <ProductDetailContent
@@ -93,11 +87,11 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    image: null,
+    images: [], // 👈 Soporte múltiple
   });
 
   const savings = product.oldPrice
-    ? (Number.parseFloat(product.oldPrice) - Number.parseFloat(product.price)).toFixed(2)
+    ? (parseFloat(product.oldPrice) - parseFloat(product.price)).toFixed(2)
     : 0;
 
   const handleQuantityChange = (delta) => {
@@ -116,16 +110,33 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleAdd = () => {
-    navigate("/catalog/checkout");
-  };
+  const handleAdd = () => navigate("/catalog/checkout");
 
+  // ✅ Maneja cambios de texto e imágenes múltiples
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (files && name === "images") {
+      setFormData((prev) => ({
+        ...prev,
+        images: Array.from(files),
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // ✅ Navegación del carrusel
+  const handlePrevImage = () => {
+    setSelectedImageIndex((prev) =>
+      prev === 0
+        ? (isEditing ? formData.images.length : product.images.length) - 1
+        : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    const total = isEditing ? formData.images.length : product.images.length;
+    setSelectedImageIndex((prev) => (prev + 1) % total);
   };
 
   const handleSave = async () => {
@@ -133,9 +144,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
       const formDataToSend = new FormData();
       const productJson = {
         name: formData.name,
-        price: formData.price,
-        oldPrice: formData.oldPrice,
-        discount: formData.discount,
+        price: parseFloat(formData.price) || 0,
+        oldPrice: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
+        discount: formData.discount ? parseFloat(formData.discount) : null,
         description: formData.description,
       };
 
@@ -143,27 +154,34 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
-      if (formData.image) formDataToSend.append("image", formData.image);
 
-      // ✅ PUT global adaptable
+      // ✅ Varias imágenes
+      if (formData.images.length > 0) {
+        formData.images.forEach((file) => formDataToSend.append("images", file));
+      }
+
       const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
       });
 
       if (!res.ok) throw new Error("Error al actualizar producto");
-      alert("Producto actualizado correctamente ✅");
+      alert("✅ Producto actualizado correctamente");
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar cambios ❌");
+      alert("❌ Error al guardar cambios");
     }
   };
+
+  const currentImages =
+    isEditing && formData.images.length > 0
+      ? formData.images.map((f) => URL.createObjectURL(f))
+      : product.images;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-10 px-6">
       <div className="max-w-7xl mx-auto">
-        <br />
         <button
           onClick={() => window.history.back()}
           className="mb-6 px-5 py-2 bg-purple-700/30 hover:bg-purple-700/50 text-white rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/50"
@@ -171,37 +189,49 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           ← Volver
         </button>
 
-        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* Imagen principal */}
-            <div className="space-y-4">
-              <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
-                {isEditing && formData.image ? (
-                  <img
-                    src={URL.createObjectURL(formData.image)}
-                    alt="preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
+            {/* 🖼️ Carrusel */}
+            <div className="relative space-y-4">
+              <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src={currentImages[selectedImageIndex]}
+                  alt="producto"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Flechas */}
+                {currentImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevImage}
+                      className="absolute top-1/2 left-3 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute top-1/2 right-3 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                    >
+                      ▶
+                    </button>
+                  </>
                 )}
               </div>
+
               {isEditing && (
                 <input
                   type="file"
-                  name="image"
+                  name="images"
+                  multiple
+                  accept="image/*"
                   onChange={handleChange}
-                  className="text-white"
+                  className="text-white mt-3"
                 />
               )}
             </div>
 
-            {/* Información */}
+            {/* Info */}
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
@@ -215,6 +245,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="price"
                     type="number"
+                    step="0.01"
                     value={formData.price}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
@@ -223,6 +254,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="oldPrice"
                     type="number"
+                    step="0.01"
                     value={formData.oldPrice}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
@@ -257,11 +289,11 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   </h1>
                   <div className="flex items-baseline gap-3">
                     <span className="text-5xl font-bold text-purple-400">
-                      ${product.price}
+                      ${parseFloat(product.price).toFixed(2)}
                     </span>
                     {product.oldPrice && (
                       <span className="text-2xl text-gray-400 line-through">
-                        ${product.oldPrice}
+                        ${parseFloat(product.oldPrice).toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -320,7 +352,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           </div>
         </div>
 
-        {/* 🔥 Productos Recomendados */}
+        {/* 🔥 Recomendados */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
@@ -346,7 +378,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                     <h3 className="text-white text-lg font-semibold mb-1">
                       {item.name}
                     </h3>
-                    <p className="text-purple-400 font-bold">${item.price}</p>
+                    <p className="text-purple-400 font-bold">
+                      ${parseFloat(item.price).toFixed(2)}
+                    </p>
                   </div>
                 );
               })}
