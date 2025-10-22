@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-// ✅ Base URL dinámica para local o producción
+// ✅ URL base dinámica y segura (sin barras dobles y con soporte HTTPS)
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
+  (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
 const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated }) => {
   const [newProduct, setNewProduct] = useState({
@@ -14,6 +14,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
   });
   const [previewProductImage, setPreviewProductImage] = useState(null);
 
+  // 🖼️ Vista previa de imagen
   const handleProductFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -22,43 +23,59 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
   };
 
+  // 🚀 Enviar nuevo producto
   const handleAddProduct = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append(
-      "product",
-      new Blob(
-        [
-          JSON.stringify({
-            name: newProduct.name,
-            price: parseFloat(newProduct.price) || 0,
-            oldPrice: newProduct.oldPrice ? parseFloat(newProduct.oldPrice) : null,
-            discount: newProduct.discount ? parseFloat(newProduct.discount) : null,
-            categoryId: selectedCategory?.id || null,
-          }),
-        ],
-        { type: "application/json" }
-      )
-    );
-
-    if (newProduct.image) {
-      formData.append("image", newProduct.image);
-    }
-
     try {
-      // ✅ Usa la URL dinámica (funciona en local y Railway)
+      if (!newProduct.name || !newProduct.price || !newProduct.image) {
+        alert("Por favor completa todos los campos obligatorios ⚠️");
+        return;
+      }
+
+      const formData = new FormData();
+
+      // ✅ Producto en formato JSON dentro del multipart
+      formData.append(
+        "product",
+        new Blob(
+          [
+            JSON.stringify({
+              name: newProduct.name.trim(),
+              price: parseFloat(newProduct.price) || 0,
+              oldPrice: newProduct.oldPrice
+                ? parseFloat(newProduct.oldPrice)
+                : null,
+              discount: newProduct.discount
+                ? parseFloat(newProduct.discount)
+                : null,
+              categoryId: selectedCategory?.id || null,
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
+
+      if (newProduct.image) {
+        formData.append("image", newProduct.image);
+      }
+
+      // ✅ Petición dinámica (local o producción)
       const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Error al guardar producto");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Respuesta del servidor:", errorText);
+        throw new Error("Error al guardar el producto");
+      }
 
       const savedProduct = await response.json();
       console.log("✅ Producto creado:", savedProduct);
 
-      // 🚀 Avisamos al padre para actualizar la lista
+      // 🔁 Notifica al padre
       if (onProductCreated) onProductCreated(savedProduct);
 
       // 🔄 Resetear formulario
@@ -72,7 +89,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       setPreviewProductImage(null);
       setShowProductForm(false);
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("❌ Error al guardar producto:", error);
       alert("Error al guardar el producto. Revisa la consola para más detalles.");
     }
   };
@@ -111,7 +128,9 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
           {/* Precio anterior */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Precio Anterior (opcional)</label>
+            <label className="block text-sm text-gray-300 mb-2">
+              Precio Anterior (opcional)
+            </label>
             <input
               type="number"
               value={newProduct.oldPrice}
@@ -127,7 +146,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
           {/* Descuento */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Descuento</label>
+            <label className="block text-sm text-gray-300 mb-2">Descuento (%)</label>
             <input
               type="number"
               value={newProduct.discount}

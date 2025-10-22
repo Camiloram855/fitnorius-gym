@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../pages/AuthContext";
 
-// ✅ Base URL dinámica: usa la del backend en producción o localhost en desarrollo
+// ✅ URL base segura y dinámica
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
+  (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
 export default function ProductCard({ product, onDelete }) {
   const { isAdmin } = useAuth();
@@ -22,6 +22,13 @@ export default function ProductCard({ product, onDelete }) {
     if (onDelete) onDelete(product.id);
   };
 
+  // 🖼️ Construcción segura del URL de imagen
+  const imageSrc = product.imageUrl
+    ? product.imageUrl.startsWith("http")
+      ? product.imageUrl // si ya viene completa
+      : `${API_BASE_URL}${product.imageUrl.startsWith("/") ? "" : "/"}${product.imageUrl}`
+    : "/img/default.jpg";
+
   return (
     <div className="block w-full max-w-[250px] mx-auto">
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
@@ -31,11 +38,7 @@ export default function ProductCard({ product, onDelete }) {
           className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group"
         >
           <img
-            src={
-              product.imageUrl
-                ? `${API_BASE_URL}${product.imageUrl}` // ✅ Usa la URL dinámica
-                : "/img/default.jpg"
-            }
+            src={imageSrc}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => (e.target.src = "/img/default.jpg")}
