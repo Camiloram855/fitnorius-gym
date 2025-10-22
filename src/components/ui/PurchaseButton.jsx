@@ -19,7 +19,7 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
-  // 🔧 URL base dinámica (para local y Railway)
+  // 🌍 URL base (usa Railway si existe la variable de entorno)
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -32,21 +32,35 @@ const PurchaseButton = () => {
     document.body.classList.toggle("overflow-hidden", isModalOpen);
   }, [isModalOpen]);
 
-  // Traer productos del backend
+  // 🧩 Cargar productos del backend
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/productos`);
-        if (!res.ok) throw new Error("Error al obtener productos");
+        // Intentar ambas rutas posibles
+        const endpoints = [
+          `${API_BASE_URL}/api/products`, // ✅ versión actual del backend
+          `${API_BASE_URL}/api/productos`, // 🕹 versión antigua (compatibilidad)
+        ];
 
-        const data = await res.json();
+        let data = null;
+        for (const url of endpoints) {
+          const res = await fetch(url);
+          if (res.ok) {
+            data = await res.json();
+            break;
+          }
+        }
+
+        if (!data) throw new Error("No se pudo obtener productos del backend");
+
         const productosConNumeros = data.map((p) => ({
           ...p,
-          idProducto: Number(p.idProducto),
+          idProducto: Number(p.id || p.idProducto),
           precio: Number(p.precio) || 0,
+          nombre: p.nombre || p.name || "Producto sin nombre",
         }));
 
-        console.log("✅ Productos desde backend:", productosConNumeros);
+        console.log("✅ Productos cargados:", productosConNumeros);
         setProductos(productosConNumeros);
       } catch (err) {
         console.error("❌ Error cargando productos:", err);
@@ -61,7 +75,7 @@ const PurchaseButton = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Toggle productos
+  // Seleccionar/deseleccionar productos
   const toggleExtra = (idProducto) => {
     const id = Number(idProducto);
     setSelectedExtras((prev) =>
@@ -69,13 +83,12 @@ const PurchaseButton = () => {
     );
   };
 
-  // Calcular total en tiempo real
+  // Calcular total dinámico
   useEffect(() => {
     if (productos.length > 0) {
       const nuevoTotal = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .reduce((sum, p) => sum + (p.precio || 0), 0);
-
       setTotal(nuevoTotal);
     }
   }, [selectedExtras, productos]);
@@ -114,7 +127,7 @@ const PurchaseButton = () => {
       const data = await res.json();
       console.log("✅ Orden registrada:", data);
 
-      // ✅ Generar mensaje de WhatsApp
+      // Generar mensaje de WhatsApp
       const productosSeleccionados = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
@@ -137,7 +150,7 @@ ${productosSeleccionados}
 💰 *Total:* $${total.toLocaleString()}
       `.trim();
 
-      const numero = "573043317223"; // ✅ Número de WhatsApp (prefijo +57)
+      const numero = "573043317223";
       const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
 
@@ -193,6 +206,7 @@ ${productosSeleccionados}
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-black">
+              {/* Campos de datos personales */}
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -253,6 +267,7 @@ ${productosSeleccionados}
                 ))}
               </select>
 
+              {/* Dirección */}
               <input
                 type="text"
                 name="ciudad"
@@ -292,7 +307,7 @@ ${productosSeleccionados}
                 className="w-full px-3 py-2 border rounded-lg"
               ></textarea>
 
-              {/* Productos dinámicos */}
+              {/* Productos */}
               <div>
                 <h3 className="text-lg font-bold text-purple-700 mb-2">
                   Selecciona tus productos:

@@ -4,7 +4,10 @@ import { Plus } from "lucide-react";
 import ProductForm from "./ProductForm";
 import Swal from "sweetalert2";
 import { useAuth } from "../../pages/AuthContext";
-import API_BASE_URL from "../../config"; // ✅ Importa la URL centralizada
+
+// 🌍 Define automáticamente si estás en local o en Railway
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
@@ -15,14 +18,10 @@ const ProductList = ({ category }) => {
   const loadProducts = async () => {
     if (!category?.id) return;
     try {
-      const endpoint = `${API_BASE_URL}/api/products/category/${category.id}`;
-      console.log("🔎 Cargando productos desde:", endpoint);
+      console.log(`🔎 Cargando productos de categoría: ${category.id}`);
 
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        console.error("❌ Error HTTP:", res.status, res.statusText);
-        throw new Error(`Error ${res.status}: ${res.statusText}`);
-      }
+      const res = await fetch(`${API_BASE_URL}/api/products/category/${category.id}`);
+      if (!res.ok) throw new Error("Error cargando productos");
 
       const data = await res.json();
       setProducts(data);

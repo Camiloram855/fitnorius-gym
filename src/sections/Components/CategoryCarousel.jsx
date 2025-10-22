@@ -3,13 +3,15 @@ import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
 import { useAuth } from "../../pages/AuthContext";
-import Swal from "sweetalert2"; // ✅ agregado para modales bonitos
+import Swal from "sweetalert2"; // ✅ modales
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080"; // ✅ Detecta URL global
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
-
   const [categoryToEdit, setCategoryToEdit] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", image: null });
 
@@ -18,10 +20,17 @@ const CategoryCarousel = () => {
 
   // ✅ Cargar categorías
   useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => console.error("Error cargando categorías:", err));
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        if (!res.ok) throw new Error("Error al cargar categorías");
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error cargando categorías:", err);
+      }
+    };
+    fetchCategories();
   }, []);
 
   const scroll = (direction) => {
@@ -34,7 +43,7 @@ const CategoryCarousel = () => {
     }
   };
 
-  // ✅ MODIFICADO: confirmación con SweetAlert2
+  // ✅ Eliminar categoría con confirmación
   const handleDeleteCategory = async (id) => {
     const category = categories.find((c) => c.id === id);
 
@@ -59,7 +68,7 @@ const CategoryCarousel = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`http://localhost:8080/api/categories/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
           method: "DELETE",
         });
 
@@ -67,9 +76,7 @@ const CategoryCarousel = () => {
 
         setCategories(categories.filter((cat) => cat.id !== id));
 
-        if (selectedCategory?.id === id) {
-          setSelectedCategory(null);
-        }
+        if (selectedCategory?.id === id) setSelectedCategory(null);
 
         await Swal.fire({
           icon: "success",
@@ -93,6 +100,7 @@ const CategoryCarousel = () => {
     }
   };
 
+  // ✅ Editar categoría
   const handleEditCategory = async () => {
     try {
       const formData = new FormData();
@@ -100,7 +108,7 @@ const CategoryCarousel = () => {
       if (editForm.image) formData.append("image", editForm.image);
 
       const response = await fetch(
-        `http://localhost:8080/api/categories/${categoryToEdit.id}`,
+        `${API_BASE_URL}/api/categories/${categoryToEdit.id}`,
         {
           method: "PUT",
           body: formData,
@@ -110,15 +118,22 @@ const CategoryCarousel = () => {
       if (!response.ok) throw new Error("Error al editar categoría");
 
       const updatedCategory = await response.json();
-
       setCategories(
         categories.map((cat) =>
           cat.id === updatedCategory.id ? updatedCategory : cat
         )
       );
+
       setCategoryToEdit(null);
     } catch (error) {
       console.error("Error editando categoría:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo actualizar la categoría.",
+        background: "#1f1f1f",
+        color: "#fff",
+      });
     }
   };
 
@@ -158,7 +173,7 @@ const CategoryCarousel = () => {
             >
               <div className="relative">
                 <img
-                  src={`http://localhost:8080${category.image}`}
+                  src={`${API_BASE_URL}${category.image}`}
                   alt={category.name}
                   className="w-28 h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
                 />
