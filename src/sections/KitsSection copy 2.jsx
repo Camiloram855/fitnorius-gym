@@ -1,9 +1,7 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { Check, X } from "lucide-react";
+import CatalogSection from "../sections/CatalogSection";
 import PurchaseButton from "../components/ui/PurchaseButton";
-
-// ✅ Carga diferida de CatalogSection
-const CatalogSection = React.lazy(() => import("../sections/CatalogSection"));
 
 // ✅ Card transparente
 function Card({ children, className = "" }) {
@@ -133,6 +131,7 @@ const styles = `
 }
 `;
 
+// ✅ Sección de Kits con fondo morado a negro
 export function KitsSection() {
   const [selectedImages, setSelectedImages] = useState(null);
   const [selectedTitle, setSelectedTitle] = useState(null);
@@ -263,14 +262,9 @@ export function KitsSection() {
           title={selectedTitle}
           onClose={() => setSelectedImages(null)}
         />
-
         <PurchaseButton />
         <br />
-
-        {/* ✅ Carga diferida del catálogo */}
-        <Suspense fallback={<div className="text-white text-center">Cargando catálogo...</div>}>
-          <CatalogSection />
-        </Suspense>
+        <CatalogSection />
       </section>
     </>
   );
