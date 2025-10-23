@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
-// ✅ Detecta si estás en local o en Railway
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
@@ -21,13 +20,12 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // ✅ Obtener producto por ID
     fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct({
           ...data,
-          price: data.price ? Number(data.price) : 0, // ✅ Convierte BigDecimal a número
+          price: data.price ? Number(data.price) : 0,
           oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
           discount: data.discount ? Number(data.discount) : 0,
           images: data.images?.length
@@ -43,7 +41,6 @@ export default function ProductDetail() {
       .catch((err) => console.error("Error cargando producto:", err))
       .finally(() => setLoading(false));
 
-    // ✅ Obtener productos recomendados
     fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
@@ -97,9 +94,17 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     image: null,
   });
 
+  // 💰 Función para formatear precios al estilo colombiano
+  const formatCurrency = (value) =>
+    Number(value).toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    });
+
   const savings =
     product.oldPrice && product.price
-      ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
+      ? Number(product.oldPrice) - Number(product.price)
       : 0;
 
   const handleQuantityChange = (delta) => {
@@ -133,8 +138,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
-
-      // ✅ Convierte valores numéricos a string (para BigDecimal en backend)
       const productJson = {
         name: formData.name,
         price: formData.price?.toString() || "0",
@@ -262,17 +265,17 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   </h1>
                   <div className="flex items-baseline gap-3">
                     <span className="text-5xl font-bold text-purple-400">
-                      ${product.price?.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </span>
                     {product.oldPrice && (
                       <span className="text-2xl text-gray-400 line-through">
-                        ${Number(product.oldPrice).toFixed(2)}
+                        {formatCurrency(product.oldPrice)}
                       </span>
                     )}
                   </div>
                   {savings > 0 && (
                     <p className="text-green-400 font-semibold text-lg">
-                      ¡Ahorras ${savings}!
+                      ¡Ahorras {formatCurrency(savings)}!
                     </p>
                   )}
                   <p className="text-gray-200">{product.description}</p>
@@ -352,7 +355,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                       {item.name}
                     </h3>
                     <p className="text-purple-400 font-bold">
-                      ${Number(item.price).toFixed(2)}
+                      {formatCurrency(item.price)}
                     </p>
                   </div>
                 );
