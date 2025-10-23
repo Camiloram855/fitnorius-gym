@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   // función para login (admin)
   const login = (username, password) => {
     // 👇 Aquí defines tus credenciales base (por ahora hardcodeadas)
-    if (username === "admin" && password === "1234") {
+    if (username === "yeik" && password === "ahinara") {
       const userData = { username, isAdmin: true };
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
