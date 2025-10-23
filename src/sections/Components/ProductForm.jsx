@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// ✅ URL base dinámica y segura (soporta local, Railway, Render, etc.)
+// ✅ URL base dinámica y segura
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
@@ -14,7 +14,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
   });
   const [previewProductImage, setPreviewProductImage] = useState(null);
 
-  // 🖼️ Vista previa de imagen seleccionada
+  // 🖼️ Vista previa de imagen
   const handleProductFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -23,16 +23,17 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
   };
 
-  // 💰 Formateador de COP (para mostrar el número con $ y puntos)
+  // 💰 Formateador visual COP (solo para mostrar)
   const formatCOP = (value) => {
-    if (!value) return "";
-    const numericValue = value.replace(/[^\d]/g, "");
-    if (!numericValue) return "";
+    if (value === "" || value == null) return "";
+    const number = Number(value);
+    if (isNaN(number)) return value;
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(numericValue);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(number);
   };
 
   // 🚀 Enviar nuevo producto al backend
@@ -45,18 +46,20 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         return;
       }
 
-      // 🧮 Limpiar y convertir valores numéricos antes de enviar
-      const cleanPrice = parseFloat(newProduct.price.replace(/[^\d]/g, "")) || 0;
+      // 🧮 Limpiar y convertir valores numéricos antes de enviar (manteniendo decimales)
+      const cleanPrice = parseFloat(
+        String(newProduct.price).replace(/[^\d.,]/g, "").replace(",", ".")
+      );
       const cleanOldPrice = newProduct.oldPrice
-        ? parseFloat(newProduct.oldPrice.replace(/[^\d]/g, "")) || 0
+        ? parseFloat(
+            String(newProduct.oldPrice).replace(/[^\d.,]/g, "").replace(",", ".")
+          )
         : null;
       const cleanDiscount = newProduct.discount
-        ? parseFloat(newProduct.discount.replace(",", ".")) || 0
+        ? parseFloat(String(newProduct.discount).replace(",", "."))
         : null;
 
       const formData = new FormData();
-
-      // ✅ Enviamos el JSON del producto dentro del multipart
       formData.append(
         "product",
         new Blob(
@@ -73,11 +76,8 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         )
       );
 
-      if (newProduct.image) {
-        formData.append("image", newProduct.image);
-      }
+      if (newProduct.image) formData.append("image", newProduct.image);
 
-      // 🔗 Petición API (Railway / Render / Local)
       const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
@@ -85,13 +85,12 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Respuesta del servidor:", errorText);
+        console.error("❌ Error del servidor:", errorText);
         throw new Error("Error al guardar el producto");
       }
 
       const savedProduct = await response.json();
       console.log("✅ Producto creado correctamente:", savedProduct);
-
       if (onProductCreated) onProductCreated(savedProduct);
 
       // 🔄 Resetear formulario
@@ -129,37 +128,40 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             />
           </div>
 
-          {/* 💰 Precio actual (formato COP) */}
+          {/* 💰 Precio actual */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Precio Actual</label>
             <input
-              type="text"
-              inputMode="decimal"
-              placeholder="Ej: $150.000"
-              value={formatCOP(newProduct.price)}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^\d]/g, "");
-                setNewProduct({ ...newProduct, price: raw });
-              }}
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Ej: 150000 o 150000.50"
+              value={newProduct.price}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, price: e.target.value })
+              }
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
               required
             />
+            <p className="text-xs text-gray-400 mt-1">
+              {newProduct.price && `Vista previa: ${formatCOP(newProduct.price)}`}
+            </p>
           </div>
 
-          {/* 💸 Precio anterior (formato COP) */}
+          {/* 💸 Precio anterior */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Precio Anterior (opcional)
             </label>
             <input
-              type="text"
-              inputMode="decimal"
-              placeholder="Ej: $180.000"
-              value={formatCOP(newProduct.oldPrice)}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^\d]/g, "");
-                setNewProduct({ ...newProduct, oldPrice: raw });
-              }}
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Ej: 180000 o 180000.99"
+              value={newProduct.oldPrice}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, oldPrice: e.target.value })
+              }
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
             />
             <p className="text-xs text-gray-400 mt-1">
@@ -171,16 +173,15 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
           <div>
             <label className="block text-sm text-gray-300 mb-2">Descuento (%)</label>
             <input
-              type="text"
-              inputMode="decimal"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
               placeholder="Ej: 10 o 15.5"
               value={newProduct.discount}
-              onChange={(e) => {
-                const value = e.target.value.replace(",", ".");
-                if (/^\d*\.?\d*$/.test(value)) {
-                  setNewProduct({ ...newProduct, discount: value });
-                }
-              }}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, discount: e.target.value })
+              }
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
             />
           </div>

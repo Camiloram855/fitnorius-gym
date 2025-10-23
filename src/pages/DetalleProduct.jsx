@@ -21,12 +21,15 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
 
-    // ✅ Obtener el producto
+    // ✅ Obtener producto por ID
     fetch(`${API_URL}/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct({
           ...data,
+          price: data.price ? Number(data.price) : 0, // ✅ Convierte BigDecimal a número
+          oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+          discount: data.discount ? Number(data.discount) : 0,
           images: data.images?.length
             ? data.images.map((img) => `${API_URL}${img}`)
             : data.imageUrl
@@ -44,9 +47,7 @@ export default function ProductDetail() {
     fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
-        setRecommended(
-          data.filter((p) => p.id !== parseInt(id)).slice(0, 5)
-        );
+        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
       })
       .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
@@ -96,9 +97,10 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     image: null,
   });
 
-  const savings = product.oldPrice
-    ? (Number.parseFloat(product.oldPrice) - Number.parseFloat(product.price)).toFixed(2)
-    : 0;
+  const savings =
+    product.oldPrice && product.price
+      ? (Number(product.oldPrice) - Number(product.price)).toFixed(2)
+      : 0;
 
   const handleQuantityChange = (delta) => {
     setQuantity((prev) => Math.max(1, prev + delta));
@@ -108,7 +110,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     addToCart({
       id: product.id,
       name: product.name,
-      price: parseFloat(product.price),
+      price: Number(product.price),
       quantity,
       image: product.images?.[0] || "/img/default.jpg",
     });
@@ -131,11 +133,13 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
+
+      // ✅ Convierte valores numéricos a string (para BigDecimal en backend)
       const productJson = {
         name: formData.name,
-        price: formData.price,
-        oldPrice: formData.oldPrice,
-        discount: formData.discount,
+        price: formData.price?.toString() || "0",
+        oldPrice: formData.oldPrice?.toString() || null,
+        discount: formData.discount?.toString() || null,
         description: formData.description,
       };
 
@@ -143,9 +147,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
+
       if (formData.image) formDataToSend.append("image", formData.image);
 
-      // ✅ PUT global adaptable
       const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
         body: formDataToSend,
@@ -171,7 +175,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           ← Volver
         </button>
 
-        {/* DETALLE DEL PRODUCTO */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
             {/* Imagen principal */}
@@ -215,6 +218,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="price"
                     type="number"
+                    step="0.01"
                     value={formData.price}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
@@ -223,6 +227,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <input
                     name="oldPrice"
                     type="number"
+                    step="0.01"
                     value={formData.oldPrice}
                     onChange={handleChange}
                     className="px-3 py-2 rounded-lg"
@@ -257,11 +262,11 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   </h1>
                   <div className="flex items-baseline gap-3">
                     <span className="text-5xl font-bold text-purple-400">
-                      ${product.price}
+                      ${product.price?.toFixed(2)}
                     </span>
                     {product.oldPrice && (
                       <span className="text-2xl text-gray-400 line-through">
-                        ${product.oldPrice}
+                        ${Number(product.oldPrice).toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -346,7 +351,9 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                     <h3 className="text-white text-lg font-semibold mb-1">
                       {item.name}
                     </h3>
-                    <p className="text-purple-400 font-bold">${item.price}</p>
+                    <p className="text-purple-400 font-bold">
+                      ${Number(item.price).toFixed(2)}
+                    </p>
                   </div>
                 );
               })}
