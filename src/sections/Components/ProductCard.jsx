@@ -25,9 +25,23 @@ export default function ProductCard({ product, onDelete }) {
   // 🖼️ Construcción segura del URL de imagen
   const imageSrc = product.imageUrl
     ? product.imageUrl.startsWith("http")
-      ? product.imageUrl // si ya viene completa
+      ? product.imageUrl
       : `${API_BASE_URL}${product.imageUrl.startsWith("/") ? "" : "/"}${product.imageUrl}`
     : "/img/default.jpg";
+
+  // 💰 Formatear precios al estilo colombiano
+  const formatCurrency = (value) =>
+    Number(value).toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    });
+
+  const formattedPrice = product.price ? formatCurrency(product.price) : "$0.00";
+  const formattedOldPrice = product.oldPrice
+    ? formatCurrency(product.oldPrice)
+    : null;
+  const formattedAhorro = ahorro ? formatCurrency(ahorro) : null;
 
   return (
     <div className="block w-full max-w-[250px] mx-auto">
@@ -61,18 +75,18 @@ export default function ProductCard({ product, onDelete }) {
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-green-600 font-bold text-lg">
-                ${product.price}
+                {formattedPrice}
               </span>
-              {product.oldPrice && (
+              {formattedOldPrice && (
                 <span className="text-gray-400 line-through text-sm">
-                  ${product.oldPrice}
+                  {formattedOldPrice}
                 </span>
               )}
             </div>
 
             {ahorro && (
               <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
-                -${ahorro}
+                -{formattedAhorro}
               </span>
             )}
           </div>
