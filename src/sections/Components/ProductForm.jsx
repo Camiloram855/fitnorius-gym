@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// ✅ URL base dinámica y segura (sin barras dobles y con soporte HTTPS)
+// ✅ URL base dinámica y segura
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
@@ -33,22 +33,27 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         return;
       }
 
+      // 🧮 Limpiar valores antes de enviar
+      const cleanPrice = parseFloat(newProduct.price.replace(/[^\d]/g, "")) || 0;
+      const cleanOldPrice = newProduct.oldPrice
+        ? parseFloat(newProduct.oldPrice.replace(/[^\d]/g, "")) || 0
+        : null;
+      const cleanDiscount = newProduct.discount
+        ? parseFloat(newProduct.discount.replace(",", ".")) || 0
+        : null;
+
       const formData = new FormData();
 
-      // ✅ Producto en formato JSON dentro del multipart
+      // ✅ Enviamos el JSON del producto dentro del multipart
       formData.append(
         "product",
         new Blob(
           [
             JSON.stringify({
               name: newProduct.name.trim(),
-              price: parseFloat(newProduct.price) || 0,
-              oldPrice: newProduct.oldPrice
-                ? parseFloat(newProduct.oldPrice)
-                : null,
-              discount: newProduct.discount
-                ? parseFloat(newProduct.discount)
-                : null,
+              price: cleanPrice,
+              oldPrice: cleanOldPrice,
+              discount: cleanDiscount,
               categoryId: selectedCategory?.id || null,
             }),
           ],
@@ -60,7 +65,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         formData.append("image", newProduct.image);
       }
 
-      // ✅ Petición dinámica (local o producción)
+      // 🔗 Petición API (Railway o local)
       const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
@@ -75,7 +80,6 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       const savedProduct = await response.json();
       console.log("✅ Producto creado:", savedProduct);
 
-      // 🔁 Notifica al padre
       if (onProductCreated) onProductCreated(savedProduct);
 
       // 🔄 Resetear formulario
@@ -92,6 +96,18 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       console.error("❌ Error al guardar producto:", error);
       alert("Error al guardar el producto. Revisa la consola para más detalles.");
     }
+  };
+
+  // 💰 Formateador COP (para mostrar bonito en inputs)
+  const formatCOP = (value) => {
+    if (!value) return "";
+    const numericValue = value.replace(/[^\d]/g, "");
+    if (!numericValue) return "";
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(numericValue);
   };
 
   return (
@@ -112,31 +128,37 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             />
           </div>
 
-          {/* Precio actual */}
+          {/* Precio actual (formato COP) */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Precio Actual</label>
             <input
-              type="number"
-              value={newProduct.price}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, price: e.target.value })
-              }
+              type="text"
+              inputMode="decimal"
+              placeholder="Ej: $150.000"
+              value={formatCOP(newProduct.price)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^\d]/g, "");
+                setNewProduct({ ...newProduct, price: raw });
+              }}
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
               required
             />
           </div>
 
-          {/* Precio anterior */}
+          {/* Precio anterior (formato COP) */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Precio Anterior (opcional)
             </label>
             <input
-              type="number"
-              value={newProduct.oldPrice}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, oldPrice: e.target.value })
-              }
+              type="text"
+              inputMode="decimal"
+              placeholder="Ej: $180.000"
+              value={formatCOP(newProduct.oldPrice)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^\d]/g, "");
+                setNewProduct({ ...newProduct, oldPrice: raw });
+              }}
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
             />
             <p className="text-xs text-gray-400 mt-1">
@@ -148,11 +170,16 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
           <div>
             <label className="block text-sm text-gray-300 mb-2">Descuento (%)</label>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ej: 15.5"
               value={newProduct.discount}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, discount: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value.replace(",", ".");
+                if (/^\d*\.?\d*$/.test(value)) {
+                  setNewProduct({ ...newProduct, discount: value });
+                }
+              }}
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
             />
           </div>
