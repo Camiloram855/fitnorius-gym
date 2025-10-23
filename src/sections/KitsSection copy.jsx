@@ -106,7 +106,7 @@ function ImageModal({ images, title, onClose }) {
   );
 }
 
-// ✅ Animaciones CSS
+// Animaciones CSS (inyectadas en el mismo archivo)
 const styles = `
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -116,18 +116,11 @@ const styles = `
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
-@keyframes glow {
-  0%, 100% { text-shadow: 0 0 10px #facc15, 0 0 20px #facc15, 0 0 40px #a855f7; transform: scale(1); }
-  50% { text-shadow: 0 0 20px #facc15, 0 0 40px #a855f7, 0 0 60px #9333ea; transform: scale(1.05); }
-}
 .animate-fadeIn {
   animation: fadeIn 0.3s ease forwards;
 }
 .animate-zoomIn {
   animation: zoomIn 0.3s ease forwards;
-}
-.animate-glow {
-  animation: glow 2s ease-in-out infinite;
 }
 `;
 
@@ -139,7 +132,7 @@ export function KitsSection() {
   const kits = [
     {
       title: "Precio promo $199.900",
-      images: ["img/imagen_uno.png", "img/detalle-banda.png"],
+      images: ["img/imagen_uno.png", "img/detalle-banda.png"], // ✅ ahora array
       features: [
         "colchoneta en Casata medidas 100cmx50cm x3 cm ",
         "Set x3 bandas de tela incluye:",
@@ -150,43 +143,43 @@ export function KitsSection() {
         "pesas tobilleras de 5 kilos, peso total, peso removible",
         "2 mancuernas en hierro de 5 libras cada una",
       ],
-      price: "$199.900",
       popular: false,
     },
     {
       title: "Precio $90.000",
       images: ["img/imagen_dos.png", "img/detalle-banda.png"],
       features: [
+        
         "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
-        "Banda negra 150lb ",
+        "Banda negra  150lb ",
         "pesas tobilleras de 5 kilos, peso total, peso removible",
       ],
-      price: "$90.000",
       popular: true,
     },
     {
       title: "Precio $50.000",
       images: ["img/bandas-5.png", "img/detalle-banda.png"],
       features: [
-        "Set x3 bandas",
+        "Set x3  bandas",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
-        "Banda negra 150lb ",
+        "Banda negra  150lb ",
       ],
-      price: "$50.000",
       popular: false,
     },
   ];
 
   return (
     <>
+      {/* Inyectar animaciones */}
       <style>{styles}</style>
 
       <section className="relative py-20 bg-gradient-to-br from-purple-950 via-purple-900 to-black text-white">
+        {/* Fondo con logo en marca de agua */}
         <div className="absolute inset-0 opacity-10 flex justify-center items-center">
           <img
             src="/img/LOGO2.png"
@@ -196,6 +189,7 @@ export function KitsSection() {
         </div>
 
         <div className="container relative z-10 mx-auto px-4">
+          {/* Título */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-yellow-400">ELIGE TU KIT</h2>
             <p className="text-purple-200 max-w-2xl mx-auto">
@@ -203,7 +197,7 @@ export function KitsSection() {
             </p>
           </div>
 
-          {/* Grid */}
+          {/* Grid de Cards */}
           <div className="grid md:grid-cols-3 gap-8">
             {kits.map((kit, index) => (
               <Card
@@ -219,6 +213,7 @@ export function KitsSection() {
                 )}
 
                 <CardHeader className="text-center pb-4">
+                  <CardTitle>{kit.title}</CardTitle>
                   <div
                     className="mx-auto cursor-pointer"
                     onClick={() => {
@@ -244,11 +239,9 @@ export function KitsSection() {
                     ))}
                   </div>
 
-                  {/* 💥 Precio animado */}
+                  {/* Precio + Botones */}
                   <div className="text-center pt-4">
-                    <div className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 bg-clip-text text-transparent animate-glow drop-shadow-lg">
-                      {kit.price}
-                    </div>
+                    <div className="text-3xl font-bold text-yellow-400 mb-4">{kit.price}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -256,7 +249,7 @@ export function KitsSection() {
           </div>
         </div>
 
-        {/* Modal */}
+        {/* Modal de imagen */}
         <ImageModal
           images={selectedImages}
           title={selectedTitle}
