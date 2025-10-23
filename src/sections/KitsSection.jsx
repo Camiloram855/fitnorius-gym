@@ -135,7 +135,7 @@ export function KitsSection() {
       images: ["img/imagen_uno.png", "img/detalle-banda.png"], // ✅ ahora array
       features: [
         "colchoneta en Casata medidas 100cmx50cm x3 cm ",
-        "Set x 3 bandas de tela incluye:",
+        "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
@@ -150,7 +150,7 @@ export function KitsSection() {
       images: ["img/imagen_dos.png", "img/detalle-banda.png"],
       features: [
         
-        "Set x 3 bandas de tela incluye:",
+        "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
@@ -163,7 +163,7 @@ export function KitsSection() {
       title: "Precio $50.000",
       images: ["img/bandas-5.png", "img/detalle-banda.png"],
       features: [
-        "Set x 3  bandas",
+        "Set x3  bandas",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
