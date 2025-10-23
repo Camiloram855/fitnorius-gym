@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// ✅ URL base dinámica y segura
+// ✅ URL base dinámica y segura (soporta local, Railway, Render, etc.)
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
@@ -14,7 +14,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
   });
   const [previewProductImage, setPreviewProductImage] = useState(null);
 
-  // 🖼️ Vista previa de imagen
+  // 🖼️ Vista previa de imagen seleccionada
   const handleProductFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -23,7 +23,19 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
   };
 
-  // 🚀 Enviar nuevo producto
+  // 💰 Formateador de COP (para mostrar el número con $ y puntos)
+  const formatCOP = (value) => {
+    if (!value) return "";
+    const numericValue = value.replace(/[^\d]/g, "");
+    if (!numericValue) return "";
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(numericValue);
+  };
+
+  // 🚀 Enviar nuevo producto al backend
   const handleAddProduct = async (e) => {
     e.preventDefault();
 
@@ -33,7 +45,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         return;
       }
 
-      // 🧮 Limpiar valores antes de enviar
+      // 🧮 Limpiar y convertir valores numéricos antes de enviar
       const cleanPrice = parseFloat(newProduct.price.replace(/[^\d]/g, "")) || 0;
       const cleanOldPrice = newProduct.oldPrice
         ? parseFloat(newProduct.oldPrice.replace(/[^\d]/g, "")) || 0
@@ -65,7 +77,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
         formData.append("image", newProduct.image);
       }
 
-      // 🔗 Petición API (Railway o local)
+      // 🔗 Petición API (Railway / Render / Local)
       const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
@@ -78,7 +90,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
       }
 
       const savedProduct = await response.json();
-      console.log("✅ Producto creado:", savedProduct);
+      console.log("✅ Producto creado correctamente:", savedProduct);
 
       if (onProductCreated) onProductCreated(savedProduct);
 
@@ -98,23 +110,11 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
     }
   };
 
-  // 💰 Formateador COP (para mostrar bonito en inputs)
-  const formatCOP = (value) => {
-    if (!value) return "";
-    const numericValue = value.replace(/[^\d]/g, "");
-    if (!numericValue) return "";
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(numericValue);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-purple-900 to-black rounded-2xl p-8 w-full max-w-md shadow-2xl border border-purple-700">
         <form onSubmit={handleAddProduct} className="space-y-6">
-          {/* Nombre */}
+          {/* 🏷️ Nombre */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Nombre</label>
             <input
@@ -124,11 +124,12 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
                 setNewProduct({ ...newProduct, name: e.target.value })
               }
               className="w-full px-4 py-2 border border-purple-600 rounded-lg bg-black/50 text-white"
+              placeholder="Ej: Protein Fit Max"
               required
             />
           </div>
 
-          {/* Precio actual (formato COP) */}
+          {/* 💰 Precio actual (formato COP) */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Precio Actual</label>
             <input
@@ -145,7 +146,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             />
           </div>
 
-          {/* Precio anterior (formato COP) */}
+          {/* 💸 Precio anterior (formato COP) */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Precio Anterior (opcional)
@@ -166,13 +167,13 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             </p>
           </div>
 
-          {/* Descuento */}
+          {/* 📉 Descuento */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Descuento (%)</label>
             <input
               type="text"
               inputMode="decimal"
-              placeholder="Ej: 15.5"
+              placeholder="Ej: 10 o 15.5"
               value={newProduct.discount}
               onChange={(e) => {
                 const value = e.target.value.replace(",", ".");
@@ -184,7 +185,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             />
           </div>
 
-          {/* Imagen */}
+          {/* 🖼️ Imagen */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">Imagen</label>
             <input
@@ -202,18 +203,18 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
             )}
           </div>
 
-          {/* Botones */}
+          {/* 🔘 Botones */}
           <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={() => setShowProductForm(false)}
-              className="flex-1 px-4 py-2 border border-gray-500 text-gray-300 rounded-lg hover:bg-gray-800"
+              className="flex-1 px-4 py-2 border border-gray-500 text-gray-300 rounded-lg hover:bg-gray-800 transition"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500"
+              className="flex-1 px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition"
             >
               Agregar
             </button>
