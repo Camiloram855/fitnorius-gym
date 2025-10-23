@@ -200,7 +200,7 @@ export function KitsSection() {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-yellow-400">ELIGE TU KIT</h2>
             <p className="text-purple-200 max-w-2xl mx-auto">
-              Selecciona el kit perfecto para tu nivel de entrenamiento y objetivos fitness
+              Selecciona el kit perfecto para tu nivel de entrenamiento y objetivos fitness.
             </p>
           </div>
 
