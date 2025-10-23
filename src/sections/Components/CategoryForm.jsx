@@ -1,8 +1,5 @@
 import { useState } from "react";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
-
 const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const [newCategory, setNewCategory] = useState({ name: "", image: null });
   const [previewImage, setPreviewImage] = useState(null);
@@ -18,37 +15,28 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const handleAddCategory = async (e) => {
     e.preventDefault();
 
-    if (!newCategory.name.trim() || !newCategory.image) {
-      alert("Por favor completa todos los campos antes de continuar ⚠️");
-      return;
-    }
+    if (newCategory.name.trim() && newCategory.image) {
+      const formData = new FormData();
+      formData.append("name", newCategory.name.trim());
+      formData.append("image", newCategory.image);
 
-    const formData = new FormData();
-    formData.append("name", newCategory.name.trim());
-    formData.append("image", newCategory.image);
+      try {
+        const response = await fetch("http://localhost:8080/api/categories", {
+          method: "POST",
+          body: formData,
+        });
 
-    try {
-      console.log("📤 Enviando categoría a:", `${API_BASE_URL}/api/categories`);
-      const response = await fetch(`${API_BASE_URL}/api/categories`, {
-        method: "POST",
-        body: formData,
-      });
+        if (!response.ok) throw new Error("Error al guardar la categoría");
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Error al guardar la categoría: ${text}`);
+        const savedCategory = await response.json();
+        onCategoryCreated(savedCategory);
+
+        setNewCategory({ name: "", image: null });
+        setPreviewImage(null);
+        setShowForm(false);
+      } catch (error) {
+        console.error("Error:", error);
       }
-
-      const savedCategory = await response.json();
-      console.log("✅ Categoría creada:", savedCategory);
-      onCategoryCreated(savedCategory);
-
-      setNewCategory({ name: "", image: null });
-      setPreviewImage(null);
-      setShowForm(false);
-    } catch (error) {
-      console.error("❌ Error guardando categoría:", error);
-      alert("Hubo un error al crear la categoría. Intenta nuevamente ❌");
     }
   };
 
