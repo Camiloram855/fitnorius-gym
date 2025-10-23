@@ -3,30 +3,33 @@ import ProductCard from "./ProductCard";
 import { Plus } from "lucide-react";
 import ProductForm from "./ProductForm";
 import Swal from "sweetalert2";
-import { useAuth } from "../../pages/AuthContext"; // ✅ Importamos el contexto
+import { useAuth } from "../../pages/AuthContext";
+import API_BASE_URL from "../../config"; // ✅ Importa la URL centralizada
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
-  const { isAdmin } = useAuth(); // ✅ Saber si el admin está logueado
+  const { isAdmin } = useAuth();
 
-  // 🔎 Cargar productos de la categoría seleccionada
+  // 🔎 Cargar productos según categoría
   const loadProducts = async () => {
-    if (!category) return;
+    if (!category?.id) return;
     try {
-      console.log("🔎 Cargando productos de la categoría:", category.id);
-      const res = await fetch(
-        `http://localhost:8080/api/products/category/${category.id}`
-      );
+      const endpoint = `${API_BASE_URL}/api/products/category/${category.id}`;
+      console.log("🔎 Cargando productos desde:", endpoint);
 
-      if (!res.ok) throw new Error("Error cargando productos");
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        console.error("❌ Error HTTP:", res.status, res.statusText);
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
 
       const data = await res.json();
-      console.log("✅ Productos recibidos:", data);
-
       setProducts(data);
+      console.log("✅ Productos recibidos:", data);
     } catch (err) {
       console.error("❌ Error cargando productos:", err);
+      Swal.fire("Error", "No se pudieron cargar los productos.", "error");
     }
   };
 
@@ -34,47 +37,44 @@ const ProductList = ({ category }) => {
     loadProducts();
   }, [category]);
 
-// 🗑 Eliminar producto con confirmación SweetAlert2
-const handleDeleteProduct = async (id) => {
-  const confirm = await Swal.fire({
-    title: "¿Estás seguro?",
-    text: "Esta acción eliminará el producto permanentemente.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#6c757d",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar",
-  });
+  // 🗑 Eliminar producto con confirmación
+  const handleDeleteProduct = async (id) => {
+    const confirm = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción eliminará el producto permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
 
-  if (confirm.isConfirmed) {
+    if (!confirm.isConfirmed) return;
+
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
         method: "DELETE",
       });
 
-      // ✅ Si el backend devuelve 204 o 200, se considera éxito
       if (response.ok) {
-        setProducts((prev) => prev.filter((prod) => prod.id !== id));
-
-        Swal.fire("Eliminado", "El producto fue eliminado con éxito.", "success");
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        Swal.fire("Eliminado", "El producto fue eliminado correctamente.", "success");
       } else {
-        const errorText = await response.text(); // leer texto en lugar de JSON
+        const errorText = await response.text();
         console.error("❌ Error del servidor:", errorText);
-        Swal.fire("Error", "Hubo un problema al eliminar el producto.", "error");
+        Swal.fire("Error", "No se pudo eliminar el producto.", "error");
       }
     } catch (error) {
       console.error("❌ Error al eliminar producto:", error);
-      Swal.fire("Error", "Hubo un problema al eliminar el producto.", "erroring");
+      Swal.fire("Error", "Hubo un problema con la conexión al servidor.", "error");
     }
-  }
-};
+  };
 
-
-  // ➕ Agregar producto nuevo
+  // ➕ Cuando se crea un producto nuevo
   const handleProductCreated = (savedProduct) => {
     console.log("📦 Nuevo producto creado:", savedProduct);
-    setProducts((prev) => [...prev, savedProduct]); // Se agrega directo al state
+    setProducts((prev) => [...prev, savedProduct]);
     setShowProductForm(false);
   };
 
@@ -93,7 +93,7 @@ const handleDeleteProduct = async (id) => {
           />
         ))}
 
-        {/* 🔒 Botón Agregar Producto solo visible si el admin está logueado */}
+        {/* 🔒 Botón visible solo para el admin */}
         {isAdmin && (
           <div
             onClick={() => setShowProductForm(true)}
@@ -105,7 +105,7 @@ const handleDeleteProduct = async (id) => {
         )}
       </div>
 
-      {/* 📌 Modal de Formulario Producto */}
+      {/* 📦 Modal para agregar producto */}
       {showProductForm && (
         <ProductForm
           setShowProductForm={setShowProductForm}
