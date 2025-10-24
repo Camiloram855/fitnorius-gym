@@ -29,7 +29,9 @@ export default function SearchSection() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(trimmedQuery)}`
+        `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(
+          trimmedQuery
+        )}`
       );
 
       if (!response.ok) throw new Error("Error al buscar productos");
@@ -117,17 +119,19 @@ export default function SearchSection() {
                 <div
                   key={product.id}
                   onClick={() => handleProductClick(product.id)}
-                  className="group bg-[#1e1e1e] rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:border-purple-500/30 transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                  className="bg-[#181818] rounded-2xl border border-white/10 hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer group"
                 >
-                  <div className="relative w-full h-60 overflow-hidden">
+                  {/* 🖼 Imagen centrada como en las tarjetas originales */}
+                  <div className="w-full aspect-square bg-[#121212] rounded-t-2xl flex items-center justify-center overflow-hidden">
                     <img
                       src={imageSrc}
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => (e.target.src = "/no-image.png")}
                     />
                   </div>
 
+                  {/* 📄 Info del producto */}
                   <div className="p-4">
                     <h3 className="text-white text-lg font-semibold mb-1 line-clamp-1">
                       {product.name}
@@ -136,7 +140,11 @@ export default function SearchSection() {
                       {product.description}
                     </p>
                     <p className="text-purple-400 font-bold text-lg">
-                      ${Number(product.price).toFixed(2)}
+                      {new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                        minimumFractionDigits: 2,
+                      }).format(product.price)}
                     </p>
                   </div>
                 </div>
