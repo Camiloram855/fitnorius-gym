@@ -17,6 +17,26 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
+  // --- Desactivar scroll restoration del navegador para evitar que "vuelva" la posición
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      try {
+        window.history.scrollRestoration = "manual";
+      } catch (e) {
+        // algunos entornos pueden bloquear esto; no rompemos nada
+        // console.warn("No se pudo setear scrollRestoration:", e);
+      }
+    }
+    // opcional: restaurar comportamiento cuando el componente se desmonte
+    return () => {
+      if ("scrollRestoration" in window.history) {
+        try {
+          window.history.scrollRestoration = "auto";
+        } catch (e) {}
+      }
+    };
+  }, []);
+
   // 🔄 Cargar producto y recomendados
   const fetchProductData = async () => {
     setLoading(true);
@@ -48,8 +68,16 @@ export default function ProductDetail() {
 
   useEffect(() => {
     fetchProductData();
-    // ⬆️ Scroll al inicio al cambiar producto
+
+    // intentamos asegurar scroll top: inmediato + refuerzos
     window.scrollTo({ top: 0, behavior: "smooth" });
+    const t1 = setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 120);
+    const t2 = setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 400);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [id]);
 
   if (loading)
@@ -170,6 +198,7 @@ function ProductDetailContent({
 
       const updated = await res.json();
 
+      // 🔄 Actualizar estado inmediatamente
       setProduct((prev) => ({
         ...prev,
         ...updated,
@@ -329,9 +358,7 @@ function ProductDetailContent({
                     onClick={handleAddToCart}
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all"
                   >
-                    {addedToCart
-                      ? "✓ Agregado al carrito"
-                      : "Agregar al carrito"}
+                    {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
                   </button>
 
                   <button
@@ -354,20 +381,14 @@ function ProductDetailContent({
             </h2>
             <div className="flex flex-wrap justify-center gap-8">
               {recommended.map((item) => {
-                const hasPromo =
-                  item.oldPrice &&
-                  Number(item.price) < Number(item.oldPrice);
+                const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
 
-                const ahorro = hasPromo
-                  ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
-                  : null;
+                const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
 
                 const imgSrc = item.imageUrl
                   ? item.imageUrl.startsWith("http")
                     ? item.imageUrl
-                    : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${
-                        item.imageUrl
-                      }`
+                    : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${item.imageUrl}`
                   : "/img/default.jpg";
 
                 return (
@@ -375,9 +396,9 @@ function ProductDetailContent({
                     key={item.id}
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 200); // 🟣 Espera breve para asegurar que el cambio de vista ocurra
+                      // varios refuerzos para asegurar que el scroll quede en top
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 80);
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 220);
                     }}
                     className="block w-full max-w-[250px] mx-auto cursor-pointer"
                   >
@@ -391,35 +412,21 @@ function ProductDetailContent({
                         />
                         {hasPromo && (
                           <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
-                            <span className="text-white font-bold text-xs uppercase">
-                              ¡PROMO!
-                            </span>
+                            <span className="text-white font-bold text-xs uppercase">¡PROMO!</span>
                           </div>
                         )}
                       </div>
 
                       <div className="p-4 flex flex-col flex-1 justify-between">
-                        <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
-                          {item.name}
-                        </h3>
+                        <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">{item.name}</h3>
 
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
-                            <span className="text-green-600 font-bold text-lg">
-                              {formatCurrency(item.price)}
-                            </span>
-                            {item.oldPrice && (
-                              <span className="text-gray-400 line-through text-sm">
-                                {formatCurrency(item.oldPrice)}
-                              </span>
-                            )}
+                            <span className="text-green-600 font-bold text-lg">{formatCurrency(item.price)}</span>
+                            {item.oldPrice && <span className="text-gray-400 line-through text-sm">{formatCurrency(item.oldPrice)}</span>}
                           </div>
 
-                          {ahorro && (
-                            <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
-                              -{formatCurrency(ahorro)}
-                            </span>
-                          )}
+                          {ahorro && <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">-{formatCurrency(ahorro)}</span>}
                         </div>
                       </div>
                     </div>
