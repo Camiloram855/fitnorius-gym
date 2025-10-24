@@ -97,7 +97,7 @@ export default function FeaturesSection() {
             {/* Imagen del producto recibido */}
             <div className="w-48 h-48 rounded-xl overflow-hidden border-2 border-purple-500 shadow-md">
               <img
-                src="/img/cliente-1.jpeg" // <-- aquí va la foto real que suba el cliente
+                src="/img/cliente-2.jpeg" // <-- aquí va la foto real que suba el cliente
                 alt="Producto recibido por cliente"
                 className="w-full h-full object-cover"
               />
