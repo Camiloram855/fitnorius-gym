@@ -19,25 +19,21 @@ export default function Catalog() {
     location.pathname === "/catalog/login" ||
     location.pathname === "/catalog/checkout";
 
-  // ✅ Control total del scroll — evita restauración automática del navegador
+  // ✅ Control completo del scroll
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
-    // Forzar scroll al tope (instantáneo)
+    // Forzar scroll al tope inmediatamente
     window.scrollTo(0, 0);
 
-    // Refuerzos para casos donde React Router monta contenido después
-    const t1 = setTimeout(() => window.scrollTo(0, 0), 80);
-    const t2 = setTimeout(() => window.scrollTo(0, 0), 200);
-    const t3 = setTimeout(() => window.scrollTo(0, 0), 400);
+    // 🔁 Refuerzo en caso de que el navegador intente restaurar la posición anterior
+    const fixScroll = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 300);
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    return () => clearTimeout(fixScroll);
   }, [location.pathname]);
 
   return (
