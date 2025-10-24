@@ -6,21 +6,28 @@ export default function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Evita que el navegador recuerde la posición anterior
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
-    // Reinicia el scroll instantáneamente
-    window.scrollTo(0, 0);
+    // Forzamos varias veces el scroll al tope
+    const scrollToTopNow = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
-    // A veces React Router o el navegador lo sobrescriben justo después
-    // así que hacemos un refuerzo con un pequeño delay
-    const fix = setTimeout(() => {
-      window.scrollTo(0, 0);
-    }, 400);
+    // Inmediatamente
+    scrollToTopNow();
 
-    return () => clearTimeout(fix);
+    // A los 100ms (por si React Router restaura después del render)
+    const t1 = setTimeout(scrollToTopNow, 100);
+    // A los 400ms (por si imágenes o contenido tardan en cargar)
+    const t2 = setTimeout(scrollToTopNow, 400);
+    // A los 800ms (refuerzo final)
+    const t3 = setTimeout(scrollToTopNow, 800);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [pathname]);
 
   return null;
