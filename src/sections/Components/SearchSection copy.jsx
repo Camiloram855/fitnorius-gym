@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// 🌍 Detecta si estás en local o producción (Railway)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -12,13 +13,18 @@ export default function SearchSection() {
   const [results, setResults] = useState([]);
   const navigate = useNavigate();
 
+  // 🔍 Buscar productos
   const handleSearch = async (searchTerm) => {
     const trimmedQuery = searchTerm.trim();
+
+    // 🧹 Si está vacío, limpiar resultados y errores
     if (!trimmedQuery) {
       setResults([]);
       setError(null);
       return;
     }
+
+    // 🔠 Solo buscar si hay al menos 3 caracteres
     if (trimmedQuery.length < 3) {
       setResults([]);
       return;
@@ -44,6 +50,7 @@ export default function SearchSection() {
     }
   };
 
+  // 🕒 Búsqueda con debounce (espera 400ms tras escribir)
   useEffect(() => {
     const delay = setTimeout(() => {
       handleSearch(query);
@@ -51,6 +58,7 @@ export default function SearchSection() {
     return () => clearTimeout(delay);
   }, [query]);
 
+  // 🧠 Buscar al presionar Enter
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -58,6 +66,7 @@ export default function SearchSection() {
     }
   };
 
+  // 🚀 Ir al detalle del producto
   const handleProductClick = (id) => {
     navigate(`/catalog/producto/${id}`);
   };
@@ -107,6 +116,7 @@ export default function SearchSection() {
         {results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {results.map((product) => {
+              // 🖼️ Construcción dinámica del URL de la imagen
               const imageSrc = product.imageUrl
                 ? product.imageUrl.startsWith("http")
                   ? product.imageUrl
@@ -117,28 +127,21 @@ export default function SearchSection() {
                 <div
                   key={product.id}
                   onClick={() => handleProductClick(product.id)}
-                  className="group bg-[#1e1e1e] rounded-2xl overflow-hidden shadow-lg border border-white/10 hover:border-purple-500/30 transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                  className="bg-[#181818] rounded-2xl p-4 shadow-lg hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer hover:scale-105"
                 >
-                  <div className="relative w-full h-60 overflow-hidden">
-                    <img
-                      src={imageSrc}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => (e.target.src = "/no-image.png")}
-                    />
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="text-white text-lg font-semibold mb-1 line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-gray-400 text-sm mb-2 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <p className="text-purple-400 font-bold text-lg">
-                      ${Number(product.price).toFixed(2)}
-                    </p>
-                  </div>
+                  <img
+                    src={imageSrc}
+                    alt={product.name}
+                    className="w-full h-60 object-cover rounded-xl mb-3"
+                    onError={(e) => (e.target.src = "/no-image.png")}
+                  />
+                  <h3 className="text-white text-lg font-semibold mb-1">
+                    {product.name}
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-2 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <p className="text-purple-400 font-bold">${product.price}</p>
                 </div>
               );
             })}
