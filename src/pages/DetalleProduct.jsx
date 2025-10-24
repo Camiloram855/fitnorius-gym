@@ -94,7 +94,6 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     image: null,
   });
 
-  // 💰 Función para formatear precios al estilo colombiano
   const formatCurrency = (value) =>
     Number(value).toLocaleString("es-CO", {
       style: "currency",
@@ -123,9 +122,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleAdd = () => {
-    navigate("/catalog/checkout");
-  };
+  const handleAdd = () => navigate("/catalog/checkout");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -168,9 +165,8 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-10 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
-        <br />
         <button
           onClick={() => window.history.back()}
           className="mb-6 px-5 py-2 bg-purple-700/30 hover:bg-purple-700/50 text-white rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/50"
@@ -178,24 +174,21 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           ← Volver
         </button>
 
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-800/40">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
+        {/* PRODUCTO PRINCIPAL */}
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-purple-800/40 p-6 sm:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10">
             {/* Imagen principal */}
-            <div className="space-y-4">
-              <div className="relative aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
-                {isEditing && formData.image ? (
-                  <img
-                    src={URL.createObjectURL(formData.image)}
-                    alt="preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-full aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
+                <img
+                  src={
+                    isEditing && formData.image
+                      ? URL.createObjectURL(formData.image)
+                      : product.images[selectedImageIndex]
+                  }
+                  alt={product.name}
+                  className="w-full h-full object-contain sm:object-cover transition-all duration-300"
+                />
               </div>
               {isEditing && (
                 <input
@@ -208,14 +201,14 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
             </div>
 
             {/* Información */}
-            <div className="flex flex-col space-y-6">
+            <div className="flex flex-col justify-center space-y-6">
               {isEditing ? (
                 <>
                   <input
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="px-3 py-2 rounded-lg"
+                    className="px-3 py-2 rounded-lg w-full"
                     placeholder="Nombre del producto"
                   />
                   <input
@@ -224,7 +217,7 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                     step="0.01"
                     value={formData.price}
                     onChange={handleChange}
-                    className="px-3 py-2 rounded-lg"
+                    className="px-3 py-2 rounded-lg w-full"
                     placeholder="Precio"
                   />
                   <input
@@ -233,17 +226,17 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                     step="0.01"
                     value={formData.oldPrice}
                     onChange={handleChange}
-                    className="px-3 py-2 rounded-lg"
+                    className="px-3 py-2 rounded-lg w-full"
                     placeholder="Precio anterior"
                   />
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    className="px-3 py-2 rounded-lg"
+                    className="px-3 py-2 rounded-lg w-full"
                     placeholder="Descripción"
                   />
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-4">
                     <button
                       onClick={handleSave}
                       className="px-6 py-2 bg-green-600 text-white rounded-lg"
@@ -260,11 +253,11 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                 </>
               ) : (
                 <>
-                  <h1 className="text-4xl lg:text-5xl font-extrabold text-white">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
                     {product.name}
                   </h1>
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-5xl font-bold text-purple-400">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <span className="text-4xl sm:text-5xl font-bold text-purple-400">
                       {formatCurrency(product.price)}
                     </span>
                     {product.oldPrice && (
@@ -328,13 +321,13 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           </div>
         </div>
 
-        {/* 🔥 Productos Recomendados */}
+        {/* RECOMENDADOS */}
         {recommended.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
               Productos Recomendados
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {recommended.map((item) => {
                 const imgSrc = item.imageUrl
                   ? `${API_URL}${item.imageUrl}`
@@ -344,17 +337,19 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
                   <div
                     key={item.id}
                     onClick={() => navigate(`/catalog/producto/${item.id}`)}
-                    className="cursor-pointer bg-[#181818] rounded-2xl p-4 shadow-lg hover:shadow-purple-500/20 hover:scale-105 transition-all duration-300"
+                    className="cursor-pointer bg-[#181818] rounded-2xl p-4 shadow-lg hover:shadow-purple-500/20 hover:scale-105 transition-all duration-300 flex flex-col"
                   >
-                    <img
-                      src={imgSrc}
-                      alt={item.name}
-                      className="w-full h-48 object-cover rounded-xl mb-3"
-                    />
-                    <h3 className="text-white text-lg font-semibold mb-1">
+                    <div className="w-full h-56 flex items-center justify-center bg-black/30 rounded-xl overflow-hidden mb-3">
+                      <img
+                        src={imgSrc}
+                        alt={item.name}
+                        className="max-h-56 w-auto object-contain"
+                      />
+                    </div>
+                    <h3 className="text-white text-lg font-semibold mb-1 truncate text-center">
                       {item.name}
                     </h3>
-                    <p className="text-purple-400 font-bold">
+                    <p className="text-purple-400 font-bold text-center">
                       {formatCurrency(item.price)}
                     </p>
                   </div>
