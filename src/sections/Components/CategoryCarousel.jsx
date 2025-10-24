@@ -3,10 +3,10 @@ import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
 import { useAuth } from "../../pages/AuthContext";
-import Swal from "sweetalert2"; // ✅ modales
+import Swal from "sweetalert2";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080"; // ✅ Detecta URL global
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
@@ -37,13 +37,13 @@ const CategoryCarousel = () => {
     const container = scrollRef.current;
     if (container) {
       container.scrollBy({
-        left: direction === "left" ? -200 : 200,
+        left: direction === "left" ? -250 : 250,
         behavior: "smooth",
       });
     }
   };
 
-  // ✅ Desplazamiento táctil (para móviles)
+  // ✅ Desplazamiento táctil rápido (para móviles)
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -58,15 +58,13 @@ const CategoryCarousel = () => {
       scrollLeft = container.scrollLeft;
     };
 
-    const end = () => {
-      isDown = false;
-    };
+    const end = () => (isDown = false);
 
     const move = (e) => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX || e.touches[0].pageX;
-      const walk = (x - startX) * 1.2; // velocidad suave
+      const walk = (x - startX) * 2.2; // 🔥 más rápido
       container.scrollLeft = scrollLeft - walk;
     };
 
@@ -74,7 +72,6 @@ const CategoryCarousel = () => {
     container.addEventListener("mouseleave", end);
     container.addEventListener("mouseup", end);
     container.addEventListener("mousemove", move);
-
     container.addEventListener("touchstart", start);
     container.addEventListener("touchend", end);
     container.addEventListener("touchmove", move);
@@ -84,7 +81,6 @@ const CategoryCarousel = () => {
       container.removeEventListener("mouseleave", end);
       container.removeEventListener("mouseup", end);
       container.removeEventListener("mousemove", move);
-
       container.removeEventListener("touchstart", start);
       container.removeEventListener("touchend", end);
       container.removeEventListener("touchmove", move);
@@ -123,7 +119,6 @@ const CategoryCarousel = () => {
         if (!response.ok) throw new Error("Error al eliminar la categoría");
 
         setCategories(categories.filter((cat) => cat.id !== id));
-
         if (selectedCategory?.id === id) setSelectedCategory(null);
 
         await Swal.fire({
@@ -193,8 +188,12 @@ const CategoryCarousel = () => {
     <div className="w-full max-w-6xl mx-auto p-6">
       {/* ====== CARRUSEL ====== */}
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2">Categorías de Productos</h2>
-        <p className="text-gray-300">Explora nuestras categorías destacadas</p>
+        <h2 className="text-3xl font-bold text-white mb-2">
+          Categorías de Productos
+        </h2>
+        <p className="text-gray-300">
+          Explora nuestras categorías destacadas
+        </p>
       </div>
 
       <div className="relative select-none">
@@ -212,10 +211,15 @@ const CategoryCarousel = () => {
           <ChevronRight className="w-5 h-5 text-white" />
         </button>
 
-        {/* 🔹 Carrusel con scroll táctil */}
+        {/* 🔹 Carrusel con scroll táctil ocultando la barra */}
         <div
           ref={scrollRef}
-          className="flex gap-6 px-20 py-4 overflow-x-scroll scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
+          className="flex gap-6 px-20 py-4 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
         >
           {categories.map((category) => (
             <div
@@ -227,7 +231,7 @@ const CategoryCarousel = () => {
                 <img
                   src={`${API_BASE_URL}${category.image}`}
                   alt={category.name}
-                  className="w-24 h-24 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
                 />
 
                 {/* Botón eliminar */}
@@ -268,7 +272,7 @@ const CategoryCarousel = () => {
             <div className="flex-shrink-0">
               <button
                 onClick={() => setShowForm(true)}
-                className="w-24 h-24 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
+                className="w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
               >
                 <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
               </button>
@@ -290,26 +294,35 @@ const CategoryCarousel = () => {
         </div>
       )}
 
-      {/* ====== MODAL CATEGORÍA ====== */}
+      {/* ====== MODAL NUEVA CATEGORÍA ====== */}
       {isAdmin && showForm && (
-        <CategoryForm setShowForm={setShowForm} onCategoryCreated={handleCategoryCreated} />
+        <CategoryForm
+          setShowForm={setShowForm}
+          onCategoryCreated={handleCategoryCreated}
+        />
       )}
 
       {/* ====== MODAL EDITAR ====== */}
       {isAdmin && categoryToEdit && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-            <h3 className="text-lg font-bold text-white mb-4">Editar categoría</h3>
+            <h3 className="text-lg font-bold text-white mb-4">
+              Editar categoría
+            </h3>
             <input
               type="text"
               value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, name: e.target.value })
+              }
               className="w-full p-2 mb-4 rounded bg-gray-700 text-white"
               placeholder="Nombre de la categoría"
             />
             <input
               type="file"
-              onChange={(e) => setEditForm({ ...editForm, image: e.target.files[0] })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, image: e.target.files[0] })
+              }
               className="w-full text-gray-300 mb-6"
             />
             <div className="flex justify-center gap-4">
