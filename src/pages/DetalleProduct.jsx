@@ -65,16 +65,32 @@ export default function ProductDetail() {
   useEffect(() => {
     fetchProductData();
 
-    // ✅ Scroll instantáneo al inicio sin animación
-    window.scrollTo(0, 0);
-    const t1 = setTimeout(() => window.scrollTo(0, 0), 120);
-    const t2 = setTimeout(() => window.scrollTo(0, 0), 400);
+    // ✅ Forzar scroll al inicio al cambiar producto
+    const scrollToTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    scrollToTop();
+    const t1 = setTimeout(scrollToTop, 100);
+    const t2 = setTimeout(scrollToTop, 300);
+    const t3 = setTimeout(scrollToTop, 600);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, [id]);
+
+  // ✅ Refuerzo adicional: cuando el producto termina de cargar, también sube
+  useEffect(() => {
+    if (!loading && product) {
+      const scrollToTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      const t1 = setTimeout(scrollToTop, 50);
+      const t2 = setTimeout(scrollToTop, 200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [product, loading]);
 
   if (loading)
     return (
@@ -397,10 +413,12 @@ function ProductDetailContent({
                     key={item.id}
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
-                      // ✅ Scroll instantáneo con refuerzos para evitar rebote
-                      setTimeout(() => window.scrollTo(0, 0), 80);
-                      setTimeout(() => window.scrollTo(0, 0), 250);
-                      setTimeout(() => window.scrollTo(0, 0), 500);
+                      // ✅ Scroll instantáneo con refuerzos
+                      const scrollToTop = () =>
+                        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+                      setTimeout(scrollToTop, 50);
+                      setTimeout(scrollToTop, 200);
+                      setTimeout(scrollToTop, 400);
                     }}
                     className="block w-full max-w-[250px] mx-auto cursor-pointer"
                   >
