@@ -170,7 +170,6 @@ function ProductDetailContent({
 
       const updated = await res.json();
 
-      // 🔄 Actualizar estado inmediatamente
       setProduct((prev) => ({
         ...prev,
         ...updated,
@@ -376,7 +375,9 @@ function ProductDetailContent({
                     key={item.id}
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
-                      window.scrollTo({ top: 0, behavior: "smooth" }); // 👈 scroll automático
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }, 200); // 🟣 Espera breve para asegurar que el cambio de vista ocurra
                     }}
                     className="block w-full max-w-[250px] mx-auto cursor-pointer"
                   >
