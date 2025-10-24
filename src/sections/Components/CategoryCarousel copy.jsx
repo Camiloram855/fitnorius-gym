@@ -43,54 +43,6 @@ const CategoryCarousel = () => {
     }
   };
 
-  // ✅ Desplazamiento táctil (para móviles)
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    const start = (e) => {
-      isDown = true;
-      startX = e.pageX || e.touches[0].pageX;
-      scrollLeft = container.scrollLeft;
-    };
-
-    const end = () => {
-      isDown = false;
-    };
-
-    const move = (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX || e.touches[0].pageX;
-      const walk = (x - startX) * 1.2; // velocidad suave
-      container.scrollLeft = scrollLeft - walk;
-    };
-
-    container.addEventListener("mousedown", start);
-    container.addEventListener("mouseleave", end);
-    container.addEventListener("mouseup", end);
-    container.addEventListener("mousemove", move);
-
-    container.addEventListener("touchstart", start);
-    container.addEventListener("touchend", end);
-    container.addEventListener("touchmove", move);
-
-    return () => {
-      container.removeEventListener("mousedown", start);
-      container.removeEventListener("mouseleave", end);
-      container.removeEventListener("mouseup", end);
-      container.removeEventListener("mousemove", move);
-
-      container.removeEventListener("touchstart", start);
-      container.removeEventListener("touchend", end);
-      container.removeEventListener("touchmove", move);
-    };
-  }, []);
-
   // ✅ Eliminar categoría con confirmación
   const handleDeleteCategory = async (id) => {
     const category = categories.find((c) => c.id === id);
@@ -197,7 +149,7 @@ const CategoryCarousel = () => {
         <p className="text-gray-300">Explora nuestras categorías destacadas</p>
       </div>
 
-      <div className="relative select-none">
+      <div className="relative">
         <button
           onClick={() => scroll("left")}
           className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-2 hover:bg-purple-600 transition-colors duration-200"
@@ -212,11 +164,7 @@ const CategoryCarousel = () => {
           <ChevronRight className="w-5 h-5 text-white" />
         </button>
 
-        {/* 🔹 Carrusel con scroll táctil */}
-        <div
-          ref={scrollRef}
-          className="flex gap-6 px-20 py-4 overflow-x-scroll scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
-        >
+        <div ref={scrollRef} className="flex gap-6 px-20 py-4 overflow-hidden scroll-smooth">
           {categories.map((category) => (
             <div
               key={category.id}
@@ -227,7 +175,7 @@ const CategoryCarousel = () => {
                 <img
                   src={`${API_BASE_URL}${category.image}`}
                   alt={category.name}
-                  className="w-24 h-24 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
+                  className="w-28 h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
                 />
 
                 {/* Botón eliminar */}
@@ -268,7 +216,7 @@ const CategoryCarousel = () => {
             <div className="flex-shrink-0">
               <button
                 onClick={() => setShowForm(true)}
-                className="w-24 h-24 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
+                className="w-28 h-28 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
               >
                 <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
               </button>
