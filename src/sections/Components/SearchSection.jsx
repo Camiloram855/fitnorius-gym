@@ -121,12 +121,12 @@ export default function SearchSection() {
                   onClick={() => handleProductClick(product.id)}
                   className="bg-[#181818] rounded-2xl border border-white/10 hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer group"
                 >
-                  {/* 🖼 Imagen centrada como en las tarjetas originales */}
-                  <div className="w-full aspect-square bg-[#121212] rounded-t-2xl flex items-center justify-center overflow-hidden">
+                  {/* 🖼 Imagen ajustada correctamente */}
+                  <div className="w-full aspect-square bg-[#121212] rounded-t-2xl overflow-hidden flex items-center justify-center">
                     <img
                       src={imageSrc}
                       alt={product.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => (e.target.src = "/no-image.png")}
                     />
                   </div>
