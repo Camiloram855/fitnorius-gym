@@ -321,43 +321,83 @@ function ProductDetailContent({ product, recommended, addToCart, navigate, API_U
           </div>
         </div>
 
-        {/* RECOMENDADOS */}
-        {recommended.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
-              Productos Recomendados
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {recommended.map((item) => {
-                const imgSrc = item.imageUrl
-                  ? `${API_URL}${item.imageUrl}`
-                  : "/img/default.jpg";
+          {/* RECOMENDADOS */}
+          {recommended.length > 0 && (
+            <div className="mt-16">
+              <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
+                Productos Recomendados
+              </h2>
+              <div className="flex flex-wrap justify-center gap-8">
+                {recommended.map((item) => {
+                  const hasPromo =
+                    item.oldPrice !== null &&
+                    item.oldPrice !== undefined &&
+                    Number(item.price) < Number(item.oldPrice);
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => navigate(`/catalog/producto/${item.id}`)}
-                    className="cursor-pointer bg-[#181818] rounded-2xl p-4 shadow-lg hover:shadow-purple-500/20 hover:scale-105 transition-all duration-300 flex flex-col"
-                  >
-                    <div className="w-full h-56 flex items-center justify-center bg-black/30 rounded-xl overflow-hidden mb-3">
-                      <img
-                        src={imgSrc}
-                        alt={item.name}
-                        className="max-h-56 w-auto object-contain"
-                      />
+                  const ahorro = hasPromo
+                    ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
+                    : null;
+
+                  const imgSrc = item.imageUrl
+                    ? item.imageUrl.startsWith("http")
+                      ? item.imageUrl
+                      : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${item.imageUrl}`
+                    : "/img/default.jpg";
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate(`/catalog/producto/${item.id}`)}
+                      className="block w-full max-w-[250px] mx-auto cursor-pointer"
+                    >
+                      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col">
+                        <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group">
+                          <img
+                            src={imgSrc}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => (e.target.src = "/img/default.jpg")}
+                          />
+                          {hasPromo && (
+                            <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
+                              <span className="text-white font-bold text-xs uppercase">
+                                ¡PROMO!
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-4 flex flex-col flex-1 justify-between">
+                          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
+                            {item.name}
+                          </h3>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-green-600 font-bold text-lg">
+                                {formatCurrency(item.price)}
+                              </span>
+                              {item.oldPrice && (
+                                <span className="text-gray-400 line-through text-sm">
+                                  {formatCurrency(item.oldPrice)}
+                                </span>
+                              )}
+                            </div>
+
+                            {ahorro && (
+                              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                                -{formatCurrency(ahorro)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-white text-lg font-semibold mb-1 truncate text-center">
-                      {item.name}
-                    </h3>
-                    <p className="text-purple-400 font-bold text-center">
-                      {formatCurrency(item.price)}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
