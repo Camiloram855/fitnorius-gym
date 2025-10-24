@@ -17,42 +17,39 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
-  // 🔄 Cargar producto y recomendados
-  const fetchProductData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/products/${id}`);
-      const data = await res.json();
-      setProduct({
-        ...data,
-        price: data.price ? Number(data.price) : 0,
-        oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-        discount: data.discount ? Number(data.discount) : 0,
-        images: data.images?.length
-          ? data.images.map((img) => `${API_URL}${img}`)
-          : data.imageUrl
-          ? [`${API_URL}${data.imageUrl}`]
-          : ["/img/default.jpg"],
-        description: data.description || "Sin descripción disponible",
-      });
-
-      const recRes = await fetch(`${API_URL}/api/products`);
-      const recData = await recRes.json();
-      setRecommended(recData.filter((p) => p.id !== parseInt(id)).slice(0, 5));
-    } catch (err) {
-      console.error("Error cargando datos:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProductData();
-    // ⬆️ Scroll al inicio al cambiar producto
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setLoading(true);
+
+    fetch(`${API_URL}/api/products/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProduct({
+          ...data,
+          price: data.price ? Number(data.price) : 0,
+          oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+          discount: data.discount ? Number(data.discount) : 0,
+          images: data.images?.length
+            ? data.images.map((img) => `${API_URL}${img}`)
+            : data.imageUrl
+            ? [`${API_URL}${data.imageUrl}`]
+            : ["/img/default.jpg"],
+          variants: data.variants || [],
+          features: data.features || [],
+          description: data.description || "Sin descripción disponible",
+        });
+      })
+      .catch((err) => console.error("Error cargando producto:", err))
+      .finally(() => setLoading(false));
+
+    fetch(`${API_URL}/api/products`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRecommended(data.filter((p) => p.id !== parseInt(id)).slice(0, 5));
+      })
+      .catch((err) => console.error("Error cargando recomendados:", err));
   }, [id]);
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
         <p className="text-purple-400 text-xl animate-pulse">
@@ -60,36 +57,28 @@ export default function ProductDetail() {
         </p>
       </div>
     );
+  }
 
-  if (!product)
+  if (!product) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
         <p>No se encontró el producto</p>
       </div>
     );
+  }
 
   return (
     <ProductDetailContent
       product={product}
-      setProduct={setProduct}
       recommended={recommended}
       addToCart={addToCart}
       navigate={navigate}
       API_URL={API_URL}
-      refetch={fetchProductData}
     />
   );
 }
 
-function ProductDetailContent({
-  product,
-  setProduct,
-  recommended,
-  addToCart,
-  navigate,
-  API_URL,
-  refetch,
-}) {
+function ProductDetailContent({ product, recommended, addToCart, navigate, API_URL }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -117,8 +106,9 @@ function ProductDetailContent({
       ? Number(product.oldPrice) - Number(product.price)
       : 0;
 
-  const handleQuantityChange = (delta) =>
+  const handleQuantityChange = (delta) => {
     setQuantity((prev) => Math.max(1, prev + delta));
+  };
 
   const handleAddToCart = () => {
     addToCart({
@@ -142,7 +132,6 @@ function ProductDetailContent({
     }));
   };
 
-  // ✅ Guardar cambios y actualizar sin refrescar
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
@@ -167,24 +156,11 @@ function ProductDetailContent({
       });
 
       if (!res.ok) throw new Error("Error al actualizar producto");
-
-      const updated = await res.json();
-
-      // 🔄 Actualizar estado inmediatamente
-      setProduct((prev) => ({
-        ...prev,
-        ...updated,
-        images: updated.images?.length
-          ? updated.images.map((img) => `${API_URL}${img}`)
-          : prev.images,
-      }));
-
+      alert("Producto actualizado correctamente ✅");
       setIsEditing(false);
-      alert("✅ Producto actualizado correctamente");
-      await refetch();
     } catch (err) {
       console.error(err);
-      alert("❌ Error al guardar cambios");
+      alert("Error al guardar cambios ❌");
     }
   };
 
@@ -330,9 +306,7 @@ function ProductDetailContent({
                     onClick={handleAddToCart}
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all"
                   >
-                    {addedToCart
-                      ? "✓ Agregado al carrito"
-                      : "Agregar al carrito"}
+                    {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
                   </button>
 
                   <button
@@ -347,87 +321,83 @@ function ProductDetailContent({
           </div>
         </div>
 
-        {/* 🟣 RECOMENDADOS */}
-        {recommended.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
-              Productos Recomendados
-            </h2>
-            <div className="flex flex-wrap justify-center gap-8">
-              {recommended.map((item) => {
-                const hasPromo =
-                  item.oldPrice &&
-                  Number(item.price) < Number(item.oldPrice);
+          {/* RECOMENDADOS */}
+          {recommended.length > 0 && (
+            <div className="mt-16">
+              <h2 className="text-3xl font-bold text-purple-400 mb-8 text-center">
+                Productos Recomendados
+              </h2>
+              <div className="flex flex-wrap justify-center gap-8">
+                {recommended.map((item) => {
+                  const hasPromo =
+                    item.oldPrice !== null &&
+                    item.oldPrice !== undefined &&
+                    Number(item.price) < Number(item.oldPrice);
 
-                const ahorro = hasPromo
-                  ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
-                  : null;
+                  const ahorro = hasPromo
+                    ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
+                    : null;
 
-                const imgSrc = item.imageUrl
-                  ? item.imageUrl.startsWith("http")
-                    ? item.imageUrl
-                    : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${
-                        item.imageUrl
-                      }`
-                  : "/img/default.jpg";
+                  const imgSrc = item.imageUrl
+                    ? item.imageUrl.startsWith("http")
+                      ? item.imageUrl
+                      : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${item.imageUrl}`
+                    : "/img/default.jpg";
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      navigate(`/catalog/producto/${item.id}`);
-                      window.scrollTo({ top: 0, behavior: "smooth" }); // 👈 scroll automático
-                    }}
-                    className="block w-full max-w-[250px] mx-auto cursor-pointer"
-                  >
-                    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col">
-                      <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group">
-                        <img
-                          src={imgSrc}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => (e.target.src = "/img/default.jpg")}
-                        />
-                        {hasPromo && (
-                          <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
-                            <span className="text-white font-bold text-xs uppercase">
-                              ¡PROMO!
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate(`/catalog/producto/${item.id}`)}
+                      className="block w-full max-w-[250px] mx-auto cursor-pointer"
+                    >
+                      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col">
+                        <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group">
+                          <img
+                            src={imgSrc}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => (e.target.src = "/img/default.jpg")}
+                          />
+                          {hasPromo && (
+                            <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
+                              <span className="text-white font-bold text-xs uppercase">
+                                ¡PROMO!
+                              </span>
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="p-4 flex flex-col flex-1 justify-between">
-                        <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
-                          {item.name}
-                        </h3>
+                        <div className="p-4 flex flex-col flex-1 justify-between">
+                          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
+                            {item.name}
+                          </h3>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-green-600 font-bold text-lg">
-                              {formatCurrency(item.price)}
-                            </span>
-                            {item.oldPrice && (
-                              <span className="text-gray-400 line-through text-sm">
-                                {formatCurrency(item.oldPrice)}
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-green-600 font-bold text-lg">
+                                {formatCurrency(item.price)}
+                              </span>
+                              {item.oldPrice && (
+                                <span className="text-gray-400 line-through text-sm">
+                                  {formatCurrency(item.oldPrice)}
+                                </span>
+                              )}
+                            </div>
+
+                            {ahorro && (
+                              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                                -{formatCurrency(ahorro)}
                               </span>
                             )}
                           </div>
-
-                          {ahorro && (
-                            <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
-                              -{formatCurrency(ahorro)}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
