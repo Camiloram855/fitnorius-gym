@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import PurchaseButton from "../components/ui/PurchaseButton";
 
@@ -48,9 +48,14 @@ function Button({ children, className = "", variant = "default" }) {
   return <button className={`${base} ${variants[variant]} ${className}`}>{children}</button>;
 }
 
-// ✅ Modal con carrusel
+// ✅ Modal con carrusel (reinicia correctamente)
 function ImageModal({ images, title, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Reinicia el índice cuando se abre un nuevo set de imágenes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [images]);
 
   if (!images || images.length === 0) return null;
 
@@ -62,19 +67,24 @@ function ImageModal({ images, title, onClose }) {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const handleClose = () => {
+    setCurrentIndex(0); // Reinicia al cerrar
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-fadeIn">
       {/* Fondo borroso */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300"
-        onClick={onClose}
+        onClick={handleClose}
       ></div>
 
       {/* Contenedor */}
       <div className="relative z-10 max-w-3xl w-[85%] md:w-[70%] animate-zoomIn">
         {/* Botón cerrar */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute -top-10 right-0 text-white hover:text-yellow-400 transition"
         >
           <X className="w-8 h-8" />
@@ -133,23 +143,34 @@ const styles = `
 }
 `;
 
+const kitImages = {
+  kit1: [
+    "img/imagen_uno.png",
+    "img/colchoneta.png",
+    "img/detalle-banda.png",
+    "img/tobilleras.png",
+    "img/mancuernas pintadas.png",
+  ],
+  kit2: ["img/imagen_dos.png", "img/detalle-banda.png", "img/pesas-pies.png"],
+  kit3: ["img/bandas-5.png", "img/detalle-banda.png"],
+};
+
 export function KitsSection() {
   const [selectedImages, setSelectedImages] = useState(null);
   const [selectedTitle, setSelectedTitle] = useState(null);
 
+  // ✅ Estructura de kits
   const kits = [
     {
       title: "Precio promo $199.900",
-      images: ["img/imagen_uno.png", "img/colchoneta.png", 
-      "img/detalle-banda.png", "img/tobilleras.png", 
-      "img/mancuernas pintadas.png"],
+      images: kitImages.kit1,
       features: [
         "colchoneta en Casata medidas 100cmx50cm x3 cm ",
         "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
         "Banda rosado 90 lb ",
         "Banda blanca 120 lb",
-        "Banda negra  150lb ",
+        "Banda negra 150lb ",
         "pesas tobilleras de 5 kilos, peso total, peso removible",
         "2 mancuernas en hierro de 5 libras cada una",
       ],
@@ -158,7 +179,7 @@ export function KitsSection() {
     },
     {
       title: "Precio $90.000",
-      images: ["img/imagen_dos.png", "img/detalle-banda.png" , "img/pesas-pies.png"],
+      images: kitImages.kit2,
       features: [
         "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
@@ -172,7 +193,7 @@ export function KitsSection() {
     },
     {
       title: "Precio $50.000",
-      images: ["img/bandas-5.png", "img/detalle-banda.png"],
+      images: kitImages.kit3,
       features: [
         "Set x3 bandas",
         "Bolsa de malla",
