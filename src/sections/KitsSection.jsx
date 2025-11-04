@@ -140,7 +140,9 @@ export function KitsSection() {
   const kits = [
     {
       title: "Precio promo $199.900",
-      images: ["img/imagen_uno.png", "img/detalle-banda.png"],
+      images: ["img/imagen_uno.png", "img/colchoneta.png", 
+      "img/detalle-banda.png", "img/tobilleras.png", 
+      "img/mancuernas pintadas.png"],
       features: [
         "colchoneta en Casata medidas 100cmx50cm x3 cm ",
         "Set x3 bandas de tela incluye:",
@@ -156,7 +158,7 @@ export function KitsSection() {
     },
     {
       title: "Precio $90.000",
-      images: ["img/imagen_dos.png", "img/detalle-banda.png"],
+      images: ["img/imagen_dos.png", "img/detalle-banda.png" , "img/pesas-pies.png"],
       features: [
         "Set x3 bandas de tela incluye:",
         "Bolsa de malla",
