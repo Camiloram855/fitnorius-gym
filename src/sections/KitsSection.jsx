@@ -210,7 +210,11 @@ export function KitsSection() {
     <>
       <style>{styles}</style>
 
-      <section className="relative py-20 bg-gradient-to-br from-purple-950 via-purple-900 to-black text-white">
+      {/* ✅ Aquí se agrega el id para el scroll */}
+      <section
+        id="kits-section"
+        className="relative py-20 bg-gradient-to-br from-purple-950 via-purple-900 to-black text-white"
+      >
         <div className="absolute inset-0 opacity-10 flex justify-center items-center">
           <img
             src="/img/LOGO2.png"

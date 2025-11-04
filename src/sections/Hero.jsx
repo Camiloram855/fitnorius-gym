@@ -9,6 +9,20 @@ import PurchaseButton from "../components/ui/PurchaseButton"
 export default function Hero() {
   const [isExpanded, setIsExpanded] = useState(false)
 
+  // Scroll directo al elemento con id "kits-section"
+  const handleScrollToKits = (offset = 0) => {
+    const el = document.getElementById("kits-section")
+    if (!el) return
+
+    // Si quieres un offset (por ejemplo navbar fijo), pon aquí el valor en px (ej: 80)
+    const top = el.getBoundingClientRect().top + window.pageYOffset - offset
+
+    window.scrollTo({
+      top,
+      behavior: "smooth",
+    })
+  }
+
   return (
     <section className="relative min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden">
       {/* Fondo decorativo */}
@@ -18,7 +32,7 @@ export default function Hero() {
         <div className="absolute top-1/2 left-1/4 w-12 sm:w-16 h-12 sm:h-16 border border-purple-300 rounded-full"></div>
       </div>
 
-      {/* Contenido principal CENTRADO */}
+      {/* Contenido principal */}
       <div className="relative z-10 flex flex-col justify-center items-center text-center w-full max-w-[1280px] px-6 py-12 sm:px-4 sm:py-16 mx-auto min-h-[80vh] space-y-8">
         
         {/* Logo */}
@@ -49,7 +63,7 @@ export default function Hero() {
           </h1>
         </div>
 
-        {/* Imagen debajo del título */}
+        {/* Imagen */}
         <div className="flex justify-center w-full">
           <div
             className="relative w-full max-w-[500px] rounded-lg overflow-hidden cursor-pointer"
@@ -95,14 +109,20 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Botón */}
+        {/* Botón con scroll suave directo */}
         <div className="w-full max-w-[400px] mx-auto">
-          <Button
-            size="lg"
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-5 sm:py-6 rounded-lg"
-          >
-            VER DETALLES DE BANDAS
-          </Button>
+        <Button
+          size="lg"
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg py-5 sm:py-6 rounded-lg"
+          onClick={() => {
+            const section = document.getElementById("kits-section");
+            if (section) {
+              section.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }}
+        >
+          VER DETALLES DE BANDAS
+        </Button>
         </div>
       </div>
 
