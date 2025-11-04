@@ -28,19 +28,6 @@ const ShippingSection = () => {
             <h3 className="text-2xl font-semibold text-purple-900 mb-4 text-center">
               Cobertura Nacional
             </h3>
-            <div className="relative w-full h-96 rounded-xl overflow-hidden shadow-lg mb-8">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4069757.8648235!2d-76.7729!3d4.5709!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e15a43aae1594a3%3A0x9a0b9a0b9a0b9a0b!2sColombia!5e0!3m2!1ses!2sco!4v1234567890123!5m2!1ses!2sco"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="rounded-xl"
-                title="Mapa de Colombia - Cobertura de envíos"
-              ></iframe>
-            </div>
 
             {/* Shipping Companies Logos */}
             <div className="flex flex-wrap justify-center items-center gap-10 mb-6">
@@ -50,7 +37,7 @@ const ShippingSection = () => {
                     key={index}
                     src={`/img/${img}`}
                     alt={img.replace(/\.(png|jpeg|jpg)/, "")}
-                    className="h-16 object-contain grayscale hover:grayscale-0 transition duration-300"
+                    className="h-16 object-contain transition duration-300"
                   />
                 )
               )}

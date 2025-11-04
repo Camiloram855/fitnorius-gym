@@ -3,6 +3,9 @@ export function PaymentMethods() {
     { name: "Mastercard", logo: "img/MasterCard_Logo.png" },
     { name: "Visa", logo: "img/visa.png" },
     { name: "Nequi", logo: "img/nequi.jpg" },
+    { name: "Visa", logo: "img/addi-3.png" },
+    { name: "Nequi", logo: "img/contra-entrega.png" },
+    { name: "Nequi", logo: "img/bold.png" },
   ];
 
   return (
