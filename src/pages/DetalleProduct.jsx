@@ -230,6 +230,7 @@ function ProductDetailContent({
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-gray-950 py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
+        <br></br><br></br>
         <button
           onClick={() => window.history.back()}
           className="mb-6 px-5 py-2 bg-purple-700/30 hover:bg-purple-700/50 text-white rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/50"
