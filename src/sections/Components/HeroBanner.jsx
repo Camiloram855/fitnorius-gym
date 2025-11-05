@@ -2,57 +2,94 @@
 import { useState, useEffect } from "react";
 import SearchSection from "./SearchSection";
 import CategoryCarousel from "./CategoryCarousel";
-import { useAuth } from "../../pages/AuthContext"; // ✅ Importamos el contexto de autenticación
+import { useAuth } from "../../pages/AuthContext"; // ✅ Contexto de autenticación
 
 export default function HeroBanner({ image }) {
   const [bannerImage, setBannerImage] = useState(image || null);
   const [preview, setPreview] = useState(null);
-  const { isAdmin } = useAuth(); // ✅ Saber si el usuario es administrador
+  const { isAdmin } = useAuth();
 
-  // 🔄 Cargar imagen guardada si existe
+  // ✅ Cargar imagen desde el backend al iniciar
   useEffect(() => {
-    const savedImage = localStorage.getItem("bannerImage");
-    if (savedImage) {
-      setBannerImage(savedImage);
-    }
-  }, []);
+    const fetchBanner = async () => {
+      try {
+        const res = await fetch("https://tu-backend.fitnorius.com/api/banner"); // 🔁 Ajusta la URL base a tu backend
+        if (!res.ok) throw new Error("Error al cargar banner");
+        const data = await res.json();
 
-  // 📸 Manejar imagen subida
-  const handleBannerUpload = (e) => {
+        if (data && data.imageUrl) {
+          setBannerImage(data.imageUrl);
+        } else {
+          // Si no hay banner en la BD, carga el predeterminado
+          setBannerImage(image || null);
+        }
+      } catch (err) {
+        console.error("❌ Error al obtener banner:", err);
+        setBannerImage(image || null);
+      }
+    };
+
+    fetchBanner();
+  }, [image]);
+
+  // 📸 Subir nuevo banner al backend
+  const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerImage(reader.result);
-        setPreview(reader.result);
-        localStorage.setItem("bannerImage", reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      // 🔁 Llamada a tu backend para subir la imagen
+      const res = await fetch("https://tu-backend.fitnorius.com/api/banner/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Error al subir el banner");
+
+      const data = await res.json();
+      if (data.imageUrl) {
+        setBannerImage(data.imageUrl);
+        setPreview(data.imageUrl);
+        localStorage.setItem("bannerImage", data.imageUrl);
+      }
+    } catch (err) {
+      console.error("❌ Error al subir banner:", err);
     }
   };
 
   // 🔙 Restablecer al banner original
-  const handleResetBanner = () => {
-    localStorage.removeItem("bannerImage");
-    setBannerImage(image || null);
-    setPreview(null);
+  const handleResetBanner = async () => {
+    try {
+      await fetch("https://tu-backend.fitnorius.com/api/banner/reset", {
+        method: "DELETE",
+      });
+
+      localStorage.removeItem("bannerImage");
+      setBannerImage(image || null);
+      setPreview(null);
+    } catch (err) {
+      console.error("❌ Error al restablecer banner:", err);
+    }
   };
 
   return (
     <section className="relative overflow-hidden">
-      {/* Background con imagen */}
+      {/* Fondo principal */}
       <div
         className="relative min-h-[500px] md:min-h-[600px] flex flex-col justify-center"
         style={{
-          backgroundImage: `url(${bannerImage || image})`,
+          backgroundImage: `url(${preview || bannerImage || image})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
-        {/* Capa de gradiente diagonal */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-black-900 to-black text-white"></div>
+        {/* Capa de gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-black to-black opacity-60"></div>
 
-        {/* Contenedor principal */}
+        {/* Contenido */}
         <div className="relative z-10 w-full text-center">
           <img
             src={preview || bannerImage || "../img/Banner.png"}
@@ -60,7 +97,7 @@ export default function HeroBanner({ image }) {
             className="w-full"
           />
 
-          {/* 🔒 Solo visible para administradores */}
+          {/* Solo visible para admin */}
           {isAdmin && (
             <div className="absolute top-5 right-5 z-20 flex gap-2">
               <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
