@@ -241,9 +241,8 @@ function ProductDetailContent({
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-purple-800/40 p-6 sm:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10">
             {/* Imagen principal */}
-            {/* Imagen principal */}
             <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-full aspect-square bg-white rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60 flex items-center justify-center">
+              <div className="relative w-full aspect-square bg-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60">
                 <img
                   src={
                     isEditing && formData.image
@@ -251,7 +250,7 @@ function ProductDetailContent({
                       : product.images[selectedImageIndex]
                   }
                   alt={product.name}
-                  className="w-full h-full object-contain transition-all duration-300"
+                  className="w-full h-full object-contain sm:object-cover transition-all duration-300"
                 />
               </div>
               {isEditing && (
@@ -263,6 +262,7 @@ function ProductDetailContent({
                 />
               )}
             </div>
+
             {/* Información */}
             <div className="flex flex-col justify-center space-y-6">
               {isEditing ? (
