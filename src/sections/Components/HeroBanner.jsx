@@ -84,13 +84,14 @@ export default function HeroBanner({ image }) {
   return (
     <>
       {/* 🖼️ Banner principal */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden w-full">
         <div
-          className="relative min-h-[500px] md:min-h-[600px] flex flex-col justify-center"
+          className="relative flex flex-col justify-center min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[650px] w-full"
           style={{
             backgroundImage: `url(${preview || bannerImage || image})`,
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center center",
           }}
         >
           {/* 🌈 Capa de gradiente morado */}
@@ -130,7 +131,7 @@ export default function HeroBanner({ image }) {
       </section>
 
       {/* 🔽 Secciones debajo del banner */}
-      <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black "> 
+      <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black">
         <div className="max-w-7xl mx-auto px-4">
           <SearchSection />
           <div className="mt-8">

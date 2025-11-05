@@ -241,9 +241,8 @@ function ProductDetailContent({
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-purple-800/40 p-6 sm:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10">
             {/* Imagen principal */}
-            {/* Imagen principal */}
             <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-full aspect-square bg-white rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60 flex items-center justify-center">
+              <div className="relative w-full aspect-square bg-black rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/60 flex items-center justify-center">
                 <img
                   src={
                     isEditing && formData.image
@@ -251,7 +250,8 @@ function ProductDetailContent({
                       : product.images[selectedImageIndex]
                   }
                   alt={product.name}
-                  className="w-full h-full object-contain transition-all duration-300"
+                  className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                  onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
               {isEditing && (
@@ -395,17 +395,13 @@ function ProductDetailContent({
                 const hasPromo =
                   item.oldPrice && Number(item.price) < Number(item.oldPrice);
                 const ahorro = hasPromo
-                  ? (
-                      Number(item.oldPrice) - Number(item.price)
-                    ).toFixed(2)
+                  ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
                   : null;
 
                 const imgSrc = item.imageUrl
                   ? item.imageUrl.startsWith("http")
                     ? item.imageUrl
-                    : `${API_URL}${
-                        item.imageUrl.startsWith("/") ? "" : "/"
-                      }${item.imageUrl}`
+                    : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${item.imageUrl}`
                   : "/img/default.jpg";
 
                 return (
@@ -413,7 +409,6 @@ function ProductDetailContent({
                     key={item.id}
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
-                      // ✅ Scroll instantáneo con refuerzos
                       const scrollToTop = () =>
                         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
                       setTimeout(scrollToTop, 50);
@@ -423,11 +418,13 @@ function ProductDetailContent({
                     className="block w-full max-w-[250px] mx-auto cursor-pointer"
                   >
                     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col">
-                      <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group">
+                      
+                      {/* 🔥 Imagen optimizada sin barras blancas */}
+                      <div className="relative w-full h-[240px] sm:h-[260px] md:h-[280px] lg:h-[320px] overflow-hidden rounded-t-xl block group bg-black">
                         <img
                           src={imgSrc}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => (e.target.src = "/img/default.jpg")}
                         />
                         {hasPromo && (

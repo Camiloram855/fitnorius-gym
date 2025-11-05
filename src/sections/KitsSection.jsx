@@ -210,7 +210,7 @@ export function KitsSection() {
     <>
       <style>{styles}</style>
 
-      {/* ✅ Aquí se agrega el id para el scroll */}
+      {/* id para el scroll */}
       <section
         id="kits-section"
         className="relative py-20 bg-gradient-to-br from-purple-950 via-purple-900 to-black text-white"
@@ -294,7 +294,7 @@ export function KitsSection() {
         <PurchaseButton />
         <br />
 
-        {/* ✅ Carga diferida del catálogo */}
+        {/*Carga diferida del catálogo */}
         <Suspense fallback={<div className="text-white text-center">Cargando catálogo...</div>}>
           <CatalogSection />
         </Suspense>
