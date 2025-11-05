@@ -9,10 +9,11 @@ export default function HeroBanner({ image }) {
   const [preview, setPreview] = useState(null);
   const { isAdmin } = useAuth();
 
+  // 🌍 URL base del backend (usa variable de entorno si existe)
   const API_URL =
     import.meta.env.VITE_API_URL || "https://fitnorius-production.up.railway.app";
 
-  // ✅ Cargar imagen desde el backend
+  // ✅ Cargar imagen desde el backend al iniciar
   useEffect(() => {
     const fetchBanner = async () => {
       try {
@@ -21,6 +22,7 @@ export default function HeroBanner({ image }) {
         const data = await res.json();
 
         if (data && data.imageUrl) {
+          // 🧩 Si la URL es relativa, la completamos con el dominio del backend
           const fullUrl = data.imageUrl.startsWith("http")
             ? data.imageUrl
             : `${API_URL}${data.imageUrl}`;
@@ -33,10 +35,11 @@ export default function HeroBanner({ image }) {
         setBannerImage(image || null);
       }
     };
+
     fetchBanner();
   }, [image, API_URL]);
 
-  // 📸 Subir nuevo banner
+  // 📸 Subir nuevo banner al backend
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -55,9 +58,11 @@ export default function HeroBanner({ image }) {
       const data = await res.json();
 
       if (data.imageUrl) {
+        // 🧩 También ajustamos la URL al formato completo
         const fullUrl = data.imageUrl.startsWith("http")
           ? data.imageUrl
           : `${API_URL}${data.imageUrl}`;
+
         setBannerImage(fullUrl);
         setPreview(fullUrl);
         localStorage.setItem("bannerImage", fullUrl);
@@ -67,12 +72,13 @@ export default function HeroBanner({ image }) {
     }
   };
 
-  // 🔙 Restablecer banner original
+  // 🔙 Restablecer al banner original
   const handleResetBanner = async () => {
     try {
       await fetch(`${API_URL}/api/banner/reset`, {
         method: "DELETE",
       });
+
       localStorage.removeItem("bannerImage");
       setBannerImage(image || null);
       setPreview(null);
@@ -93,17 +99,17 @@ export default function HeroBanner({ image }) {
             backgroundPosition: "center",
           }}
         >
-          {/* 🌈 Capa de gradiente morado */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-black-900 to-black opacity-0"></div>
+          {/* Capa de gradiente */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-black to-black opacity-60"></div>
 
-          {/* Imagen de fondo (oculta, solo soporte visual) */}
+          {/* Imagen de fondo (por compatibilidad visual) */}
           <img
             src={preview || bannerImage || "../img/Banner.png"}
             alt="Banner de oferta"
             className="w-full h-full object-cover opacity-0"
           />
 
-          {/* 🎛️ Botones solo para admin */}
+          {/* Botones solo para admin */}
           {isAdmin && (
             <div className="absolute top-5 right-5 z-20 flex gap-2">
               <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
@@ -130,14 +136,10 @@ export default function HeroBanner({ image }) {
       </section>
 
       {/* 🔽 Secciones debajo del banner */}
-      <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black "> 
-        <div className="max-w-7xl mx-auto px-4">
-          <SearchSection />
-          <div className="mt-8">
-            <CategoryCarousel />
-          </div>
-        </div>
-      </section>
+      <div className="relative z-10 bg-black">
+        <SearchSection />
+        <CategoryCarousel />
+      </div>
     </>
   );
 }
