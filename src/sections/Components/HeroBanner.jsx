@@ -9,18 +9,21 @@ export default function HeroBanner({ image }) {
   const [preview, setPreview] = useState(null);
   const { isAdmin } = useAuth();
 
+  // 🌍 URL base del backend (usa variable de entorno si existe)
+  const API_URL =
+    import.meta.env.VITE_API_URL || "https://fitnorius-production.up.railway.app";
+
   // ✅ Cargar imagen desde el backend al iniciar
   useEffect(() => {
     const fetchBanner = async () => {
       try {
-        const res = await fetch("https://tu-backend.fitnorius.com/api/banner"); // 🔁 Ajusta la URL base a tu backend
+        const res = await fetch(`${API_URL}/api/banner`);
         if (!res.ok) throw new Error("Error al cargar banner");
         const data = await res.json();
 
         if (data && data.imageUrl) {
           setBannerImage(data.imageUrl);
         } else {
-          // Si no hay banner en la BD, carga el predeterminado
           setBannerImage(image || null);
         }
       } catch (err) {
@@ -30,7 +33,7 @@ export default function HeroBanner({ image }) {
     };
 
     fetchBanner();
-  }, [image]);
+  }, [image, API_URL]);
 
   // 📸 Subir nuevo banner al backend
   const handleBannerUpload = async (e) => {
@@ -41,8 +44,7 @@ export default function HeroBanner({ image }) {
     formData.append("file", file);
 
     try {
-      // 🔁 Llamada a tu backend para subir la imagen
-      const res = await fetch("https://tu-backend.fitnorius.com/api/banner/upload", {
+      const res = await fetch(`${API_URL}/api/banner/upload`, {
         method: "POST",
         body: formData,
       });
@@ -63,7 +65,7 @@ export default function HeroBanner({ image }) {
   // 🔙 Restablecer al banner original
   const handleResetBanner = async () => {
     try {
-      await fetch("https://tu-backend.fitnorius.com/api/banner/reset", {
+      await fetch(`${API_URL}/api/banner/reset`, {
         method: "DELETE",
       });
 
