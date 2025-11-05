@@ -250,7 +250,7 @@ function ProductDetailContent({
                       : product.images[selectedImageIndex]
                   }
                   alt={product.name}
-                  className="w-full h-full object-contain sm:object-cover transition-all duration-300"
+                  className="w-full h-full object-contain transition-all duration-300"
                 />
               </div>
               {isEditing && (
@@ -316,10 +316,10 @@ function ProductDetailContent({
                 </>
               ) : (
                 <>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white text-center lg:text-left">
                     {product.name}
                   </h1>
-                  <div className="flex flex-wrap items-baseline gap-3">
+                  <div className="flex flex-wrap items-baseline gap-3 justify-center lg:justify-start">
                     <span className="text-4xl sm:text-5xl font-bold text-purple-400">
                       {formatCurrency(product.price)}
                     </span>
@@ -330,11 +330,11 @@ function ProductDetailContent({
                     )}
                   </div>
                   {savings > 0 && (
-                    <p className="text-green-400 font-semibold text-lg">
+                    <p className="text-green-400 font-semibold text-lg text-center lg:text-left">
                       ¡Ahorras {formatCurrency(savings)}!
                     </p>
                   )}
-                  <p className="text-gray-200">{product.description}</p>
+                  <p className="text-gray-200 text-center lg:text-left">{product.description}</p>
 
                   {isAdmin && (
                     <button
@@ -349,7 +349,7 @@ function ProductDetailContent({
 
               {!isEditing && (
                 <>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 justify-center lg:justify-start">
                     <button
                       onClick={() => handleQuantityChange(-1)}
                       className="px-4 py-2 bg-white/10 text-white rounded-lg"
@@ -413,7 +413,6 @@ function ProductDetailContent({
                     key={item.id}
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
-                      // ✅ Scroll instantáneo con refuerzos
                       const scrollToTop = () =>
                         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
                       setTimeout(scrollToTop, 50);
@@ -423,11 +422,11 @@ function ProductDetailContent({
                     className="block w-full max-w-[250px] mx-auto cursor-pointer"
                   >
                     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col">
-                      <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group">
+                      <div className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group bg-white">
                         <img
                           src={imgSrc}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => (e.target.src = "/img/default.jpg")}
                         />
                         {hasPromo && (
@@ -440,12 +439,12 @@ function ProductDetailContent({
                       </div>
 
                       <div className="p-4 flex flex-col flex-1 justify-between">
-                        <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
+                        <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1 text-center">
                           {item.name}
                         </h3>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
+                        <div className="flex items-center justify-center flex-col">
+                          <div className="flex flex-col items-center">
                             <span className="text-green-600 font-bold text-lg">
                               {formatCurrency(item.price)}
                             </span>
@@ -457,7 +456,7 @@ function ProductDetailContent({
                           </div>
 
                           {ahorro && (
-                            <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                            <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full mt-2">
                               -{formatCurrency(ahorro)}
                             </span>
                           )}
