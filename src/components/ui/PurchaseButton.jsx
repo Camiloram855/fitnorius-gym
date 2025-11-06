@@ -19,7 +19,7 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
-  // 🌍 Detecta automáticamente entorno local o Railway
+  // 🌍 Detectar entorno
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -32,7 +32,7 @@ const PurchaseButton = () => {
     document.body.classList.toggle("overflow-hidden", isModalOpen);
   }, [isModalOpen]);
 
-  // 🧩 Cargar productos desde el backend (ruta /api/productos)
+  // 🧩 Cargar productos desde backend
   useEffect(() => {
     const fetchProductos = async () => {
       try {
@@ -57,7 +57,7 @@ const PurchaseButton = () => {
     fetchProductos();
   }, [API_BASE_URL]);
 
-  // Manejar inputs del formulario
+  // Manejar inputs
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -80,9 +80,14 @@ const PurchaseButton = () => {
     }
   }, [selectedExtras, productos]);
 
-  // 🧾 Enviar orden al backend
+  // 🧾 Enviar orden
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (selectedExtras.length === 0) {
+      alert("Por favor selecciona al menos un producto.");
+      return;
+    }
 
     const orderRequest = {
       nombre: formData.nombre,
@@ -117,31 +122,36 @@ const PurchaseButton = () => {
       // 🟢 Generar mensaje de WhatsApp
       const productosSeleccionados = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
-        .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
-        .join("\n");
+        .map((p) => `• ${p.nombre} ($${p.precio.toLocaleString()})`)
+        .join("%0A");
 
       const mensaje = `
-🤩 *Nueva Orden de Compra*
-
-👤 Cliente: ${formData.nombre} ${formData.apellido}
-📞 Teléfono: ${formData.telefono}
-✉️ Correo: ${formData.correo}
-
-🏠 Dirección: ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}
-🏢 Torre/Apto: ${formData.torre || "N/A"}
-🗒️ Comentario: ${formData.comentario || "N/A"}
-
-🛒 *Productos:*
-${productosSeleccionados}
-
+🤩 *Nueva Orden de Compra*%0A%0A
+👤 *Cliente:* ${formData.nombre} ${formData.apellido}%0A
+📞 *Teléfono:* ${formData.telefono}%0A
+✉️ *Correo:* ${formData.correo}%0A%0A
+🏠 *Dirección:* ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}%0A
+🏢 *Torre/Apto:* ${formData.torre || "N/A"}%0A
+🗒️ *Comentario:* ${formData.comentario || "N/A"}%0A%0A
+🛒 *Productos:*%0A${productosSeleccionados}%0A%0A
 💰 *Total:* $${total.toLocaleString()}
       `.trim();
 
       const numero = "573043317223";
-      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+      const url = `https://wa.me/${numero}?text=${mensaje}`;
 
-      alert("¡Compra realizada con éxito!");
+      // ⚙️ Compatibilidad avanzada con iPhone / Android / Escritorio
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      if (isIOS) {
+        // En iOS, window.open puede ser bloqueado, usar redirección directa
+        window.location.href = url;
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
+      alert("✅ ¡Compra realizada con éxito!");
       closeModal();
     } catch (err) {
       console.error("❌ Error registrando orden:", err);

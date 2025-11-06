@@ -6,7 +6,7 @@ const PurchaseButton = () => {
   const [productos, setProductos] = useState([]);
   const [selectedExtras, setSelectedExtras] = useState([]);
   const [selectedDepartamento, setSelectedDepartamento] = useState("");
-  const [total, setTotal] = useState(0); // 👈 estado para el total
+  const [total, setTotal] = useState(0);
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -19,44 +19,50 @@ const PurchaseButton = () => {
     comentario: "",
   });
 
+  // 🌍 Detecta automáticamente entorno local o Railway
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:8080";
+
   // Abrir / cerrar modal
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   // Bloquear scroll cuando el modal está abierto
   useEffect(() => {
-    if (isModalOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-    }
+    document.body.classList.toggle("overflow-hidden", isModalOpen);
   }, [isModalOpen]);
 
-  // Traer productos del backend
+  // 🧩 Cargar productos desde el backend (ruta /api/productos)
   useEffect(() => {
-    fetch("http://localhost:8080/api/productos")
-      .then((res) => {
+    const fetchProductos = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/productos`);
         if (!res.ok) throw new Error("Error al obtener productos");
-        return res.json();
-      })
-      .then((data) => {
+
+        const data = await res.json();
         const productosConNumeros = data.map((p) => ({
           ...p,
-          idProducto: Number(p.idProducto),
+          idProducto: Number(p.idProducto || p.id),
           precio: Number(p.precio) || 0,
+          nombre: p.nombre || p.name || "Producto sin nombre",
         }));
-        console.log("Productos desde backend ✅:", productosConNumeros);
+
+        console.log("✅ Productos cargados:", productosConNumeros);
         setProductos(productosConNumeros);
-      })
-      .catch((err) => console.error("Error cargando productos:", err));
-  }, []);
+      } catch (err) {
+        console.error("❌ Error cargando productos:", err);
+      }
+    };
+
+    fetchProductos();
+  }, [API_BASE_URL]);
 
   // Manejar inputs del formulario
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Toggle productos (solo actualiza selectedExtras)
+  // Seleccionar/deseleccionar productos
   const toggleExtra = (idProducto) => {
     const id = Number(idProducto);
     setSelectedExtras((prev) =>
@@ -64,22 +70,18 @@ const PurchaseButton = () => {
     );
   };
 
-  // Calcular total en tiempo real
+  // Calcular total dinámico
   useEffect(() => {
-    console.log("🔥 selectedExtras:", selectedExtras);
-    console.log("🔥 productos:", productos);
     if (productos.length > 0) {
       const nuevoTotal = productos
         .filter((p) => selectedExtras.includes(p.idProducto))
         .reduce((sum, p) => sum + (p.precio || 0), 0);
-
-      console.log("Extras seleccionados:", selectedExtras, "Total:", nuevoTotal); // ✅ Debug
       setTotal(nuevoTotal);
     }
   }, [selectedExtras, productos]);
 
-  // Enviar orden al backend
-  const handleSubmit = (e) => {
+  // 🧾 Enviar orden al backend
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const orderRequest = {
@@ -100,52 +102,51 @@ const PurchaseButton = () => {
       total: total,
     };
 
-    fetch("http://localhost:8080/api/ordenes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderRequest),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al registrar orden");
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Orden registrada ✅:", data);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/ordenes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderRequest),
+      });
 
-        // 🔥 Armar mensaje de WhatsApp
-        const productosSeleccionados = productos
-          .filter((p) => selectedExtras.includes(p.idProducto))
-          .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
-          .join("\n");
+      if (!res.ok) throw new Error("Error al registrar la orden");
+
+      const data = await res.json();
+      console.log("✅ Orden registrada:", data);
+
+      // 🟢 Generar mensaje de WhatsApp
+      const productosSeleccionados = productos
+        .filter((p) => selectedExtras.includes(p.idProducto))
+        .map((p) => `- ${p.nombre} ($${p.precio.toLocaleString()})`)
+        .join("\n");
 
       const mensaje = `
-      🤩 *Nueva Orden de Compra*
+🤩 *Nueva Orden de Compra*
 
-      👤 Cliente: ${formData.nombre} ${formData.apellido}
-      📞 Teléfono: ${formData.telefono}
-      ✉️ Correo: ${formData.correo}
+👤 Cliente: ${formData.nombre} ${formData.apellido}
+📞 Teléfono: ${formData.telefono}
+✉️ Correo: ${formData.correo}
 
-      🏠 Dirección: ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}
-      🏢 Torre/Apto: ${formData.torre || "N/A"}
-      🗒️ Comentario: ${formData.comentario || "N/A"}
+🏠 Dirección: ${formData.direccion}, ${formData.barrio}, ${formData.ciudad}, ${selectedDepartamento}
+🏢 Torre/Apto: ${formData.torre || "N/A"}
+🗒️ Comentario: ${formData.comentario || "N/A"}
 
-      🛒 *Productos:*
-      ${productosSeleccionados}
+🛒 *Productos:*
+${productosSeleccionados}
 
-      💰 *Total:* $${total.toLocaleString()}
-              `.trim();
+💰 *Total:* $${total.toLocaleString()}
+      `.trim();
 
-        const numero = "573043317223"; // 👈 número con prefijo Colombia (+57)
-        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, "_blank"); // abrir WhatsApp Web / App
+      const numero = "573043317223";
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
 
-        alert("¡Compra realizada con éxito!");
-        closeModal();
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Hubo un problema al registrar la orden.");
-      });
+      alert("¡Compra realizada con éxito!");
+      closeModal();
+    } catch (err) {
+      console.error("❌ Error registrando orden:", err);
+      alert("Hubo un problema al registrar la orden.");
+    }
   };
 
   return (
@@ -192,7 +193,7 @@ const PurchaseButton = () => {
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-black">
-              {/* Datos cliente */}
+              {/* Campos personales */}
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -211,6 +212,7 @@ const PurchaseButton = () => {
                   className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
+
               <input
                 type="tel"
                 name="telefono"
@@ -227,6 +229,7 @@ const PurchaseButton = () => {
                 placeholder="tu@email.com"
                 className="w-full px-3 py-2 border rounded-lg"
               />
+
               <select
                 required
                 value={selectedDepartamento}
@@ -250,6 +253,7 @@ const PurchaseButton = () => {
                   </option>
                 ))}
               </select>
+
               <input
                 type="text"
                 name="ciudad"
@@ -289,7 +293,7 @@ const PurchaseButton = () => {
                 className="w-full px-3 py-2 border rounded-lg"
               ></textarea>
 
-              {/* Productos dinámicos */}
+              {/* Productos */}
               <div>
                 <h3 className="text-lg font-bold text-purple-700 mb-2">
                   Selecciona tus productos:
@@ -302,8 +306,8 @@ const PurchaseButton = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={selectedExtras.includes(Number(p.idProducto))}
-                        onChange={() => toggleExtra(Number(p.idProducto))}
+                        checked={selectedExtras.includes(p.idProducto)}
+                        onChange={() => toggleExtra(p.idProducto)}
                         className="w-5 h-5 border-2 border-black"
                       />
                       <div className="flex-1">
@@ -319,12 +323,10 @@ const PurchaseButton = () => {
                 </div>
               </div>
 
-              {/* Total */}
               <div className="text-right font-bold text-lg text-purple-800">
                 Total: ${total.toLocaleString()}
-              </div >
+              </div>
 
-              {/* Botón Confirmar */}
               <button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg mt-6"
