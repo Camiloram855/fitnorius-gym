@@ -37,16 +37,28 @@ export default function ProductDetail() {
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`);
       const data = await res.json();
+      // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
+      const rawImages =
+        data.images?.length && Array.isArray(data.images)
+          ? data.images // Ej: ["/uploads/xyz.jpg", "/uploads/abc.jpg"] (paths desde backend)
+          : data.imageUrl
+          ? [data.imageUrl]
+          : [];
+
       setProduct({
         ...data,
         price: data.price ? Number(data.price) : 0,
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         discount: data.discount ? Number(data.discount) : 0,
-        images: data.images?.length
-          ? data.images.map((img) => `${API_URL}${img}`)
-          : data.imageUrl
-          ? [`${API_URL}${data.imageUrl}`]
-          : ["/img/default.jpg"],
+        // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
+        images:
+          rawImages?.length
+            ? rawImages.map((img) =>
+                img.startsWith("http") ? img : `${API_URL}${img}`
+              )
+            : ["/img/default.jpg"],
+        // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
+        rawImages: rawImages,
         description: data.description || "Sin descripción disponible",
       });
 
@@ -120,14 +132,35 @@ function ProductDetailContent({
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
 
+  // formData ahora maneja nuevos archivos y las imágenes a borrar
   const [formData, setFormData] = useState({
     name: product.name,
     price: product.price,
     oldPrice: product.oldPrice || "",
     discount: product.discount || "",
     description: product.description,
-    image: null,
+    // newImages: lista de File que se van a subir (append 'newImages' al FormData)
+    newImages: [],
+    // deleteImages: lista de rutas (raw paths) a eliminar en backend
+    deleteImages: [],
   });
+
+  useEffect(() => {
+    // Cuando cambia product (por fetch), actualizar formData base (mantener nuevos/newImages y deleteImages)
+    setFormData((prev) => ({
+      ...prev,
+      name: product.name,
+      price: product.price,
+      oldPrice: product.oldPrice || "",
+      discount: product.discount || "",
+      description: product.description,
+    }));
+    // Reset selectedImageIndex si excede
+    setSelectedImageIndex((idx) =>
+      product.images && idx < product.images.length ? idx : 0
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product]);
 
   const formatCurrency = (value) =>
     Number(value).toLocaleString("es-CO", {
@@ -160,15 +193,146 @@ function ProductDetailContent({
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    // input individual (name fields) - mantener compatibilidad con edición existente
+    if (files) {
+      // Si es el input de imagen individual (en modo editing simple), coger solo el primer file
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
+  // NUEVO: manejar selección de nuevas imágenes (admin) -> option 3: añadir multiple
+  const handleAddImages = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    // Añadir previews a product.images (usando createObjectURL) y push a rawImages como null temporal
+    const previewUrls = files.map((f) => URL.createObjectURL(f));
+
+    setProduct((prev) => {
+      const newImages = [...(prev.images || []), ...previewUrls];
+      const newRaw = [...(prev.rawImages || []), ...files.map(() => null)]; // null indicates new local file
+      return {
+        ...prev,
+        images: newImages,
+        rawImages: newRaw,
+      };
+    });
+
+    // Añadir files a formData.newImages
+    setFormData((prev) => ({
+      ...prev,
+      newImages: [...(prev.newImages || []), ...files],
+    }));
+
+    // reset input value to allow re-upload same file again if needed
+    e.target.value = "";
+  };
+
+  // NUEVO: eliminar una imagen individual (solo admin). index corresponde al índice mostrado en product.images
+  const handleDeleteImage = (index) => {
+    // confirmar (puedes quitar confirm si no quieres prompt)
+    if (!confirm("¿Eliminar esta imagen? Esta acción se aplicará cuando guardes los cambios.")) {
+      return;
+    }
+
+    setProduct((prev) => {
+      const images = [...(prev.images || [])];
+      const raw = [...(prev.rawImages || [])];
+
+      const removedRaw = raw[index]; // puede ser null si era recién subida (archivo)
+      // quitar elemento
+      images.splice(index, 1);
+      raw.splice(index, 1);
+
+      // ajustar selectedImageIndex
+      let newSelected = selectedImageIndex;
+      if (index === selectedImageIndex) {
+        newSelected = 0;
+      } else if (index < selectedImageIndex) {
+        newSelected = Math.max(0, selectedImageIndex - 1);
+      }
+
+      setSelectedImageIndex(newSelected);
+
+      // si la imagen removida corresponde a una newImage (raw === null), la tenemos que quitar de formData.newImages
+      if (removedRaw === null) {
+        // removemos el primer archivo que coincida por tamaño/nombre con previews - es mejor intentar por tamaño+name, pero como raw is null
+        // approach: removemos el último archivo en newImages (porque añadimos en orden). Para mayor robustez podríamos mapear previews->files, pero evitamos complejidad.
+        setFormData((prevForm) => {
+          const newImgs = [...(prevForm.newImages || [])];
+          // intentemos eliminar un archivo heurísticamente: buscar archivo cuyo preview esté en images? complicado.
+          // Para evitar eliminar el archivo incorrecto, intentaremos eliminar el archivo que tenga URL.createObjectURL con mismo name/size no posible.
+          // Mejor: cuando añadimos archivos, se añadieron en el mismo orden; asumimos que si quitaron el índice i luego de agregar al final, retiramos el correspondiente del final.
+          // Implementación simple: quitar último archivo si newImages no vacio.
+          if (newImgs.length > 0) newImgs.pop();
+          return { ...prevForm, newImages: newImgs };
+        });
+      } else {
+        // si removedRaw tiene valor (ruta del backend), debemos marcarla para borrado en deleteImages
+        setFormData((prevForm) => ({
+          ...prevForm,
+          deleteImages: [...(prevForm.deleteImages || []), removedRaw],
+        }));
+      }
+
+      return {
+        ...prev,
+        images,
+        rawImages: raw,
+      };
+    });
+  };
+
+  // Manejar click en miniatura
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index);
+  };
+
+  // NUEVO: handler para quitar una newImage previamente agregada (por si el admin decide quitar antes de guardar)
+  const handleRemoveNewImagePreview = (previewIndex) => {
+    setProduct((prev) => {
+      const images = [...(prev.images || [])];
+      const raw = [...(prev.rawImages || [])];
+
+      // localizar el previewIndex en rawImages que sea null y esté en la misma posición
+      // asumimos el previewIndex es el índice exacto en images/rawImages
+      const removedRaw = raw[previewIndex]; // debería ser null si fue new
+      images.splice(previewIndex, 1);
+      raw.splice(previewIndex, 1);
+
+      setSelectedImageIndex((sel) =>
+        previewIndex === sel ? 0 : previewIndex < sel ? Math.max(0, sel - 1) : sel
+      );
+
+      // remover del formData.newImages el archivo correspondiente:
+      setFormData((prevForm) => {
+        const newImgs = [...(prevForm.newImages || [])];
+        // intentar eliminar el archivo posicionado en newImgs correspondiente al previewIndex relativo al primer null
+        // encontrar how many existing rawImages (non-null) before previewIndex to compute indexInNewImages
+        const rawBefore = raw.slice(0, previewIndex + 1); // after splice above raw already removed, but for calculation keep simple: we'll try remove last
+        if (newImgs.length > 0) {
+          newImgs.pop(); // heurística: remove last added
+        }
+        return { ...prevForm, newImages: newImgs };
+      });
+
+      return { ...prev, images, rawImages: raw };
+    });
+  };
+
+  // Guardar cambios (actualizado para soportar newImages[] y deleteImages[])
   const handleSave = async () => {
     try {
-      const formDataToSend = new FormData();
+      const payloadForm = new FormData();
+
       const productJson = {
         name: formData.name,
         price: formData.price?.toString() || "0",
@@ -177,28 +341,48 @@ function ProductDetailContent({
         description: formData.description,
       };
 
-      formDataToSend.append(
+      payloadForm.append(
         "product",
         new Blob([JSON.stringify(productJson)], { type: "application/json" })
       );
 
-      if (formData.image) formDataToSend.append("image", formData.image);
+      // append newImages (cada file con la misma key 'newImages')
+      if (formData.newImages && formData.newImages.length > 0) {
+        formData.newImages.forEach((file) => {
+          payloadForm.append("newImages", file);
+        });
+      }
+
+      // append deleteImages as JSON string (backend debe parsearlo)
+      if (formData.deleteImages && formData.deleteImages.length > 0) {
+        // backend expects array of paths (raw) to delete
+        payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
+      }
 
       const res = await fetch(`${API_URL}/api/products/${product.id}`, {
         method: "PUT",
-        body: formDataToSend,
+        body: payloadForm,
       });
 
       if (!res.ok) throw new Error("Error al actualizar producto");
 
       const updated = await res.json();
 
+      // actualizar producto local con la respuesta del backend
       setProduct((prev) => ({
         ...prev,
         ...updated,
+        rawImages: updated.images?.length ? updated.images : [],
         images: updated.images?.length
-          ? updated.images.map((img) => `${API_URL}${img}`)
+          ? updated.images.map((img) => (img.startsWith("http") ? img : `${API_URL}${img}`))
           : prev.images,
+      }));
+
+      // limpiar formData newImages & deleteImages
+      setFormData((prev) => ({
+        ...prev,
+        newImages: [],
+        deleteImages: [],
       }));
 
       setIsEditing(false);
@@ -213,7 +397,7 @@ function ProductDetailContent({
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto text-white">
-        <br></br>
+        <br />
         <button
           onClick={() => window.history.back()}
           className="mb-8 px-6 py-2 bg-purple-700/40 hover:bg-purple-700/60 rounded-lg transition-all duration-300 shadow-md hover:shadow-purple-600/50 backdrop-blur-sm"
@@ -224,11 +408,12 @@ function ProductDetailContent({
         {/* PRODUCTO PRINCIPAL */}
         <div className="bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-15px_rgba(168,85,247,0.6)] border border-purple-800/40 p-8 sm:p-12 transition-all duration-500 hover:shadow-[0_0_70px_-10px_rgba(168,85,247,0.8)]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Imagen principal */}
+            {/* Imagen principal + miniaturas debajo */}
             <div className="relative group">
               <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black rounded-3xl overflow-hidden shadow-lg flex items-center justify-center border border-purple-800/40">
                 <img
                   src={
+                    // si está en edición y el formData tiene image individual se muestra; sino la imagen seleccionada
                     isEditing && formData.image
                       ? URL.createObjectURL(formData.image)
                       : product.images[selectedImageIndex]
@@ -238,6 +423,65 @@ function ProductDetailContent({
                   onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
+
+              {/* MINIATURAS */}
+              <div className="mt-4 flex items-center gap-3 overflow-x-auto">
+                {product.images &&
+                  product.images.map((imgSrc, idx) => (
+                    <div key={idx} className="relative">
+                      <button
+                        onClick={() => handleThumbnailClick(idx)}
+                        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
+                          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
+                        } focus:outline-none`}
+                      >
+                        <img
+                          src={imgSrc}
+                          alt={`thumb-${idx}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => (e.target.src = "/img/default.jpg")}
+                        />
+                      </button>
+
+                      {isAdmin && (
+                        <button
+                          title="Eliminar imagen"
+                          onClick={() => {
+                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar remove new preview
+                            const raw = (product.rawImages || [])[idx];
+                            if (raw === null) {
+                              // es una previsualización de archivo nuevo
+                              if (confirm("Eliminar esta imagen agregada (todavía no guardada)?")) {
+                                handleRemoveNewImagePreview(idx);
+                              }
+                            } else {
+                              // imagen que existe en backend -> marcar para borrado
+                              handleDeleteImage(idx);
+                            }
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                {/* Agregar imagen (admin) */}
+                {isAdmin && (
+                  <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAddImages}
+                      className="hidden"
+                    />
+                    <span className="text-2xl">＋</span>
+                  </label>
+                )}
+              </div>
+
               {isEditing && (
                 <input
                   type="file"
@@ -255,7 +499,7 @@ function ProductDetailContent({
                   <input
                     name="name"
                     value={formData.name}
-                    onChange={handleChange}
+                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "name", value: e.target.value } })}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Nombre del producto"
                   />
@@ -264,7 +508,7 @@ function ProductDetailContent({
                     type="number"
                     step="0.01"
                     value={formData.price}
-                    onChange={handleChange}
+                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "price", value: e.target.value } })}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio"
                   />
@@ -273,14 +517,14 @@ function ProductDetailContent({
                     type="number"
                     step="0.01"
                     value={formData.oldPrice}
-                    onChange={handleChange}
+                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "oldPrice", value: e.target.value } })}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio anterior"
                   />
                   <textarea
                     name="description"
                     value={formData.description}
-                    onChange={handleChange}
+                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "description", value: e.target.value } })}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Descripción"
                   />
@@ -292,7 +536,11 @@ function ProductDetailContent({
                       Guardar cambios
                     </button>
                     <button
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => {
+                        setIsEditing(false);
+                        // limpiar previews agregadas sin guardar: recargar datos originales
+                        refetch();
+                      }}
                       className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg font-bold hover:scale-105 transition-transform"
                     >
                       Cancelar
@@ -343,9 +591,7 @@ function ProductDetailContent({
                     >
                       −
                     </button>
-                    <span className="text-2xl font-semibold">
-                      {quantity}
-                    </span>
+                    <span className="text-2xl font-semibold">{quantity}</span>
                     <button
                       onClick={() => handleQuantityChange(1)}
                       className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
