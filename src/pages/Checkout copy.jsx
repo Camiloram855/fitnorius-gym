@@ -90,21 +90,13 @@ ${orderDetails}
     `.trim()
 
     // 📲 Número de WhatsApp (formato internacional sin + ni espacios)
-    const phone = "573043317223"
+    const phone = "573043317223" // 57 (Colombia) + número
 
     // 🧠 Codificar mensaje para la URL
     const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 
-    // 📱 Detección de iPhone para compatibilidad total
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-
-    if (isIOS) {
-      // En iPhone, Safari bloquea window.open() — usamos redirección directa
-      window.location.href = whatsappURL
-    } else {
-      // En Android y PC funciona perfecto abrir en una nueva pestaña
-      window.open(whatsappURL, "_blank")
-    }
+    // 🔗 Abrir WhatsApp
+    window.open(whatsappURL, "_blank")
 
     // 🧹 (Opcional) limpiar el carrito después del envío
     // clearCart()
@@ -299,6 +291,7 @@ ${orderDetails}
           <div className="bg-gradient-to-br from-purple-200 to-purple-300 rounded-2xl shadow-lg p-8 lg:sticky lg:top-8 h-fit">
             <h3 className="text-2xl font-bold text-purple-900 mb-6">Resumen del Pedido</h3>
 
+            {/* Productos del carrito */}
             {cartItems.length === 0 ? (
               <p className="text-purple-800">Tu carrito está vacío 🛒</p>
             ) : (
@@ -308,6 +301,7 @@ ${orderDetails}
                     key={item.id}
                     className="flex items-center gap-4 bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-sm relative"
                   >
+                    {/* Botón eliminar (❌ arriba derecha) */}
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition"
@@ -333,6 +327,7 @@ ${orderDetails}
                   </div>
                 ))}
 
+                {/* Total */}
                 <div className="mt-6 pt-4 border-t border-purple-400 text-right">
                   <p className="text-lg font-bold text-purple-900">
                     Total: ${total.toLocaleString()}
@@ -341,6 +336,7 @@ ${orderDetails}
               </div>
             )}
 
+            {/* Info adicional */}
             <div className="mt-8 space-y-4">
               <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4">
                 <p className="text-purple-900 font-medium mb-2">Compra 100% Segura</p>
