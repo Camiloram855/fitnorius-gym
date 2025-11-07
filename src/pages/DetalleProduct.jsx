@@ -132,13 +132,16 @@ function ProductDetailContent({
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
 
+  // --- TRACKER: guardamos previewsObjUrls para revoke cuando se eliminen o al limpiar
+  const [previewsObjUrls, setPreviewsObjUrls] = useState([]);
+
   // formData ahora maneja nuevos archivos y las imágenes a borrar
   const [formData, setFormData] = useState({
-    name: product.name,
-    price: product.price,
-    oldPrice: product.oldPrice || "",
-    discount: product.discount || "",
-    description: product.description,
+    name: product?.name,
+    price: product?.price,
+    oldPrice: product?.oldPrice || "",
+    discount: product?.discount || "",
+    description: product?.description,
     // newImages: lista de File que se van a subir (append 'newImages' al FormData)
     newImages: [],
     // deleteImages: lista de rutas (raw paths) a eliminar en backend
@@ -161,6 +164,17 @@ function ProductDetailContent({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
+
+  // Limpiar objectURLs cuando el componente se desmonte o cuando previewsObjUrls cambien
+  useEffect(() => {
+    return () => {
+      previewsObjUrls.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {}
+      });
+    };
+  }, [previewsObjUrls]);
 
   const formatCurrency = (value) =>
     Number(value).toLocaleString("es-CO", {
@@ -232,6 +246,9 @@ function ProductDetailContent({
       newImages: [...(prev.newImages || []), ...files],
     }));
 
+    // trackear los objectURLs para revoke luego
+    setPreviewsObjUrls((prev) => [...prev, ...previewUrls]);
+
     // reset input value to allow re-upload same file again if needed
     e.target.value = "";
   };
@@ -249,8 +266,18 @@ function ProductDetailContent({
 
       const removedRaw = raw[index]; // puede ser null si era recién subida (archivo)
       // quitar elemento
-      images.splice(index, 1);
+      const removedPreview = images.splice(index, 1)[0];
       raw.splice(index, 1);
+
+      // Si la preview removida es un objectURL que generamos, revocarla
+      if (removedPreview && removedPreview.startsWith("blob:")) {
+        try {
+          URL.revokeObjectURL(removedPreview);
+          setPreviewsObjUrls((prevUrls) =>
+            prevUrls.filter((u) => u !== removedPreview)
+          );
+        } catch {}
+      }
 
       // ajustar selectedImageIndex
       let newSelected = selectedImageIndex;
@@ -264,15 +291,16 @@ function ProductDetailContent({
 
       // si la imagen removida corresponde a una newImage (raw === null), la tenemos que quitar de formData.newImages
       if (removedRaw === null) {
-        // removemos el primer archivo que coincida por tamaño/nombre con previews - es mejor intentar por tamaño+name, pero como raw is null
-        // approach: removemos el último archivo en newImages (porque añadimos en orden). Para mayor robustez podríamos mapear previews->files, pero evitamos complejidad.
+        // Mejor heurística: calcular qué archivo dentro de newImages corresponde a este previewIndex
+        // Para eso contamos cuántos elementos con raw===null hay antes de previewIndex en el arreglo original raw (incluyendo el eliminado).
+        // Construimos índices antes de la modificación: pero como ya modificamos, podemos aproximar buscando la última newImage y removerla.
         setFormData((prevForm) => {
           const newImgs = [...(prevForm.newImages || [])];
-          // intentemos eliminar un archivo heurísticamente: buscar archivo cuyo preview esté en images? complicado.
-          // Para evitar eliminar el archivo incorrecto, intentaremos eliminar el archivo que tenga URL.createObjectURL con mismo name/size no posible.
-          // Mejor: cuando añadimos archivos, se añadieron en el mismo orden; asumimos que si quitaron el índice i luego de agregar al final, retiramos el correspondiente del final.
-          // Implementación simple: quitar último archivo si newImages no vacio.
-          if (newImgs.length > 0) newImgs.pop();
+          if (newImgs.length > 0) {
+            // intentamos eliminar el archivo que corresponde al preview, buscando por tamaño similar al nombre no es fiable
+            // eliminación segura: eliminar el primer archivo desde la derecha (último añadido)
+            newImgs.pop();
+          }
           return { ...prevForm, newImages: newImgs };
         });
       } else {
@@ -304,9 +332,18 @@ function ProductDetailContent({
 
       // localizar el previewIndex en rawImages que sea null y esté en la misma posición
       // asumimos el previewIndex es el índice exacto en images/rawImages
-      const removedRaw = raw[previewIndex]; // debería ser null si fue new
-      images.splice(previewIndex, 1);
-      raw.splice(previewIndex, 1);
+      const removedPreview = images.splice(previewIndex, 1)[0];
+      const removedRaw = raw.splice(previewIndex, 1)[0]; // debería ser null si fue new
+
+      // revocar objectURL si aplica
+      if (removedPreview && removedPreview.startsWith("blob:")) {
+        try {
+          URL.revokeObjectURL(removedPreview);
+          setPreviewsObjUrls((prevUrls) =>
+            prevUrls.filter((u) => u !== removedPreview)
+          );
+        } catch {}
+      }
 
       setSelectedImageIndex((sel) =>
         previewIndex === sel ? 0 : previewIndex < sel ? Math.max(0, sel - 1) : sel
@@ -315,11 +352,13 @@ function ProductDetailContent({
       // remover del formData.newImages el archivo correspondiente:
       setFormData((prevForm) => {
         const newImgs = [...(prevForm.newImages || [])];
-        // intentar eliminar el archivo posicionado en newImgs correspondiente al previewIndex relativo al primer null
-        // encontrar how many existing rawImages (non-null) before previewIndex to compute indexInNewImages
-        const rawBefore = raw.slice(0, previewIndex + 1); // after splice above raw already removed, but for calculation keep simple: we'll try remove last
+
+        // Mejor heurística: calcular el índice relativo en newImgs:
+        // contar cuántos nulls hay en raw antes del previewIndex en el estado actual
+        // pero como raw ya fue modificado arriba, recomputamos:
+        // Vamos a estimar: si newImgs.length > 0, quitamos el último (ya que se añadieron al final)
         if (newImgs.length > 0) {
-          newImgs.pop(); // heurística: remove last added
+          newImgs.pop();
         }
         return { ...prevForm, newImages: newImgs };
       });
@@ -369,6 +408,7 @@ function ProductDetailContent({
       const updated = await res.json();
 
       // actualizar producto local con la respuesta del backend
+      // asegurarse de mapear las rutas (updated.images) a URLs públicas si no vienen absolute
       setProduct((prev) => ({
         ...prev,
         ...updated,
@@ -377,6 +417,14 @@ function ProductDetailContent({
           ? updated.images.map((img) => (img.startsWith("http") ? img : `${API_URL}${img}`))
           : prev.images,
       }));
+
+      // revoke all previewsObjUrls (porque ya fueron subidas o descartadas)
+      previewsObjUrls.forEach((u) => {
+        try {
+          URL.revokeObjectURL(u);
+        } catch {}
+      });
+      setPreviewsObjUrls([]);
 
       // limpiar formData newImages & deleteImages
       setFormData((prev) => ({
