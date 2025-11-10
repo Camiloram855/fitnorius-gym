@@ -284,11 +284,10 @@ const confirmDeletePending = async () => {
     return;
   }
 
-  const raw = (product.rawImages || [])[index];
-  const imageUrl = product.images?.[index];
+  const image = product.images?.[index];
 
-  // Si es una imagen nueva (no guardada en backend)
-  if (raw === null || !raw) {
+  // 🧩 Si no hay imagen o es nueva (sin id => no guardada aún)
+  if (!image || !image.id) {
     handleRemoveNewImagePreview(index);
     setShowDeleteModal(false);
     setDeleteIndexPending(null);
@@ -297,31 +296,20 @@ const confirmDeletePending = async () => {
   }
 
   try {
-    // ✅ Llamar al backend DELETE
-    const idMatch = raw.match(/\/api\/images\/(\d+)/) || imageUrl.match(/\/api\/images\/(\d+)/);
-    const imageId = idMatch ? idMatch[1] : null;
-
-    if (!imageId) {
-      console.warn("⚠️ No se pudo obtener el ID de la imagen a eliminar:", raw);
-      alert("No se pudo identificar la imagen en el servidor.");
-      return;
-    }
-
-    const res = await fetch(`${API_URL}/api/images/${imageId}`, {
+    const res = await fetch(`${API_URL}/api/images/${image.id}`, {
       method: "DELETE",
     });
 
-    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
+    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${image.id}`);
 
-    console.log(`✅ Imagen eliminada correctamente del servidor: ${imageId}`);
+    console.log(`✅ Imagen eliminada del servidor (ID: ${image.id})`);
 
-    // ✅ Quitarla también del estado local
+    // 🧹 Actualizar estado local
     setProduct((prev) => {
-      const images = [...(prev.images || [])];
-      const rawImgs = [...(prev.rawImages || [])];
-      images.splice(index, 1);
-      rawImgs.splice(index, 1);
-      return { ...prev, images, rawImages: rawImgs };
+      const updated = { ...prev };
+      updated.images = prev.images.filter((_, i) => i !== index);
+      updated.rawImages = prev.rawImages.filter((_, i) => i !== index);
+      return updated;
     });
 
   } catch (err) {
@@ -333,6 +321,7 @@ const confirmDeletePending = async () => {
     setDeleteIsNewPreview(false);
   }
 };
+
 
 
   // Manejar click en miniatura
