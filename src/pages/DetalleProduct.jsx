@@ -275,6 +275,7 @@ const handleAddImages = (e) => {
   };
 
   // Confirmación final (desde modal)
+// ✅ confirmDeletePending corregido
 const confirmDeletePending = async () => {
   const index = deleteIndexPending;
   if (index == null) {
@@ -284,10 +285,11 @@ const confirmDeletePending = async () => {
     return;
   }
 
-  const image = product.images?.[index];
+  const raw = product.rawImages?.[index];
+  const imageUrl = product.images?.[index];
 
-  // 🧩 Si no hay imagen o es nueva (sin id => no guardada aún)
-  if (!image || !image.id) {
+  // 🧩 Si la imagen fue agregada recientemente (raw === null)
+  if (raw === null) {
     handleRemoveNewImagePreview(index);
     setShowDeleteModal(false);
     setDeleteIndexPending(null);
@@ -296,15 +298,27 @@ const confirmDeletePending = async () => {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/images/${image.id}`, {
+    // 🔍 Extraer el ID del backend (desde la URL o del raw)
+    const idMatch = typeof raw === "string" ? raw.match(/(\d+)$/) : null;
+    const imageId = idMatch ? idMatch[1] : null;
+
+    if (!imageId) {
+      console.warn("⚠️ No se pudo extraer el ID de la imagen:", raw);
+      alert("No se pudo identificar la imagen en el servidor.");
+      return;
+    }
+
+    console.log(`🗑️ Eliminando imagen con ID: ${imageId}`);
+
+    const res = await fetch(`${API_URL}/api/images/${imageId}`, {
       method: "DELETE",
     });
 
-    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${image.id}`);
+    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
 
-    console.log(`✅ Imagen eliminada del servidor (ID: ${image.id})`);
+    console.log(`✅ Imagen eliminada del servidor (ID: ${imageId})`);
 
-    // 🧹 Actualizar estado local
+    // 🧹 Actualizar estado local sin recargar página
     setProduct((prev) => {
       const updated = { ...prev };
       updated.images = prev.images.filter((_, i) => i !== index);
