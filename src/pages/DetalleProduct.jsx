@@ -38,12 +38,9 @@ export default function ProductDetail() {
       const res = await fetch(`${API_URL}/api/products/${id}`);
       const data = await res.json();
       // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
-      const rawImages =
-        data.images?.length && Array.isArray(data.images)
-          ? data.images // Ej: ["/uploads/xyz.jpg", "/uploads/abc.jpg"] (paths desde backend)
-          : data.imageUrl
-          ? [data.imageUrl]
-          : [];
+      const rawImages = Array.isArray(data.images)
+      ? data.images.map((img) => img.url)
+      : [];
 
       setProduct({
         ...data,
@@ -54,9 +51,9 @@ export default function ProductDetail() {
         images:
           rawImages?.length
             ? rawImages.map((img) =>
-                img && typeof img === "string" && img.startsWith("http")
-                  ? img
-                  : `${API_URL}${img}`
+                img && typeof img === "string"
+                  ? `${API_URL}${img.startsWith("/") ? "" : "/"}${img}`
+                  : "/img/default.jpg"
               )
             : ["/img/default.jpg"],
         // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
