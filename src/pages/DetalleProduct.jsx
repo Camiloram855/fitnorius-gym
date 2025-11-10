@@ -217,36 +217,54 @@ function ProductDetailContent({
   };
 
   // NUEVO: manejar selección de nuevas imágenes (admin) -> option 3: añadir multiple
-  const handleAddImages = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+// ✅ Manejar selección de nuevas imágenes (admin)
+const handleAddImages = (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
 
-    // Añadir previews a product.images (usando createObjectURL) y push a rawImages como null temporal
-    const previewUrls = files.map((f) => URL.createObjectURL(f));
+  console.log("📸 Archivos seleccionados:", files.map(f => f.name));
 
-    setProduct((prev) => {
-      const newImages = [...(prev.images || []), ...previewUrls];
-      const newRaw = [...(prev.rawImages || []), ...files.map(() => null)]; // null indicates new local file
-      return {
-        ...prev,
-        images: newImages,
-        rawImages: newRaw,
-      };
-    });
+  // Generar URLs de previsualización
+  const previewUrls = files.map((f) => URL.createObjectURL(f));
 
-    // Añadir files a formData.newImages
-    setFormData((prev) => ({
-      ...prev,
-      newImages: [...(prev.newImages || []), ...files],
-    }));
+  // Actualizar el producto con las previsualizaciones
+  setProduct((prev) => {
+    const newImages = [...(prev.images || []), ...previewUrls];
+    const newRaw = [...(prev.rawImages || []), ...files.map(() => null)];
+    return { ...prev, images: newImages, rawImages: newRaw };
+  });
 
-    // Mostrar toast de confirmación de subida (visual)
-    setToastUploadVisible(true);
-    setTimeout(() => setToastUploadVisible(false), 2200);
+  // Guardar los nuevos archivos para el backend
+  setFormData((prev) => ({
+    ...prev,
+    newImages: [...(prev.newImages || []), ...files],
+  }));
 
-    // reset input value to allow re-upload same file again if needed
-    e.target.value = "";
-  };
+  // Mostrar notificación visual
+  setToastUploadVisible(true);
+  setTimeout(() => setToastUploadVisible(false), 2000);
+
+  // ⚠️ Resetear input para permitir subir la misma imagen otra vez
+  e.target.value = "";
+};
+
+// Dentro del renderizado donde está el input file de añadir miniaturas:
+{isAdmin && (
+  <label
+    className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30"
+  >
+    <input
+      key={product.images?.length || 0} // 🔁 Fuerza que React recree el input al cambiar imágenes
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleAddImages}
+      className="hidden"
+    />
+    <span className="text-2xl">＋</span>
+  </label>
+)}
+
 
   // Antes: handleDeleteImage usaba confirm(). Ahora abrimos modal para confirmar.
   const openDeleteConfirmation = (index) => {
