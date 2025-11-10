@@ -275,59 +275,65 @@ const handleAddImages = (e) => {
   };
 
   // Confirmación final (desde modal)
-  const confirmDeletePending = () => {
-    const index = deleteIndexPending;
-    if (index == null) {
-      setShowDeleteModal(false);
-      setDeleteIndexPending(null);
-      setDeleteIsNewPreview(false);
-      return;
-    }
-
-    setProduct((prev) => {
-      const images = [...(prev.images || [])];
-      const raw = [...(prev.rawImages || [])];
-
-      const removedRaw = raw[index]; // puede ser null si era newly added
-      images.splice(index, 1);
-      raw.splice(index, 1);
-
-      // ajustar selectedImageIndex
-      let newSelected = selectedImageIndex;
-      if (index === selectedImageIndex) {
-        newSelected = 0;
-      } else if (index < selectedImageIndex) {
-        newSelected = Math.max(0, selectedImageIndex - 1);
-      }
-      setSelectedImageIndex(newSelected);
-
-      // si removedRaw === null => era new preview, quitar del newImages (heurística: quitar último agregado)
-      if (removedRaw === null) {
-        setFormData((prevForm) => {
-          const newImgs = [...(prevForm.newImages || [])];
-          if (newImgs.length > 0) newImgs.pop();
-          return { ...prevForm, newImages: newImgs };
-        });
-      } else {
-        // si removedRaw tiene valor (ruta del backend), debemos marcarla para borrado en deleteImages
-        setFormData((prevForm) => ({
-          ...prevForm,
-          deleteImages: [...(prevForm.deleteImages || []), removedRaw],
-        }));
-      }
-
-      return {
-        ...prev,
-        images,
-        rawImages: raw,
-      };
-    });
-
-    // cerrar modal
+const confirmDeletePending = async () => {
+  const index = deleteIndexPending;
+  if (index == null) {
     setShowDeleteModal(false);
     setDeleteIndexPending(null);
     setDeleteIsNewPreview(false);
-  };
+    return;
+  }
+
+  const raw = (product.rawImages || [])[index];
+  const imageUrl = product.images?.[index];
+
+  // Si es una imagen nueva (no guardada en backend)
+  if (raw === null || !raw) {
+    handleRemoveNewImagePreview(index);
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
+    return;
+  }
+
+  try {
+    // ✅ Llamar al backend DELETE
+    const idMatch = raw.match(/\/api\/images\/(\d+)/) || imageUrl.match(/\/api\/images\/(\d+)/);
+    const imageId = idMatch ? idMatch[1] : null;
+
+    if (!imageId) {
+      console.warn("⚠️ No se pudo obtener el ID de la imagen a eliminar:", raw);
+      alert("No se pudo identificar la imagen en el servidor.");
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/api/images/${imageId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
+
+    console.log(`✅ Imagen eliminada correctamente del servidor: ${imageId}`);
+
+    // ✅ Quitarla también del estado local
+    setProduct((prev) => {
+      const images = [...(prev.images || [])];
+      const rawImgs = [...(prev.rawImages || [])];
+      images.splice(index, 1);
+      rawImgs.splice(index, 1);
+      return { ...prev, images, rawImages: rawImgs };
+    });
+
+  } catch (err) {
+    console.error("❌ Error al eliminar imagen:", err);
+    alert("Error eliminando imagen del servidor.");
+  } finally {
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
+  }
+};
+
 
   // Manejar click en miniatura
   const handleThumbnailClick = (index) => {
