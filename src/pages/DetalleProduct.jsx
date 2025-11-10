@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
@@ -32,53 +32,69 @@ export default function ProductDetail() {
     };
   }, []);
 
-  const fetchProductData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/products/${id}`);
-      const data = await res.json();
-      // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
-      const rawImages =
-        data.images?.length && Array.isArray(data.images)
-          ? data.images // Ej: ["/uploads/xyz.jpg", "/uploads/abc.jpg"] (paths desde backend)
-          : data.imageUrl
-          ? [data.imageUrl]
-          : [];
+  // ✅ useCallback para evitar recreaciones y prevenir loops
+  const fetchProductData = useCallback(
+    async (signal) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/products/${id}`, { signal });
+        if (!res.ok) throw new Error("Error al obtener producto");
+        const data = await res.json();
+        // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
+        const rawImages =
+          data.images?.length && Array.isArray(data.images)
+            ? data.images // Ej: ["/uploads/xyz.jpg", "/uploads/abc.jpg"] (paths desde backend)
+            : data.imageUrl
+            ? [data.imageUrl]
+            : [];
 
-      setProduct({
-        ...data,
-        price: data.price ? Number(data.price) : 0,
-        oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-        discount: data.discount ? Number(data.discount) : 0,
-        // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
-        images:
-          rawImages?.length
-            ? rawImages.map((img) =>
-                img.startsWith("http") ? img : `${API_URL}${img}`
-              )
-            : ["/img/default.jpg"],
-        // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
-        rawImages: rawImages,
-        description: data.description || "Sin descripción disponible",
-      });
+        setProduct({
+          ...data,
+          price: data.price ? Number(data.price) : 0,
+          oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+          discount: data.discount ? Number(data.discount) : 0,
+          // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
+          images:
+            rawImages?.length
+              ? rawImages.map((img) =>
+                  img.startsWith("http") ? img : `${API_URL}${img.startsWith("/") ? "" : "/"}${img}`
+                )
+              : ["/img/default.jpg"],
+          // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
+          rawImages: rawImages,
+          description: data.description || "Sin descripción disponible",
+        });
 
-      const recRes = await fetch(`${API_URL}/api/products`);
-      const recData = await recRes.json();
-      setRecommended(recData.filter((p) => p.id !== parseInt(id)).slice(0, 5));
-    } catch (err) {
-      console.error("Error cargando datos:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Petición recomendados (se hace aquí para mantener coherencia)
+        const recRes = await fetch(`${API_URL}/api/products`, { signal });
+        if (!recRes.ok) throw new Error("Error al obtener productos recomendados");
+        const recData = await recRes.json();
+        setRecommended(recData.filter((p) => p.id !== parseInt(id)).slice(0, 5));
+      } catch (err) {
+        // Ignorar abort errors (cuando se aborta la petición por navegación/unmount)
+        if (err.name === "AbortError") return;
+        console.error("Error cargando datos:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id]
+  );
 
   useEffect(() => {
-    fetchProductData();
+    const controller = new AbortController();
+    fetchProductData(controller.signal);
+
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
     scrollToTop();
     const timers = [100, 300, 600].map((t) => setTimeout(scrollToTop, t));
-    return () => timers.forEach(clearTimeout);
-  }, [id]);
+
+    return () => {
+      // abort any inflight fetches when component unmounts or id changes
+      controller.abort();
+      timers.forEach(clearTimeout);
+    };
+  }, [id, fetchProductData]);
 
   useEffect(() => {
     if (!loading && product) {
@@ -112,7 +128,12 @@ export default function ProductDetail() {
       addToCart={addToCart}
       navigate={navigate}
       API_URL={API_URL}
-      refetch={fetchProductData}
+      refetch={() => {
+        // reusar fetchProductData con abortcontrol por seguridad
+        const controller = new AbortController();
+        fetchProductData(controller.signal);
+        // no retornamos controller; quien llame a refetch no necesita abort (se usa puntualmente)
+      }}
     />
   );
 }
@@ -374,7 +395,7 @@ function ProductDetailContent({
         ...updated,
         rawImages: updated.images?.length ? updated.images : [],
         images: updated.images?.length
-          ? updated.images.map((img) => (img.startsWith("http") ? img : `${API_URL}${img}`))
+          ? updated.images.map((img) => (img.startsWith("http") ? img : `${API_URL}${img.startsWith("/") ? "" : "/"}${img}`))
           : prev.images,
       }));
 
@@ -387,7 +408,12 @@ function ProductDetailContent({
 
       setIsEditing(false);
       alert("✅ Producto actualizado correctamente");
-      await refetch();
+      // re-fetch para mantener consistencia (usa refetch proporcionado)
+      if (typeof refetch === "function") {
+        try {
+          refetch();
+        } catch {}
+      }
     } catch (err) {
       console.error(err);
       alert("❌ Error al guardar cambios");
