@@ -54,7 +54,9 @@ export default function ProductDetail() {
         images:
           rawImages?.length
             ? rawImages.map((img) =>
-                img.startsWith("http") ? img : `${API_URL}${img}`
+                img && typeof img === "string" && img.startsWith("http")
+                  ? img
+                  : `${API_URL}${img}`
               )
             : ["/img/default.jpg"],
         // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
@@ -133,27 +135,36 @@ function ProductDetailContent({
   const { isAdmin } = useAuth();
 
   // formData ahora maneja nuevos archivos y las imágenes a borrar
+  // IMPORTANTE: inicializamos con valores seguros para evitar errores / bucles infinitos al leer product antes de fetch
   const [formData, setFormData] = useState({
-    name: product.name,
-    price: product.price,
-    oldPrice: product.oldPrice || "",
-    discount: product.discount || "",
-    description: product.description,
+    name: "",
+    price: "",
+    oldPrice: "",
+    discount: "",
+    description: "",
     // newImages: lista de File que se van a subir (append 'newImages' al FormData)
     newImages: [],
     // deleteImages: lista de rutas (raw paths) a eliminar en backend
     deleteImages: [],
   });
 
+  // Estados para confirmaciones visuales
+  const [toastUploadVisible, setToastUploadVisible] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteIndexPending, setDeleteIndexPending] = useState(null);
+  const [deleteIsNewPreview, setDeleteIsNewPreview] = useState(false);
+
   useEffect(() => {
     // Cuando cambia product (por fetch), actualizar formData base (mantener nuevos/newImages y deleteImages)
+    if (!product) return;
     setFormData((prev) => ({
       ...prev,
-      name: product.name,
-      price: product.price,
-      oldPrice: product.oldPrice || "",
-      discount: product.discount || "",
-      description: product.description,
+      name: product.name ?? "",
+      price: product.price ?? "",
+      oldPrice: product.oldPrice ?? "",
+      discount: product.discount ?? "",
+      description: product.description ?? "",
+      // conservar prev.newImages y prev.deleteImages
     }));
     // Reset selectedImageIndex si excede
     setSelectedImageIndex((idx) =>
@@ -232,14 +243,29 @@ function ProductDetailContent({
       newImages: [...(prev.newImages || []), ...files],
     }));
 
+    // Mostrar toast de confirmación de subida (visual)
+    setToastUploadVisible(true);
+    setTimeout(() => setToastUploadVisible(false), 2200);
+
     // reset input value to allow re-upload same file again if needed
     e.target.value = "";
   };
 
-  // NUEVO: eliminar una imagen individual (solo admin). index corresponde al índice mostrado en product.images
-  const handleDeleteImage = (index) => {
-    // confirmar (puedes quitar confirm si no quieres prompt)
-    if (!confirm("¿Eliminar esta imagen? Esta acción se aplicará cuando guardes los cambios.")) {
+  // Antes: handleDeleteImage usaba confirm(). Ahora abrimos modal para confirmar.
+  const openDeleteConfirmation = (index) => {
+    const raw = (product.rawImages || [])[index];
+    setDeleteIndexPending(index);
+    setDeleteIsNewPreview(raw === null);
+    setShowDeleteModal(true);
+  };
+
+  // Confirmación final (desde modal)
+  const confirmDeletePending = () => {
+    const index = deleteIndexPending;
+    if (index == null) {
+      setShowDeleteModal(false);
+      setDeleteIndexPending(null);
+      setDeleteIsNewPreview(false);
       return;
     }
 
@@ -247,8 +273,7 @@ function ProductDetailContent({
       const images = [...(prev.images || [])];
       const raw = [...(prev.rawImages || [])];
 
-      const removedRaw = raw[index]; // puede ser null si era recién subida (archivo)
-      // quitar elemento
+      const removedRaw = raw[index]; // puede ser null si era newly added
       images.splice(index, 1);
       raw.splice(index, 1);
 
@@ -259,19 +284,12 @@ function ProductDetailContent({
       } else if (index < selectedImageIndex) {
         newSelected = Math.max(0, selectedImageIndex - 1);
       }
-
       setSelectedImageIndex(newSelected);
 
-      // si la imagen removida corresponde a una newImage (raw === null), la tenemos que quitar de formData.newImages
+      // si removedRaw === null => era new preview, quitar del newImages (heurística: quitar último agregado)
       if (removedRaw === null) {
-        // removemos el primer archivo que coincida por tamaño/nombre con previews - es mejor intentar por tamaño+name, pero como raw is null
-        // approach: removemos el último archivo en newImages (porque añadimos en orden). Para mayor robustez podríamos mapear previews->files, pero evitamos complejidad.
         setFormData((prevForm) => {
           const newImgs = [...(prevForm.newImages || [])];
-          // intentemos eliminar un archivo heurísticamente: buscar archivo cuyo preview esté en images? complicado.
-          // Para evitar eliminar el archivo incorrecto, intentaremos eliminar el archivo que tenga URL.createObjectURL con mismo name/size no posible.
-          // Mejor: cuando añadimos archivos, se añadieron en el mismo orden; asumimos que si quitaron el índice i luego de agregar al final, retiramos el correspondiente del final.
-          // Implementación simple: quitar último archivo si newImages no vacio.
           if (newImgs.length > 0) newImgs.pop();
           return { ...prevForm, newImages: newImgs };
         });
@@ -289,6 +307,11 @@ function ProductDetailContent({
         rawImages: raw,
       };
     });
+
+    // cerrar modal
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
   };
 
   // Manejar click en miniatura
@@ -297,6 +320,7 @@ function ProductDetailContent({
   };
 
   // NUEVO: handler para quitar una newImage previamente agregada (por si el admin decide quitar antes de guardar)
+  // Se puede invocar desde el modal si quieres que las previsualizaciones también usen el modal.
   const handleRemoveNewImagePreview = (previewIndex) => {
     setProduct((prev) => {
       const images = [...(prev.images || [])];
@@ -316,10 +340,9 @@ function ProductDetailContent({
       setFormData((prevForm) => {
         const newImgs = [...(prevForm.newImages || [])];
         // intentar eliminar el archivo posicionado en newImgs correspondiente al previewIndex relativo al primer null
-        // encontrar how many existing rawImages (non-null) before previewIndex to compute indexInNewImages
-        const rawBefore = raw.slice(0, previewIndex + 1); // after splice above raw already removed, but for calculation keep simple: we'll try remove last
+        // para mantener simple y evitar map complejo, removemos el último agregado (heurística)
         if (newImgs.length > 0) {
-          newImgs.pop(); // heurística: remove last added
+          newImgs.pop();
         }
         return { ...prevForm, newImages: newImgs };
       });
@@ -423,7 +446,7 @@ function ProductDetailContent({
                   onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
-
+                    
               {/* MINIATURAS */}
               <div className="mt-4 flex items-center gap-3 overflow-x-auto">
                 {product.images &&
@@ -442,21 +465,22 @@ function ProductDetailContent({
                           onError={(e) => (e.target.src = "/img/default.jpg")}
                         />
                       </button>
-
                       {isAdmin && (
                         <button
                           title="Eliminar imagen"
                           onClick={() => {
-                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar remove new preview
+                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar modal
                             const raw = (product.rawImages || [])[idx];
                             if (raw === null) {
-                              // es una previsualización de archivo nuevo
-                              if (confirm("Eliminar esta imagen agregada (todavía no guardada)?")) {
-                                handleRemoveNewImagePreview(idx);
-                              }
+                              // es una previsualización de archivo nuevo -> modal confirmará remover previsualización
+                              setDeleteIndexPending(idx);
+                              setDeleteIsNewPreview(true);
+                              setShowDeleteModal(true);
                             } else {
-                              // imagen que existe en backend -> marcar para borrado
-                              handleDeleteImage(idx);
+                              // imagen que existe en backend -> marcar para borrado (modal confirmará)
+                              setDeleteIndexPending(idx);
+                              setDeleteIsNewPreview(false);
+                              setShowDeleteModal(true);
                             }
                           }}
                           className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
@@ -692,6 +716,59 @@ function ProductDetailContent({
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación para eliminar image (visual, reemplaza confirm()) */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-black/80 border border-purple-700 rounded-2xl p-6 max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold mb-2 text-white">
+                {deleteIsNewPreview
+                  ? "Eliminar imagen agregada (previsualización)"
+                  : "Eliminar imagen existente"}
+              </h3>
+              <p className="text-gray-300 mb-4">
+                {deleteIsNewPreview
+                  ? "Esta imagen fue añadida como previsualización y se quitará localmente. No se eliminará del servidor hasta que guardes los cambios."
+                  : "Se marcará esta imagen para eliminación del servidor cuando guardes los cambios. ¿Deseas continuar?"}
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteIndexPending(null);
+                    setDeleteIsNewPreview(false);
+                  }}
+                  className="px-4 py-2 bg-gray-700 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    // Si era preview nueva, usar remove preview handler; si era existente, confirmar borrado
+                    if (deleteIsNewPreview) {
+                      handleRemoveNewImagePreview(deleteIndexPending);
+                      setShowDeleteModal(false);
+                      setDeleteIndexPending(null);
+                      setDeleteIsNewPreview(false);
+                    } else {
+                      confirmDeletePending();
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 rounded-md"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast visual para subida de miniatura */}
+        {toastUploadVisible && (
+          <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">
+            Miniatura(s) agregada(s) correctamente
           </div>
         )}
       </div>
