@@ -32,11 +32,11 @@ export default function ProductDetail() {
     };
   }, []);
 
-  const fetchProductData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/products/${id}`);
-      const data = await res.json();
+const fetchProductData = async (silent = false) => {
+  if (!silent) setLoading(true); // 🧩 no mostrar loader en modo “silent refetch”
+  try {
+    const res = await fetch(`${API_URL}/api/products/${id}`);
+    const data = await res.json();
       // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
       const rawImages = Array.isArray(data.images)
         ? data.images.map((img) => ({ id: img.id, url: img.url }))
@@ -68,25 +68,32 @@ export default function ProductDetail() {
     } catch (err) {
       console.error("Error cargando datos:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProductData();
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
-    scrollToTop();
-    const timers = [100, 300, 600].map((t) => setTimeout(scrollToTop, t));
-    return () => timers.forEach(clearTimeout);
-  }, [id]);
+useEffect(() => {
+  // Si fetchProductData no usa signal, puedes quitar las dos líneas siguientes
+  const controller = new AbortController();
+  const { signal } = controller;
 
-  useEffect(() => {
-    if (!loading && product) {
-      const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
-      const timers = [50, 200].map((t) => setTimeout(scrollToTop, t));
-      return () => timers.forEach(clearTimeout);
+  const loadProduct = async () => {
+    try {
+      await fetchProductData(signal); // Si fetchProductData no acepta signal, simplemente haz: await fetchProductData();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Error cargando el producto:", error);
+      }
     }
-  }, [product, loading]);
+  };
+
+  loadProduct();
+
+  // Limpieza: cancela el fetch si cambias de producto o desmontas el componente
+  return () => controller.abort();
+}, [id]);
+
 
   if (loading)
     return (
@@ -380,77 +387,43 @@ const confirmDeletePending = async () => {
 
   // Guardar cambios (actualizado para soportar newImages[] y deleteImages[])
   const handleSave = async () => {
-    try {
-      const payloadForm = new FormData();
-
-      const productJson = {
+  try {
+    const payloadForm = new FormData();
+    payloadForm.append(
+      "product",
+      new Blob([JSON.stringify({
         name: formData.name,
         price: formData.price?.toString() || "0",
         oldPrice: formData.oldPrice?.toString() || null,
         discount: formData.discount?.toString() || null,
         description: formData.description,
-      };
+      })], { type: "application/json" })
+    );
+    
+    formData.newImages?.forEach(file => payloadForm.append("newImages", file));
+    if (formData.deleteImages?.length) payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
+    
+    const res = await fetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
+    if (!res.ok) throw new Error("Error al actualizar producto");
 
-      payloadForm.append(
-        "product",
-        new Blob([JSON.stringify(productJson)], { type: "application/json" })
-      );
+    const updated = await res.json();
 
-      // append newImages (cada file con la misma key 'newImages')
-      if (formData.newImages && formData.newImages.length > 0) {
-        formData.newImages.forEach((file) => {
-          payloadForm.append("newImages", file);
-        });
-      }
+    setProduct({
+      ...updated,
+      images: updated.images?.map(img => img.url ? `${API_URL}${img.url}` : "/img/default.jpg") || ["/img/default.jpg"],
+      rawImages: updated.images || [],
+    });
 
-      // append deleteImages as JSON string (backend debe parsearlo)
-      if (formData.deleteImages && formData.deleteImages.length > 0) {
-        // backend expects array of paths (raw) to delete
-        payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
-      }
+    setFormData(prev => ({ ...prev, newImages: [], deleteImages: [] }));
+    setIsEditing(false);
+    setToastUploadVisible(true);
+    setTimeout(() => setToastUploadVisible(false), 2000);
 
-      const res = await fetch(`${API_URL}/api/products/${product.id}`, {
-        method: "PUT",
-        body: payloadForm,
-      });
+  } catch (err) {
+    console.error("Error al guardar producto:", err);
+  }
+};
 
-      if (!res.ok) throw new Error("Error al actualizar producto");
-
-      const updated = await res.json();
-
-      // actualizar producto local con la respuesta del backend
-      setProduct((prev) => ({
-        ...prev,
-        ...updated,
-        rawImages: updated.images?.length ? updated.images : [],
-        images: updated.images?.length
-          ? updated.images.map((img) => (img.startsWith("http") ? img : `${API_URL}${img}`))
-          : prev.images,
-      }));
-
-      // limpiar formData newImages & deleteImages
-      setFormData((prev) => ({
-        ...prev,
-        newImages: [],
-        deleteImages: [],
-      }));
-
-setIsEditing(false);
-
-// Mostrar toast visual (no bloquea el render)
-setToastUploadVisible(true);
-setTimeout(() => setToastUploadVisible(false), 2000);
-
-// Espera un poco para dejar que React re-renderice sin perder contexto
-setTimeout(async () => {
-  await refetch();
-}, 500);
-
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error al guardar cambios");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-12 px-4 sm:px-6 lg:px-10">
