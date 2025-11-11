@@ -519,6 +519,19 @@ const confirmDeletePending = async () => {
                   ))}
 
                 {/* Agregar imagen (admin) */}
+                {isAdmin && (
+                  <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAddImages}
+                      className="hidden"
+                    />
+                    <span className="text-2xl">＋</span>
+                  </label>
+                )}
+                
               </div>
               {isEditing && (
                 <input
