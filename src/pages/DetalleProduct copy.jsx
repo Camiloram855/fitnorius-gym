@@ -1,3 +1,4 @@
+// ProductDetail.jsx (componente completo, reemplaza tu archivo actual)
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
@@ -32,12 +33,12 @@ export default function ProductDetail() {
     };
   }, []);
 
-const fetchProductData = async (silent = false) => {
-  if (!silent) setLoading(true); // 🧩 no mostrar loader en modo “silent refetch”
-  try {
-    const res = await fetch(`${API_URL}/api/products/${id}`);
-    const data = await res.json();
-      // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
+  const fetchProductData = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/products/${id}`);
+      const data = await res.json();
+
       const rawImages = Array.isArray(data.images)
         ? data.images.map((img) => ({ id: img.id, url: img.url }))
         : [];
@@ -47,16 +48,13 @@ const fetchProductData = async (silent = false) => {
         price: data.price ? Number(data.price) : 0,
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         discount: data.discount ? Number(data.discount) : 0,
-        // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
-      images:
-        rawImages?.length
-          ? rawImages.map((img) =>
-              img?.url
-                ? `${API_URL}${img.url.startsWith("/") ? "" : "/"}${img.url}`
-                : "/img/default.jpg"
-            )
-          : ["/img/default.jpg"],
-
+        // images: urls públicas para mostrar
+        images:
+          rawImages?.length
+            ? rawImages.map((img) =>
+                img?.url ? `${API_URL}${img.url.startsWith("/") ? "" : "/"}${img.url}` : "/img/default.jpg"
+              )
+            : ["/img/default.jpg"],
         // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
         rawImages: rawImages,
         description: data.description || "Sin descripción disponible",
@@ -72,35 +70,18 @@ const fetchProductData = async (silent = false) => {
     }
   };
 
-useEffect(() => {
-  // Si fetchProductData no usa signal, puedes quitar las dos líneas siguientes
-  const controller = new AbortController();
-  const { signal } = controller;
-
-  const loadProduct = async () => {
-    try {
-      await fetchProductData(signal); // Si fetchProductData no acepta signal, simplemente haz: await fetchProductData();
-      window.scrollTo({ top: 0, behavior: "auto" });
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("Error cargando el producto:", error);
-      }
-    }
-  };
-
-  loadProduct();
-
-  // Limpieza: cancela el fetch si cambias de producto o desmontas el componente
-  return () => controller.abort();
-}, [id]);
-
+  useEffect(() => {
+    fetchProductData();
+    const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
+    scrollToTop();
+    const timers = [100, 300, 600].map((t) => setTimeout(scrollToTop, t));
+    return () => timers.forEach(clearTimeout);
+  }, [id]);
 
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
-        <p className="text-purple-400 text-xl animate-pulse">
-          Cargando producto...
-        </p>
+        <p className="text-purple-400 text-xl animate-pulse">Cargando producto...</p>
       </div>
     );
 
@@ -124,43 +105,31 @@ useEffect(() => {
   );
 }
 
-function ProductDetailContent({
-  product,
-  setProduct,
-  recommended,
-  addToCart,
-  navigate,
-  API_URL,
-  refetch,
-}) {
+function ProductDetailContent({ product, setProduct, recommended, addToCart, navigate, API_URL, refetch }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
 
-  // formData ahora maneja nuevos archivos y las imágenes a borrar
-  // IMPORTANTE: inicializamos con valores seguros para evitar errores / bucles infinitos al leer product antes de fetch
+  // formData para edición y nuevas imágenes
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     oldPrice: "",
     discount: "",
     description: "",
-    // newImages: lista de File que se van a subir (append 'newImages' al FormData)
     newImages: [],
-    // deleteImages: lista de rutas (raw paths) a eliminar en backend
     deleteImages: [],
   });
 
-  // Estados para confirmaciones visuales
   const [toastUploadVisible, setToastUploadVisible] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteIndexPending, setDeleteIndexPending] = useState(null);
   const [deleteIsNewPreview, setDeleteIsNewPreview] = useState(false);
+  const [deleteKindPending, setDeleteKindPending] = useState(null); // 'main'|'existing'|'local'
 
   useEffect(() => {
-    // Cuando cambia product (por fetch), actualizar formData base (mantener nuevos/newImages y deleteImages)
     if (!product) return;
     setFormData((prev) => ({
       ...prev,
@@ -169,12 +138,8 @@ function ProductDetailContent({
       oldPrice: product.oldPrice ?? "",
       discount: product.discount ?? "",
       description: product.description ?? "",
-      // conservar prev.newImages y prev.deleteImages
     }));
-    // Reset selectedImageIndex si excede
-    setSelectedImageIndex((idx) =>
-      product.images && idx < product.images.length ? idx : 0
-    );
+    setSelectedImageIndex((idx) => (product.images && idx < product.images.length ? idx : 0));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
@@ -185,14 +150,8 @@ function ProductDetailContent({
       minimumFractionDigits: 2,
     });
 
-  const savings =
-    product.oldPrice && product.price
-      ? Number(product.oldPrice) - Number(product.price)
-      : 0;
-
-  const handleQuantityChange = (delta) =>
-    setQuantity((prev) => Math.max(1, prev + delta));
-
+  const savings = product.oldPrice && product.price ? Number(product.oldPrice) - Number(product.price) : 0;
+  const handleQuantityChange = (delta) => setQuantity((prev) => Math.max(1, prev + delta));
   const handleAddToCart = () => {
     addToCart({
       id: product.id,
@@ -204,178 +163,65 @@ function ProductDetailContent({
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
-
   const handleAdd = () => navigate("/catalog/checkout");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    // input individual (name fields) - mantener compatibilidad con edición existente
     if (files) {
-      // Si es el input de imagen individual (en modo editing simple), coger solo el primer file
-      setFormData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }));
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // NUEVO: manejar selección de nuevas imágenes (admin) -> option 3: añadir multiple
-// ✅ Manejar selección de nuevas imágenes (admin)
-const handleAddImages = (e) => {
-  const files = Array.from(e.target.files || []);
-  if (!files.length) return;
+  // Manejar selección de nuevas imágenes (previsualización)
+  const handleAddImages = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-  console.log("📸 Archivos seleccionados:", files.map(f => f.name));
+    console.log("📸 Archivos seleccionados:", files.map((f) => f.name));
+    // Guardar los nuevos archivos para el backend
+    setFormData((prev) => ({ ...prev, newImages: [...(prev.newImages || []), ...files] }));
 
-  // Generar URLs de previsualización
-  const previewUrls = files.map((f) => URL.createObjectURL(f));
-
-  // Actualizar el producto con las previsualizaciones
-  setProduct((prev) => {
-    const newImages = [...(prev.images || []), ...previewUrls];
-    const newRaw = [...(prev.rawImages || []), ...files.map(() => null)];
-    return { ...prev, images: newImages, rawImages: newRaw };
-  });
-
-  // Guardar los nuevos archivos para el backend
-  setFormData((prev) => ({
-    ...prev,
-    newImages: [...(prev.newImages || []), ...files],
-  }));
-
-  // Mostrar notificación visual
-  setToastUploadVisible(true);
-  setTimeout(() => setToastUploadVisible(false), 2000);
-
-  // ⚠️ Resetear input para permitir subir la misma imagen otra vez
-  e.target.value = "";
-};
-
-// Dentro del renderizado donde está el input file de añadir miniaturas:
-{isAdmin && (
-  <label
-    className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30"
-  >
-    <input
-      key={product.images?.length || 0} // 🔁 Fuerza que React recree el input al cambiar imágenes
-      type="file"
-      accept="image/*"
-      multiple
-      onChange={handleAddImages}
-      className="hidden"
-    />
-    <span className="text-2xl">＋</span>
-  </label>
-)}
-
-
-  // Antes: handleDeleteImage usaba confirm(). Ahora abrimos modal para confirmar.
-  const openDeleteConfirmation = (index) => {
-    const raw = (product.rawImages || [])[index];
-    setDeleteIndexPending(index);
-    setDeleteIsNewPreview(raw === null);
-    setShowDeleteModal(true);
-  };
-
-  // Confirmación final (desde modal)
-// ✅ confirmDeletePending corregido
-const confirmDeletePending = async () => {
-  const index = deleteIndexPending;
-  if (index == null) {
-    setShowDeleteModal(false);
-    setDeleteIndexPending(null);
-    setDeleteIsNewPreview(false);
-    return;
-  }
-
-  const raw = product.rawImages?.[index];
-  const imageUrl = product.images?.[index];
-
-  // 🧩 Si la imagen fue agregada recientemente (raw === null)
-  if (raw === null) {
-    handleRemoveNewImagePreview(index);
-    setShowDeleteModal(false);
-    setDeleteIndexPending(null);
-    setDeleteIsNewPreview(false);
-    return;
-  }
-
-  try {
-    // 🔍 Extraer el ID del backend (desde la URL o del raw)
-    // ✅ Ahora el objeto raw tiene { id, url }
-    const imageId = raw?.id;
-
-    if (!imageId) {
-      console.warn("⚠️ No se encontró ID en la imagen:", raw);
-      alert("No se pudo identificar la imagen en el servidor.");
-      setShowDeleteModal(false);
-      return;
-    }
-
-
-    console.log(`🗑️ Eliminando imagen con ID: ${imageId}`);
-
-    const res = await fetch(`${API_URL}/api/images/${imageId}`, {
-      method: "DELETE",
-    });
-
-    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
-
-    console.log(`✅ Imagen eliminada del servidor (ID: ${imageId})`);
-
-    // 🧹 Actualizar estado local sin recargar página
+    // Añadir previsualizaciones en product.images/localPreviews (no tocar product.rawImages)
     setProduct((prev) => {
-      const updated = { ...prev };
-      updated.images = prev.images.filter((_, i) => i !== index);
-      updated.rawImages = prev.rawImages.filter((_, i) => i !== index);
-      return updated;
+      const prevImages = prev.images ? [...prev.images] : [];
+      const previews = files.map((f) => URL.createObjectURL(f));
+      return { ...prev, images: [...prevImages, ...previews], rawImages: [...(prev.rawImages || [])] };
     });
 
-  } catch (err) {
-    console.error("❌ Error al eliminar imagen:", err);
-    alert("Error eliminando imagen del servidor.");
-  } finally {
-    setShowDeleteModal(false);
-    setDeleteIndexPending(null);
-    setDeleteIsNewPreview(false);
-  }
-};
+    setToastUploadVisible(true);
+    setTimeout(() => setToastUploadVisible(false), 2000);
 
-
-
-  // Manejar click en miniatura
-  const handleThumbnailClick = (index) => {
-    setSelectedImageIndex(index);
+    e.target.value = "";
   };
 
-  // NUEVO: handler para quitar una newImage previamente agregada (por si el admin decide quitar antes de guardar)
-  // Se puede invocar desde el modal si quieres que las previsualizaciones también usen el modal.
-  const handleRemoveNewImagePreview = (previewIndex) => {
+  // Quitar previsualización local
+  const handleRemoveNewImagePreview = (localIndex) => {
     setProduct((prev) => {
       const images = [...(prev.images || [])];
       const raw = [...(prev.rawImages || [])];
 
-      // localizar el previewIndex en rawImages que sea null y esté en la misma posición
-      // asumimos el previewIndex es el índice exacto en images/rawImages
-      const removedRaw = raw[previewIndex]; // debería ser null si fue new
-      images.splice(previewIndex, 1);
-      raw.splice(previewIndex, 1);
+      // localizar previsualizaciones: asumimos las previsualizaciones locales están después de las existing/main
+      // Para encontrar la correct localIndex, contamos cuantos existing+main hay
+      const existingCount = (prev.rawImages?.length || 0) + (prev.imageUrl ? 1 : 0);
+      const globalIndex = existingCount + localIndex;
 
-      setSelectedImageIndex((sel) =>
-        previewIndex === sel ? 0 : previewIndex < sel ? Math.max(0, sel - 1) : sel
-      );
+      if (globalIndex >= 0 && globalIndex < images.length) {
+        images.splice(globalIndex, 1);
+        // raw no tiene entradas para locales, así que no splice raw
+      }
 
-      // remover del formData.newImages el archivo correspondiente:
+      // Ajustar selectedImageIndex
+      setSelectedImageIndex((sel) => (globalIndex === sel ? 0 : globalIndex < sel ? Math.max(0, sel - 1) : sel));
+
+      // remover del formData.newImages el archivo correspondiente (por posición localIndex)
       setFormData((prevForm) => {
         const newImgs = [...(prevForm.newImages || [])];
-        // intentar eliminar el archivo posicionado en newImgs correspondiente al previewIndex relativo al primer null
-        // para mantener simple y evitar map complejo, removemos el último agregado (heurística)
-        if (newImgs.length > 0) {
+        if (localIndex >= 0 && localIndex < newImgs.length) {
+          newImgs.splice(localIndex, 1);
+        } else if (newImgs.length > 0) {
+          // fallback: eliminar último
           newImgs.pop();
         }
         return { ...prevForm, newImages: newImgs };
@@ -385,45 +231,203 @@ const confirmDeletePending = async () => {
     });
   };
 
-  // Guardar cambios (actualizado para soportar newImages[] y deleteImages[])
-  const handleSave = async () => {
-  try {
-    const payloadForm = new FormData();
-    payloadForm.append(
-      "product",
-      new Blob([JSON.stringify({
-        name: formData.name,
-        price: formData.price?.toString() || "0",
-        oldPrice: formData.oldPrice?.toString() || null,
-        discount: formData.discount?.toString() || null,
-        description: formData.description,
-      })], { type: "application/json" })
-    );
-    
-    formData.newImages?.forEach(file => payloadForm.append("newImages", file));
-    if (formData.deleteImages?.length) payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
-    
-    const res = await fetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
-    if (!res.ok) throw new Error("Error al actualizar producto");
+  // Eliminar imagen principal en servidor (PUT /api/products/{id}/json con imageUrl = null)
+  const deleteMainImageOnServer = async () => {
+    try {
+      const payload = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        oldPrice: product.oldPrice,
+        discount: product.discount,
+        description: product.description,
+        categoryId: product.categoryId || null,
+        imageUrl: null,
+      };
+      const res = await fetch(`${API_URL}/api/products/${product.id}/json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Error eliminando imagen principal en servidor");
+      await refetch();
+    } catch (err) {
+      console.error("Error eliminando imagen principal:", err);
+      alert("No fue posible eliminar la imagen principal en el servidor.");
+    }
+  };
 
-    const updated = await res.json();
+  // Cuando confirmas en modal: decidir acción según kind pending
+  const handleConfirmDelete = async () => {
+    if (deleteKindPending === "local") {
+      // deleteIndexPending almacena localIndex
+      handleRemoveNewImagePreview(deleteIndexPending);
+      setShowDeleteModal(false);
+      setDeleteIndexPending(null);
+      setDeleteIsNewPreview(false);
+      setDeleteKindPending(null);
+      return;
+    }
 
-    setProduct({
-      ...updated,
-      images: updated.images?.map(img => img.url ? `${API_URL}${img.url}` : "/img/default.jpg") || ["/img/default.jpg"],
-      rawImages: updated.images || [],
+    if (deleteKindPending === "main") {
+      // borrar imagen principal en servidor
+      await deleteMainImageOnServer();
+      setShowDeleteModal(false);
+      setDeleteIndexPending(null);
+      setDeleteIsNewPreview(false);
+      setDeleteKindPending(null);
+      return;
+    }
+
+    // existing -> usa tu confirmDeletePending original (que espera deleteIndexPending index in product.rawImages)
+    try {
+      await confirmDeletePending();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteIndexPending(null);
+      setDeleteIsNewPreview(false);
+      setDeleteKindPending(null);
+    }
+  };
+
+  // tu confirmDeletePending (adaptado a async/await y usando product.rawImages indices)
+  const confirmDeletePending = async () => {
+    const index = deleteIndexPending;
+    if (index == null) return;
+
+    const raw = product.rawImages?.[index];
+    // si raw === null -> preview (no debería pasar aquí)
+    if (raw === null) {
+      handleRemoveNewImagePreview(index);
+      return;
+    }
+
+    try {
+      const imageId = raw?.id;
+      if (!imageId) {
+        console.warn("⚠️ No se encontró ID en la imagen:", raw);
+        alert("No se pudo identificar la imagen en el servidor.");
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/images/${imageId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
+
+      // actualizar estado local
+      setProduct((prev) => {
+        const updated = { ...prev };
+        updated.images = prev.images.filter((_, i) => i !== index);
+        updated.rawImages = prev.rawImages.filter((_, i) => i !== index);
+        return updated;
+      });
+    } catch (err) {
+      console.error("❌ Error al eliminar imagen:", err);
+      alert("Error eliminando imagen del servidor.");
+    }
+  };
+
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index);
+  };
+
+  // Construcción de thumbs con metadata: main (0), existing (1..n), local previews (after)
+  // Nota: product.images ya contiene urls públicas + previews; product.rawImages contiene only existing images (no main)
+  // Para el mapping correcto calculamos:
+  const buildThumbs = () => {
+    const thumbs = [];
+    // MAIN
+    if (product.imageUrl) {
+      thumbs.push({ src: `${API_URL}${product.imageUrl}`, kind: "main" });
+    }
+    // EXISTING images (product.rawImages) -> sus URLs públicas están en product.images en el mismo orden si fetchProductData hizo map
+    const existing = product.rawImages || [];
+    existing.forEach((rawImg, idx) => {
+      const src = rawImg?.url ? `${API_URL}${rawImg.url.startsWith("/") ? "" : "/"}${rawImg.url}` : "/img/default.jpg";
+      thumbs.push({ src, kind: "existing", existingIndex: idx });
     });
+    // LOCAL previews (formData.newImages) -> generan URLs en el orden en que se agregaron
+    const localCount = formData.newImages?.length || 0;
+    for (let i = 0; i < localCount; i++) {
+      const file = formData.newImages[i];
+      const src = file ? URL.createObjectURL(file) : null;
+      thumbs.push({ src, kind: "local", localIndex: i });
+    }
+    return thumbs;
+  };
 
-    setFormData(prev => ({ ...prev, newImages: [], deleteImages: [] }));
-    setIsEditing(false);
-    setToastUploadVisible(true);
-    setTimeout(() => setToastUploadVisible(false), 2000);
+  // handler para abrir modal de eliminar con la metadata correcta
+  const openDeleteModalForThumb = (thumb, thumbGlobalIndex) => {
+    if (thumb.kind === "local") {
+      setDeleteKindPending("local");
+      setDeleteIndexPending(thumb.localIndex); // index dentro de formData.newImages
+      setDeleteIsNewPreview(true);
+      setShowDeleteModal(true);
+      return;
+    }
+    if (thumb.kind === "existing") {
+      setDeleteKindPending("existing");
+      // pass the real index inside product.rawImages
+      setDeleteIndexPending(thumb.existingIndex);
+      setDeleteIsNewPreview(false);
+      setShowDeleteModal(true);
+      return;
+    }
+    if (thumb.kind === "main") {
+      setDeleteKindPending("main");
+      setDeleteIndexPending(null);
+      setDeleteIsNewPreview(false);
+      setShowDeleteModal(true);
+      return;
+    }
+  };
 
-  } catch (err) {
-    console.error("Error al guardar producto:", err);
-  }
-};
+  const handleSave = async () => {
+    try {
+      const payloadForm = new FormData();
+      payloadForm.append(
+        "product",
+        new Blob(
+          [
+            JSON.stringify({
+              name: formData.name,
+              price: formData.price?.toString() || "0",
+              oldPrice: formData.oldPrice?.toString() || null,
+              discount: formData.discount?.toString() || null,
+              description: formData.description,
+              categoryId: product.categoryId || null,
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
 
+      formData.newImages?.forEach((file) => payloadForm.append("newImages", file));
+      if (formData.deleteImages?.length) payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
+
+      const res = await fetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
+      if (!res.ok) throw new Error("Error al actualizar producto");
+
+      const updated = await res.json();
+
+      setProduct({
+        ...updated,
+        images: updated.images?.map((img) => (img.url ? `${API_URL}${img.url}` : "/img/default.jpg")) || ["/img/default.jpg"],
+        rawImages: updated.images || [],
+      });
+
+      setFormData((prev) => ({ ...prev, newImages: [], deleteImages: [] }));
+      setIsEditing(false);
+      setToastUploadVisible(true);
+      setTimeout(() => setToastUploadVisible(false), 2000);
+    } catch (err) {
+      console.error("Error al guardar producto:", err);
+    }
+  };
+
+  // RENDER
+  const thumbs = buildThumbs();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-12 px-4 sm:px-6 lg:px-10">
@@ -444,83 +448,58 @@ const confirmDeletePending = async () => {
               <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black rounded-3xl overflow-hidden shadow-lg flex items-center justify-center border border-purple-800/40">
                 <img
                   src={
-                    // si está en edición y el formData tiene image individual se muestra; sino la imagen seleccionada
                     isEditing && formData.image
                       ? URL.createObjectURL(formData.image)
-                      : product.images[selectedImageIndex]
+                      : thumbs[selectedImageIndex]?.src ||
+                        (product.imageUrl ? `${API_URL}${product.imageUrl}` : "/img/default.jpg")
                   }
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
-                    
+
               {/* MINIATURAS */}
               <div className="mt-4 flex items-center gap-3 overflow-x-auto">
-                {product.images &&
-                  product.images.map((imgSrc, idx) => (
-                    <div key={idx} className="relative">
-                      <button
-                        onClick={() => handleThumbnailClick(idx)}
-                        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
-                          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
-                        } focus:outline-none`}
-                      >
-                        <img
-                          src={imgSrc}
-                          alt={`thumb-${idx}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => (e.target.src = "/img/default.jpg")}
-                        />
-                      </button>
-                      {isAdmin && (
-                        <button
-                          title="Eliminar imagen"
-                          onClick={() => {
-                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar modal
-                            const raw = (product.rawImages || [])[idx];
-                            if (raw === null) {
-                              // es una previsualización de archivo nuevo -> modal confirmará remover previsualización
-                              setDeleteIndexPending(idx);
-                              setDeleteIsNewPreview(true);
-                              setShowDeleteModal(true);
-                            } else {
-                              // imagen que existe en backend -> marcar para borrado (modal confirmará)
-                              setDeleteIndexPending(idx);
-                              setDeleteIsNewPreview(false);
-                              setShowDeleteModal(true);
-                            }
-                          }}
-                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                {thumbs.map((thumb, idx) => (
+                  <div key={idx} className="relative">
+                    <button
+                      onClick={() => handleThumbnailClick(idx)}
+                      className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
+                        idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
+                      } focus:outline-none`}
+                    >
+                      <img
+                        src={thumb.src}
+                        alt={`thumb-${idx}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => (e.target.src = "/img/default.jpg")}
+                      />
+                    </button>
 
-                {/* Agregar imagen (admin) */}
+                    {isAdmin && (
+                      <button
+                        title="Eliminar imagen"
+                        onClick={() => openDeleteModalForThumb(thumb, idx)}
+                        className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Botón para agregar imagen */}
                 {isAdmin && (
                   <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleAddImages}
-                      className="hidden"
-                    />
+                    <input type="file" accept="image/*" multiple onChange={handleAddImages} className="hidden" />
                     <span className="text-2xl">＋</span>
                   </label>
                 )}
-                
               </div>
+
               {isEditing && (
-                <input
-                  type="file"
-                  name="image"
-                  onChange={handleChange}
-                  className="mt-4 text-sm text-gray-300"
-                />
+                <input type="file" name="image" onChange={handleChange} className="mt-4 text-sm text-gray-300" />
               )}
             </div>
 
@@ -531,7 +510,9 @@ const confirmDeletePending = async () => {
                   <input
                     name="name"
                     value={formData.name}
-                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "name", value: e.target.value } })}
+                    onChange={(e) =>
+                      handleChange({ ...e, target: { ...e.target, name: "name", value: e.target.value } })
+                    }
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Nombre del producto"
                   />
@@ -540,7 +521,9 @@ const confirmDeletePending = async () => {
                     type="number"
                     step="0.01"
                     value={formData.price}
-                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "price", value: e.target.value } })}
+                    onChange={(e) =>
+                      handleChange({ ...e, target: { ...e.target, name: "price", value: e.target.value } })
+                    }
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio"
                   />
@@ -549,28 +532,31 @@ const confirmDeletePending = async () => {
                     type="number"
                     step="0.01"
                     value={formData.oldPrice}
-                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "oldPrice", value: e.target.value } })}
+                    onChange={(e) =>
+                      handleChange({ ...e, target: { ...e.target, name: "oldPrice", value: e.target.value } })
+                    }
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio anterior"
                   />
                   <textarea
                     name="description"
                     value={formData.description}
-                    onChange={(e) => handleChange({ ...e, target: { ...e.target, name: "description", value: e.target.value } })}
+                    onChange={(e) =>
+                      handleChange({
+                        ...e,
+                        target: { ...e.target, name: "description", value: e.target.value },
+                      })
+                    }
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Descripción"
                   />
                   <div className="flex flex-wrap gap-4">
-                    <button
-                      onClick={handleSave}
-                      className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-700 rounded-lg font-bold shadow-md hover:scale-105 transition-transform"
-                    >
+                    <button onClick={handleSave} className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-700 rounded-lg font-bold shadow-md hover:scale-105 transition-transform">
                       Guardar cambios
                     </button>
                     <button
                       onClick={() => {
                         setIsEditing(false);
-                        // limpiar previews agregadas sin guardar: recargar datos originales
                         refetch();
                       }}
                       className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg font-bold hover:scale-105 transition-transform"
@@ -585,29 +571,14 @@ const confirmDeletePending = async () => {
                     {product.name}
                   </h1>
                   <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="text-5xl font-bold text-purple-300 drop-shadow-md">
-                      {formatCurrency(product.price)}
-                    </span>
-                    {product.oldPrice && (
-                      <span className="text-2xl text-gray-500 line-through">
-                        {formatCurrency(product.oldPrice)}
-                      </span>
-                    )}
+                    <span className="text-5xl font-bold text-purple-300 drop-shadow-md">{formatCurrency(product.price)}</span>
+                    {product.oldPrice && <span className="text-2xl text-gray-500 line-through">{formatCurrency(product.oldPrice)}</span>}
                   </div>
-                  {savings > 0 && (
-                    <p className="text-green-400 font-semibold text-lg">
-                      ¡Ahorras {formatCurrency(savings)}!
-                    </p>
-                  )}
-                  <p className="text-gray-300 leading-relaxed text-lg">
-                    {product.description}
-                  </p>
+                  {savings > 0 && <p className="text-green-400 font-semibold text-lg">¡Ahorras {formatCurrency(savings)}!</p>}
+                  <p className="text-gray-300 leading-relaxed text-lg">{product.description}</p>
 
                   {isAdmin && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg font-semibold text-white hover:scale-105 transition-transform"
-                    >
+                    <button onClick={() => setIsEditing(true)} className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg font-semibold text-white hover:scale-105 transition-transform">
                       Editar producto ✏️
                     </button>
                   )}
@@ -617,32 +588,20 @@ const confirmDeletePending = async () => {
               {!isEditing && (
                 <>
                   <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => handleQuantityChange(-1)}
-                      className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
-                    >
+                    <button onClick={() => handleQuantityChange(-1)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
                       −
                     </button>
                     <span className="text-2xl font-semibold">{quantity}</span>
-                    <button
-                      onClick={() => handleQuantityChange(1)}
-                      className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
-                    >
+                    <button onClick={() => handleQuantityChange(1)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
                       +
                     </button>
                   </div>
 
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-900 rounded-xl font-bold shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_50px_rgba(167,85,247,0.7)] hover:scale-105 transition-all"
-                  >
+                  <button onClick={handleAddToCart} className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-900 rounded-xl font-bold shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_50px_rgba(167,85,247,0.7)] hover:scale-105 transition-all">
                     {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
                   </button>
 
-                  <button
-                    onClick={handleAdd}
-                    className="w-full py-4 bg-gradient-to-r from-green-500 to-green-700 rounded-xl font-bold shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_50px_rgba(34,197,94,0.8)] hover:scale-105 transition-all"
-                  >
+                  <button onClick={handleAdd} className="w-full py-4 bg-gradient-to-r from-green-500 to-green-700 rounded-xl font-bold shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_50px_rgba(34,197,94,0.8)] hover:scale-105 transition-all">
                     Finalizar compra
                   </button>
                 </>
@@ -659,17 +618,9 @@ const confirmDeletePending = async () => {
             </h2>
             <div className="flex flex-wrap justify-center gap-8">
               {recommended.map((item) => {
-                const hasPromo =
-                  item.oldPrice && Number(item.price) < Number(item.oldPrice);
-                const ahorro = hasPromo
-                  ? (Number(item.oldPrice) - Number(item.price)).toFixed(2)
-                  : null;
-
-                const imgSrc = item.imageUrl
-                  ? item.imageUrl.startsWith("http")
-                    ? item.imageUrl
-                    : `${API_URL}${item.imageUrl.startsWith("/") ? "" : "/"}${item.imageUrl}`
-                  : "/img/default.jpg";
+                const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
+                const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
+                const imgSrc = item.imageUrl ? (item.imageUrl.startsWith("http") ? item.imageUrl : `${API_URL}${item.imageUrl}`) : "/img/default.jpg";
 
                 return (
                   <div
@@ -677,46 +628,23 @@ const confirmDeletePending = async () => {
                     onClick={() => {
                       navigate(`/catalog/producto/${item.id}`);
                       const scrollToTop = () => window.scrollTo({ top: 0 });
-                      [50, 200, 400].forEach((t) =>
-                        setTimeout(scrollToTop, t)
-                      );
+                      [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
                     }}
                     className="block w-full max-w-[250px] mx-auto cursor-pointer transform transition-transform hover:scale-105"
                   >
                     <div className="bg-gradient-to-br from-purple-900/40 via-black/80 to-gray-900/80 backdrop-blur-xl border border-purple-800/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-purple-800/50 transition-all duration-500">
                       <div className="relative w-full h-[280px] overflow-hidden group">
-                        <img
-                          src={imgSrc}
-                          alt={item.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          onError={(e) => (e.target.src = "/img/default.jpg")}
-                        />
-                        {hasPromo && (
-                          <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">
-                            ¡PROMO!
-                          </div>
-                        )}
+                        <img src={imgSrc} alt={item.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onError={(e) => (e.target.src = "/img/default.jpg")} />
+                        {hasPromo && <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">¡PROMO!</div>}
                       </div>
                       <div className="p-4 flex flex-col">
-                        <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">
-                          {item.name}
-                        </h3>
+                        <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">{item.name}</h3>
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
-                            <span className="text-green-400 font-bold text-lg">
-                              {formatCurrency(item.price)}
-                            </span>
-                            {item.oldPrice && (
-                              <span className="text-gray-400 line-through text-sm">
-                                {formatCurrency(item.oldPrice)}
-                              </span>
-                            )}
+                            <span className="text-green-400 font-bold text-lg">{formatCurrency(item.price)}</span>
+                            {item.oldPrice && <span className="text-gray-400 line-through text-sm">{formatCurrency(item.oldPrice)}</span>}
                           </div>
-                          {ahorro && (
-                            <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">
-                              -{formatCurrency(ahorro)}
-                            </span>
-                          )}
+                          {ahorro && <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">-{formatCurrency(ahorro)}</span>}
                         </div>
                       </div>
                     </div>
@@ -727,19 +655,23 @@ const confirmDeletePending = async () => {
           </div>
         )}
 
-        {/* Modal de confirmación para eliminar image (visual, reemplaza confirm()) */}
+        {/* Modal para eliminar imagen */}
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="bg-black/80 border border-purple-700 rounded-2xl p-6 max-w-lg w-full mx-4">
               <h3 className="text-xl font-bold mb-2 text-white">
-                {deleteIsNewPreview
+                {deleteKindPending === "local"
                   ? "Eliminar imagen agregada (previsualización)"
+                  : deleteKindPending === "main"
+                  ? "Eliminar imagen principal"
                   : "Eliminar imagen existente"}
               </h3>
               <p className="text-gray-300 mb-4">
-                {deleteIsNewPreview
+                {deleteKindPending === "local"
                   ? "Esta imagen fue añadida como previsualización y se quitará localmente. No se eliminará del servidor hasta que guardes los cambios."
-                  : "Se marcará esta imagen para eliminación del servidor cuando guardes los cambios. ¿Deseas continuar?"}
+                  : deleteKindPending === "main"
+                  ? "Se eliminará la imagen principal del producto. ¿Deseas continuar?"
+                  : "Se eliminará esta miniatura del servidor. ¿Deseas continuar?"}
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -747,23 +679,14 @@ const confirmDeletePending = async () => {
                     setShowDeleteModal(false);
                     setDeleteIndexPending(null);
                     setDeleteIsNewPreview(false);
+                    setDeleteKindPending(null);
                   }}
                   className="px-4 py-2 bg-gray-700 rounded-md"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={() => {
-                    // Si era preview nueva, usar remove preview handler; si era existente, confirmar borrado
-                    if (deleteIsNewPreview) {
-                      handleRemoveNewImagePreview(deleteIndexPending);
-                      setShowDeleteModal(false);
-                      setDeleteIndexPending(null);
-                      setDeleteIsNewPreview(false);
-                    } else {
-                      confirmDeletePending();
-                    }
-                  }}
+                  onClick={handleConfirmDelete}
                   className="px-4 py-2 bg-red-600 rounded-md"
                 >
                   Eliminar
@@ -773,12 +696,8 @@ const confirmDeletePending = async () => {
           </div>
         )}
 
-        {/* Toast visual para subida de miniatura */}
-        {toastUploadVisible && (
-          <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">
-            Miniatura(s) agregada(s) correctamente
-          </div>
-        )}
+        {/* Toast visual */}
+        {toastUploadVisible && <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">Miniatura(s) agregada(s) correctamente</div>}
       </div>
     </div>
   );
