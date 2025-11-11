@@ -435,9 +435,17 @@ const confirmDeletePending = async () => {
         deleteImages: [],
       }));
 
-      setIsEditing(false);
-      alert("✅ Producto actualizado correctamente");
-      await refetch();
+setIsEditing(false);
+
+// Mostrar toast visual (no bloquea el render)
+setToastUploadVisible(true);
+setTimeout(() => setToastUploadVisible(false), 2000);
+
+// Espera un poco para dejar que React re-renderice sin perder contexto
+setTimeout(async () => {
+  await refetch();
+}, 500);
+
     } catch (err) {
       console.error(err);
       alert("❌ Error al guardar cambios");
@@ -531,8 +539,8 @@ const confirmDeletePending = async () => {
                     <span className="text-2xl">＋</span>
                   </label>
                 )}
+                
               </div>
-
               {isEditing && (
                 <input
                   type="file"
