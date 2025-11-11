@@ -38,12 +38,9 @@ export default function ProductDetail() {
       const res = await fetch(`${API_URL}/api/products/${id}`);
       const data = await res.json();
       // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
-      const rawImages =
-        data.images?.length && Array.isArray(data.images)
-          ? data.images // Ej: ["/uploads/xyz.jpg", "/uploads/abc.jpg"] (paths desde backend)
-          : data.imageUrl
-          ? [data.imageUrl]
-          : [];
+      const rawImages = Array.isArray(data.images)
+        ? data.images.map((img) => ({ id: img.id, url: img.url }))
+        : [];
 
       setProduct({
         ...data,
@@ -51,12 +48,15 @@ export default function ProductDetail() {
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         discount: data.discount ? Number(data.discount) : 0,
         // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
-        images:
-          rawImages?.length
-            ? rawImages.map((img) =>
-                img.startsWith("http") ? img : `${API_URL}${img}`
-              )
-            : ["/img/default.jpg"],
+      images:
+        rawImages?.length
+          ? rawImages.map((img) =>
+              img?.url
+                ? `${API_URL}${img.url.startsWith("/") ? "" : "/"}${img.url}`
+                : "/img/default.jpg"
+            )
+          : ["/img/default.jpg"],
+
         // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
         rawImages: rawImages,
         description: data.description || "Sin descripción disponible",
@@ -133,27 +133,36 @@ function ProductDetailContent({
   const { isAdmin } = useAuth();
 
   // formData ahora maneja nuevos archivos y las imágenes a borrar
+  // IMPORTANTE: inicializamos con valores seguros para evitar errores / bucles infinitos al leer product antes de fetch
   const [formData, setFormData] = useState({
-    name: product.name,
-    price: product.price,
-    oldPrice: product.oldPrice || "",
-    discount: product.discount || "",
-    description: product.description,
+    name: "",
+    price: "",
+    oldPrice: "",
+    discount: "",
+    description: "",
     // newImages: lista de File que se van a subir (append 'newImages' al FormData)
     newImages: [],
     // deleteImages: lista de rutas (raw paths) a eliminar en backend
     deleteImages: [],
   });
 
+  // Estados para confirmaciones visuales
+  const [toastUploadVisible, setToastUploadVisible] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteIndexPending, setDeleteIndexPending] = useState(null);
+  const [deleteIsNewPreview, setDeleteIsNewPreview] = useState(false);
+
   useEffect(() => {
     // Cuando cambia product (por fetch), actualizar formData base (mantener nuevos/newImages y deleteImages)
+    if (!product) return;
     setFormData((prev) => ({
       ...prev,
-      name: product.name,
-      price: product.price,
-      oldPrice: product.oldPrice || "",
-      discount: product.discount || "",
-      description: product.description,
+      name: product.name ?? "",
+      price: product.price ?? "",
+      oldPrice: product.oldPrice ?? "",
+      discount: product.discount ?? "",
+      description: product.description ?? "",
+      // conservar prev.newImages y prev.deleteImages
     }));
     // Reset selectedImageIndex si excede
     setSelectedImageIndex((idx) =>
@@ -209,87 +218,128 @@ function ProductDetailContent({
   };
 
   // NUEVO: manejar selección de nuevas imágenes (admin) -> option 3: añadir multiple
-  const handleAddImages = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+// ✅ Manejar selección de nuevas imágenes (admin)
+const handleAddImages = (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
 
-    // Añadir previews a product.images (usando createObjectURL) y push a rawImages como null temporal
-    const previewUrls = files.map((f) => URL.createObjectURL(f));
+  console.log("📸 Archivos seleccionados:", files.map(f => f.name));
 
-    setProduct((prev) => {
-      const newImages = [...(prev.images || []), ...previewUrls];
-      const newRaw = [...(prev.rawImages || []), ...files.map(() => null)]; // null indicates new local file
-      return {
-        ...prev,
-        images: newImages,
-        rawImages: newRaw,
-      };
-    });
+  // Generar URLs de previsualización
+  const previewUrls = files.map((f) => URL.createObjectURL(f));
 
-    // Añadir files a formData.newImages
-    setFormData((prev) => ({
-      ...prev,
-      newImages: [...(prev.newImages || []), ...files],
-    }));
+  // Actualizar el producto con las previsualizaciones
+  setProduct((prev) => {
+    const newImages = [...(prev.images || []), ...previewUrls];
+    const newRaw = [...(prev.rawImages || []), ...files.map(() => null)];
+    return { ...prev, images: newImages, rawImages: newRaw };
+  });
 
-    // reset input value to allow re-upload same file again if needed
-    e.target.value = "";
+  // Guardar los nuevos archivos para el backend
+  setFormData((prev) => ({
+    ...prev,
+    newImages: [...(prev.newImages || []), ...files],
+  }));
+
+  // Mostrar notificación visual
+  setToastUploadVisible(true);
+  setTimeout(() => setToastUploadVisible(false), 2000);
+
+  // ⚠️ Resetear input para permitir subir la misma imagen otra vez
+  e.target.value = "";
+};
+
+// Dentro del renderizado donde está el input file de añadir miniaturas:
+{isAdmin && (
+  <label
+    className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30"
+  >
+    <input
+      key={product.images?.length || 0} // 🔁 Fuerza que React recree el input al cambiar imágenes
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleAddImages}
+      className="hidden"
+    />
+    <span className="text-2xl">＋</span>
+  </label>
+)}
+
+
+  // Antes: handleDeleteImage usaba confirm(). Ahora abrimos modal para confirmar.
+  const openDeleteConfirmation = (index) => {
+    const raw = (product.rawImages || [])[index];
+    setDeleteIndexPending(index);
+    setDeleteIsNewPreview(raw === null);
+    setShowDeleteModal(true);
   };
 
-  // NUEVO: eliminar una imagen individual (solo admin). index corresponde al índice mostrado en product.images
-  const handleDeleteImage = (index) => {
-    // confirmar (puedes quitar confirm si no quieres prompt)
-    if (!confirm("¿Eliminar esta imagen? Esta acción se aplicará cuando guardes los cambios.")) {
+  // Confirmación final (desde modal)
+// ✅ confirmDeletePending corregido
+const confirmDeletePending = async () => {
+  const index = deleteIndexPending;
+  if (index == null) {
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
+    return;
+  }
+
+  const raw = product.rawImages?.[index];
+  const imageUrl = product.images?.[index];
+
+  // 🧩 Si la imagen fue agregada recientemente (raw === null)
+  if (raw === null) {
+    handleRemoveNewImagePreview(index);
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
+    return;
+  }
+
+  try {
+    // 🔍 Extraer el ID del backend (desde la URL o del raw)
+    // ✅ Ahora el objeto raw tiene { id, url }
+    const imageId = raw?.id;
+
+    if (!imageId) {
+      console.warn("⚠️ No se encontró ID en la imagen:", raw);
+      alert("No se pudo identificar la imagen en el servidor.");
+      setShowDeleteModal(false);
       return;
     }
 
-    setProduct((prev) => {
-      const images = [...(prev.images || [])];
-      const raw = [...(prev.rawImages || [])];
 
-      const removedRaw = raw[index]; // puede ser null si era recién subida (archivo)
-      // quitar elemento
-      images.splice(index, 1);
-      raw.splice(index, 1);
+    console.log(`🗑️ Eliminando imagen con ID: ${imageId}`);
 
-      // ajustar selectedImageIndex
-      let newSelected = selectedImageIndex;
-      if (index === selectedImageIndex) {
-        newSelected = 0;
-      } else if (index < selectedImageIndex) {
-        newSelected = Math.max(0, selectedImageIndex - 1);
-      }
-
-      setSelectedImageIndex(newSelected);
-
-      // si la imagen removida corresponde a una newImage (raw === null), la tenemos que quitar de formData.newImages
-      if (removedRaw === null) {
-        // removemos el primer archivo que coincida por tamaño/nombre con previews - es mejor intentar por tamaño+name, pero como raw is null
-        // approach: removemos el último archivo en newImages (porque añadimos en orden). Para mayor robustez podríamos mapear previews->files, pero evitamos complejidad.
-        setFormData((prevForm) => {
-          const newImgs = [...(prevForm.newImages || [])];
-          // intentemos eliminar un archivo heurísticamente: buscar archivo cuyo preview esté en images? complicado.
-          // Para evitar eliminar el archivo incorrecto, intentaremos eliminar el archivo que tenga URL.createObjectURL con mismo name/size no posible.
-          // Mejor: cuando añadimos archivos, se añadieron en el mismo orden; asumimos que si quitaron el índice i luego de agregar al final, retiramos el correspondiente del final.
-          // Implementación simple: quitar último archivo si newImages no vacio.
-          if (newImgs.length > 0) newImgs.pop();
-          return { ...prevForm, newImages: newImgs };
-        });
-      } else {
-        // si removedRaw tiene valor (ruta del backend), debemos marcarla para borrado en deleteImages
-        setFormData((prevForm) => ({
-          ...prevForm,
-          deleteImages: [...(prevForm.deleteImages || []), removedRaw],
-        }));
-      }
-
-      return {
-        ...prev,
-        images,
-        rawImages: raw,
-      };
+    const res = await fetch(`${API_URL}/api/images/${imageId}`, {
+      method: "DELETE",
     });
-  };
+
+    if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
+
+    console.log(`✅ Imagen eliminada del servidor (ID: ${imageId})`);
+
+    // 🧹 Actualizar estado local sin recargar página
+    setProduct((prev) => {
+      const updated = { ...prev };
+      updated.images = prev.images.filter((_, i) => i !== index);
+      updated.rawImages = prev.rawImages.filter((_, i) => i !== index);
+      return updated;
+    });
+
+  } catch (err) {
+    console.error("❌ Error al eliminar imagen:", err);
+    alert("Error eliminando imagen del servidor.");
+  } finally {
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteIsNewPreview(false);
+  }
+};
+
+
 
   // Manejar click en miniatura
   const handleThumbnailClick = (index) => {
@@ -297,6 +347,7 @@ function ProductDetailContent({
   };
 
   // NUEVO: handler para quitar una newImage previamente agregada (por si el admin decide quitar antes de guardar)
+  // Se puede invocar desde el modal si quieres que las previsualizaciones también usen el modal.
   const handleRemoveNewImagePreview = (previewIndex) => {
     setProduct((prev) => {
       const images = [...(prev.images || [])];
@@ -316,10 +367,9 @@ function ProductDetailContent({
       setFormData((prevForm) => {
         const newImgs = [...(prevForm.newImages || [])];
         // intentar eliminar el archivo posicionado en newImgs correspondiente al previewIndex relativo al primer null
-        // encontrar how many existing rawImages (non-null) before previewIndex to compute indexInNewImages
-        const rawBefore = raw.slice(0, previewIndex + 1); // after splice above raw already removed, but for calculation keep simple: we'll try remove last
+        // para mantener simple y evitar map complejo, removemos el último agregado (heurística)
         if (newImgs.length > 0) {
-          newImgs.pop(); // heurística: remove last added
+          newImgs.pop();
         }
         return { ...prevForm, newImages: newImgs };
       });
@@ -423,7 +473,7 @@ function ProductDetailContent({
                   onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
-
+                    
               {/* MINIATURAS */}
               <div className="mt-4 flex items-center gap-3 overflow-x-auto">
                 {product.images &&
@@ -442,21 +492,22 @@ function ProductDetailContent({
                           onError={(e) => (e.target.src = "/img/default.jpg")}
                         />
                       </button>
-
                       {isAdmin && (
                         <button
                           title="Eliminar imagen"
                           onClick={() => {
-                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar remove new preview
+                            // si la imagen fue añadida recientemente (rawImages[idx] === null), usar modal
                             const raw = (product.rawImages || [])[idx];
                             if (raw === null) {
-                              // es una previsualización de archivo nuevo
-                              if (confirm("Eliminar esta imagen agregada (todavía no guardada)?")) {
-                                handleRemoveNewImagePreview(idx);
-                              }
+                              // es una previsualización de archivo nuevo -> modal confirmará remover previsualización
+                              setDeleteIndexPending(idx);
+                              setDeleteIsNewPreview(true);
+                              setShowDeleteModal(true);
                             } else {
-                              // imagen que existe en backend -> marcar para borrado
-                              handleDeleteImage(idx);
+                              // imagen que existe en backend -> marcar para borrado (modal confirmará)
+                              setDeleteIndexPending(idx);
+                              setDeleteIsNewPreview(false);
+                              setShowDeleteModal(true);
                             }
                           }}
                           className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
@@ -692,6 +743,59 @@ function ProductDetailContent({
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación para eliminar image (visual, reemplaza confirm()) */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-black/80 border border-purple-700 rounded-2xl p-6 max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold mb-2 text-white">
+                {deleteIsNewPreview
+                  ? "Eliminar imagen agregada (previsualización)"
+                  : "Eliminar imagen existente"}
+              </h3>
+              <p className="text-gray-300 mb-4">
+                {deleteIsNewPreview
+                  ? "Esta imagen fue añadida como previsualización y se quitará localmente. No se eliminará del servidor hasta que guardes los cambios."
+                  : "Se marcará esta imagen para eliminación del servidor cuando guardes los cambios. ¿Deseas continuar?"}
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteIndexPending(null);
+                    setDeleteIsNewPreview(false);
+                  }}
+                  className="px-4 py-2 bg-gray-700 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    // Si era preview nueva, usar remove preview handler; si era existente, confirmar borrado
+                    if (deleteIsNewPreview) {
+                      handleRemoveNewImagePreview(deleteIndexPending);
+                      setShowDeleteModal(false);
+                      setDeleteIndexPending(null);
+                      setDeleteIsNewPreview(false);
+                    } else {
+                      confirmDeletePending();
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 rounded-md"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast visual para subida de miniatura */}
+        {toastUploadVisible && (
+          <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">
+            Miniatura(s) agregada(s) correctamente
           </div>
         )}
       </div>

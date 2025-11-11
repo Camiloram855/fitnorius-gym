@@ -39,8 +39,8 @@ export default function ProductDetail() {
       const data = await res.json();
       // Guardar tanto las URLs públicas (product.images) como las rutas originales del backend (rawImages)
       const rawImages = Array.isArray(data.images)
-      ? data.images.map((img) => img.url)
-      : [];
+        ? data.images.map((img) => ({ id: img.id, url: img.url }))
+        : [];
 
       setProduct({
         ...data,
@@ -48,14 +48,15 @@ export default function ProductDetail() {
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         discount: data.discount ? Number(data.discount) : 0,
         // images: urls públicas para mostrar (pueden ser absolute si ya vienen así)
-        images:
-          rawImages?.length
-            ? rawImages.map((img) =>
-                img && typeof img === "string"
-                  ? `${API_URL}${img.startsWith("/") ? "" : "/"}${img}`
-                  : "/img/default.jpg"
-              )
-            : ["/img/default.jpg"],
+      images:
+        rawImages?.length
+          ? rawImages.map((img) =>
+              img?.url
+                ? `${API_URL}${img.url.startsWith("/") ? "" : "/"}${img.url}`
+                : "/img/default.jpg"
+            )
+          : ["/img/default.jpg"],
+
         // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
         rawImages: rawImages,
         description: data.description || "Sin descripción disponible",
@@ -299,14 +300,16 @@ const confirmDeletePending = async () => {
 
   try {
     // 🔍 Extraer el ID del backend (desde la URL o del raw)
-    const idMatch = typeof raw === "string" ? raw.match(/(\d+)$/) : null;
-    const imageId = idMatch ? idMatch[1] : null;
+    // ✅ Ahora el objeto raw tiene { id, url }
+    const imageId = raw?.id;
 
     if (!imageId) {
-      console.warn("⚠️ No se pudo extraer el ID de la imagen:", raw);
+      console.warn("⚠️ No se encontró ID en la imagen:", raw);
       alert("No se pudo identificar la imagen en el servidor.");
+      setShowDeleteModal(false);
       return;
     }
+
 
     console.log(`🗑️ Eliminando imagen con ID: ${imageId}`);
 
@@ -516,20 +519,7 @@ const confirmDeletePending = async () => {
                   ))}
 
                 {/* Agregar imagen (admin) */}
-                {isAdmin && (
-                  <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleAddImages}
-                      className="hidden"
-                    />
-                    <span className="text-2xl">＋</span>
-                  </label>
-                )}
               </div>
-
               {isEditing && (
                 <input
                   type="file"
