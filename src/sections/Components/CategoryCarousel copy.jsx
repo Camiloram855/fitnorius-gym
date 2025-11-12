@@ -232,7 +232,7 @@ const CategoryCarousel = () => {
                   src={category.imageUrl}
                   alt={category.name}
                   className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
-                />  
+                />
                 {/* Botón eliminar */}
                 {isAdmin && categories.length > 1 && (
                   <button
