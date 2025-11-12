@@ -1,4 +1,4 @@
-// ProductDetail.jsx (componente completo, reemplaza tu archivo actual)
+// ProductDetail.jsx (completo, Cloudinary-ready)
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
@@ -9,6 +9,10 @@ const API_URL =
   (window.location.hostname === "localhost"
     ? "http://localhost:8080"
     : "https://fitnorius-production.up.railway.app");
+
+// Cloudinary config
+const CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/<TU_CLOUD_NAME>/upload";
+const CLOUDINARY_UPLOAD_PRESET = "<TU_UPLOAD_PRESET>";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -40,7 +44,7 @@ export default function ProductDetail() {
       const data = await res.json();
 
       const rawImages = Array.isArray(data.images)
-        ? data.images.map((img) => ({ id: img.id, url: img.url }))
+        ? data.images.map((img) => ({ id: img.id, url: img.url })) // url ahora apunta a Cloudinary
         : [];
 
       setProduct({
@@ -48,14 +52,9 @@ export default function ProductDetail() {
         price: data.price ? Number(data.price) : 0,
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         discount: data.discount ? Number(data.discount) : 0,
-        // images: urls públicas para mostrar
-        images:
-          rawImages?.length
-            ? rawImages.map((img) =>
-                img?.url ? `${API_URL}${img.url.startsWith("/") ? "" : "/"}${img.url}` : "/img/default.jpg"
-              )
-            : ["/img/default.jpg"],
-        // rawImages: ruta tal cual la devuelve el backend (sin API_URL)
+        images: rawImages?.length
+          ? rawImages.map((img) => img?.url || "/img/default.jpg")
+          : ["/img/default.jpg"],
         rawImages: rawImages,
         description: data.description || "Sin descripción disponible",
       });
@@ -112,15 +111,14 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
 
-  // formData para edición y nuevas imágenes
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     oldPrice: "",
     discount: "",
     description: "",
-    newImages: [],
-    deleteImages: [],
+    newImages: [], // archivos locales seleccionados
+    deleteImages: [], // IDs Cloudinary para eliminar
   });
 
   const [toastUploadVisible, setToastUploadVisible] = useState(false);
@@ -140,7 +138,6 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
       description: product.description ?? "",
     }));
     setSelectedImageIndex((idx) => (product.images && idx < product.images.length ? idx : 0));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
   const formatCurrency = (value) =>
@@ -168,265 +165,134 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+      setFormData((prev) => ({ ...prev, [name]: [...(prev[name] || []), ...files] }));
+      const previews = Array.from(files).map((f) => URL.createObjectURL(f));
+      setProduct((prev) => ({ ...prev, images: [...prev.images, ...previews] }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Manejar selección de nuevas imágenes (previsualización)
-  const handleAddImages = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    console.log("📸 Archivos seleccionados:", files.map((f) => f.name));
-    // Guardar los nuevos archivos para el backend
-    setFormData((prev) => ({ ...prev, newImages: [...(prev.newImages || []), ...files] }));
-
-    // Añadir previsualizaciones en product.images/localPreviews (no tocar product.rawImages)
-    setProduct((prev) => {
-      const prevImages = prev.images ? [...prev.images] : [];
-      const previews = files.map((f) => URL.createObjectURL(f));
-      return { ...prev, images: [...prevImages, ...previews], rawImages: [...(prev.rawImages || [])] };
-    });
-
-    setToastUploadVisible(true);
-    setTimeout(() => setToastUploadVisible(false), 2000);
-
-    e.target.value = "";
-  };
-
-  // Quitar previsualización local
   const handleRemoveNewImagePreview = (localIndex) => {
     setProduct((prev) => {
-      const images = [...(prev.images || [])];
-      const raw = [...(prev.rawImages || [])];
-
-      // localizar previsualizaciones: asumimos las previsualizaciones locales están después de las existing/main
-      // Para encontrar la correct localIndex, contamos cuantos existing+main hay
-      const existingCount = (prev.rawImages?.length || 0) + (prev.imageUrl ? 1 : 0);
-      const globalIndex = existingCount + localIndex;
-
-      if (globalIndex >= 0 && globalIndex < images.length) {
-        images.splice(globalIndex, 1);
-        // raw no tiene entradas para locales, así que no splice raw
-      }
-
-      // Ajustar selectedImageIndex
-      setSelectedImageIndex((sel) => (globalIndex === sel ? 0 : globalIndex < sel ? Math.max(0, sel - 1) : sel));
-
-      // remover del formData.newImages el archivo correspondiente (por posición localIndex)
-      setFormData((prevForm) => {
-        const newImgs = [...(prevForm.newImages || [])];
-        if (localIndex >= 0 && localIndex < newImgs.length) {
-          newImgs.splice(localIndex, 1);
-        } else if (newImgs.length > 0) {
-          // fallback: eliminar último
-          newImgs.pop();
-        }
-        return { ...prevForm, newImages: newImgs };
-      });
-
-      return { ...prev, images, rawImages: raw };
+      const images = [...prev.images];
+      images.splice(product.rawImages.length + localIndex, 1);
+      return { ...prev, images };
+    });
+    setFormData((prev) => {
+      const newImgs = [...prev.newImages];
+      newImgs.splice(localIndex, 1);
+      return { ...prev, newImages: newImgs };
     });
   };
 
-  // Eliminar imagen principal en servidor (PUT /api/products/{id}/json con imageUrl = null)
-  const deleteMainImageOnServer = async () => {
-    try {
-      const payload = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        oldPrice: product.oldPrice,
-        discount: product.discount,
-        description: product.description,
-        categoryId: product.categoryId || null,
-        imageUrl: null,
-      };
-      const res = await fetch(`${API_URL}/api/products/${product.id}/json`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Error eliminando imagen principal en servidor");
-      await refetch();
-    } catch (err) {
-      console.error("Error eliminando imagen principal:", err);
-      alert("No fue posible eliminar la imagen principal en el servidor.");
-    }
-  };
-
-  // Cuando confirmas en modal: decidir acción según kind pending
-  const handleConfirmDelete = async () => {
-    if (deleteKindPending === "local") {
-      // deleteIndexPending almacena localIndex
-      handleRemoveNewImagePreview(deleteIndexPending);
-      setShowDeleteModal(false);
-      setDeleteIndexPending(null);
-      setDeleteIsNewPreview(false);
-      setDeleteKindPending(null);
-      return;
-    }
-
-    if (deleteKindPending === "main") {
-      // borrar imagen principal en servidor
-      await deleteMainImageOnServer();
-      setShowDeleteModal(false);
-      setDeleteIndexPending(null);
-      setDeleteIsNewPreview(false);
-      setDeleteKindPending(null);
-      return;
-    }
-
-    // existing -> usa tu confirmDeletePending original (que espera deleteIndexPending index in product.rawImages)
-    try {
-      await confirmDeletePending();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setShowDeleteModal(false);
-      setDeleteIndexPending(null);
-      setDeleteIsNewPreview(false);
-      setDeleteKindPending(null);
-    }
-  };
-
-  // tu confirmDeletePending (adaptado a async/await y usando product.rawImages indices)
-  const confirmDeletePending = async () => {
-    const index = deleteIndexPending;
-    if (index == null) return;
-
-    const raw = product.rawImages?.[index];
-    // si raw === null -> preview (no debería pasar aquí)
-    if (raw === null) {
-      handleRemoveNewImagePreview(index);
-      return;
-    }
-
-    try {
-      const imageId = raw?.id;
-      if (!imageId) {
-        console.warn("⚠️ No se encontró ID en la imagen:", raw);
-        alert("No se pudo identificar la imagen en el servidor.");
-        return;
-      }
-
-      const res = await fetch(`${API_URL}/api/images/${imageId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`Error eliminando imagen ID: ${imageId}`);
-
-      // actualizar estado local
-      setProduct((prev) => {
-        const updated = { ...prev };
-        updated.images = prev.images.filter((_, i) => i !== index);
-        updated.rawImages = prev.rawImages.filter((_, i) => i !== index);
-        return updated;
-      });
-    } catch (err) {
-      console.error("❌ Error al eliminar imagen:", err);
-      alert("Error eliminando imagen del servidor.");
-    }
-  };
-
-  const handleThumbnailClick = (index) => {
-    setSelectedImageIndex(index);
-  };
-
-  // Construcción de thumbs con metadata: main (0), existing (1..n), local previews (after)
-  // Nota: product.images ya contiene urls públicas + previews; product.rawImages contiene only existing images (no main)
-  // Para el mapping correcto calculamos:
-  const buildThumbs = () => {
-    const thumbs = [];
-    // MAIN
-    if (product.imageUrl) {
-      thumbs.push({ src: `${API_URL}${product.imageUrl}`, kind: "main" });
-    }
-    // EXISTING images (product.rawImages) -> sus URLs públicas están en product.images en el mismo orden si fetchProductData hizo map
-    const existing = product.rawImages || [];
-    existing.forEach((rawImg, idx) => {
-      const src = rawImg?.url ? `${API_URL}${rawImg.url.startsWith("/") ? "" : "/"}${rawImg.url}` : "/img/default.jpg";
-      thumbs.push({ src, kind: "existing", existingIndex: idx });
-    });
-    // LOCAL previews (formData.newImages) -> generan URLs en el orden en que se agregaron
-    const localCount = formData.newImages?.length || 0;
-    for (let i = 0; i < localCount; i++) {
-      const file = formData.newImages[i];
-      const src = file ? URL.createObjectURL(file) : null;
-      thumbs.push({ src, kind: "local", localIndex: i });
-    }
-    return thumbs;
-  };
-
-  // handler para abrir modal de eliminar con la metadata correcta
-  const openDeleteModalForThumb = (thumb, thumbGlobalIndex) => {
+  const openDeleteModalForThumb = (thumb, idx) => {
     if (thumb.kind === "local") {
       setDeleteKindPending("local");
-      setDeleteIndexPending(thumb.localIndex); // index dentro de formData.newImages
+      setDeleteIndexPending(thumb.localIndex);
       setDeleteIsNewPreview(true);
       setShowDeleteModal(true);
-      return;
-    }
-    if (thumb.kind === "existing") {
+    } else if (thumb.kind === "existing") {
       setDeleteKindPending("existing");
-      // pass the real index inside product.rawImages
       setDeleteIndexPending(thumb.existingIndex);
       setDeleteIsNewPreview(false);
       setShowDeleteModal(true);
-      return;
-    }
-    if (thumb.kind === "main") {
+    } else if (thumb.kind === "main") {
       setDeleteKindPending("main");
       setDeleteIndexPending(null);
       setDeleteIsNewPreview(false);
       setShowDeleteModal(true);
-      return;
     }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteKindPending === "local") {
+      handleRemoveNewImagePreview(deleteIndexPending);
+    } else {
+      try {
+        const imgToDelete = deleteKindPending === "main" ? product.imageUrl : product.rawImages[deleteIndexPending]?.url;
+        if (imgToDelete) {
+          await fetch(`${API_URL}/api/images/delete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: imgToDelete }),
+          });
+          if (deleteKindPending === "main") {
+            setProduct((prev) => ({ ...prev, imageUrl: null, images: prev.images.filter((_, i) => i !== 0) }));
+          } else {
+            setProduct((prev) => {
+              const images = [...prev.images];
+              images.splice(product.rawImages.length > 0 ? deleteIndexPending + 1 : deleteIndexPending, 1);
+              const rawImages = [...prev.rawImages];
+              rawImages.splice(deleteIndexPending, 1);
+              return { ...prev, images, rawImages };
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error eliminando imagen Cloudinary:", err);
+      }
+    }
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteKindPending(null);
+    setDeleteIsNewPreview(false);
+  };
+
+  const buildThumbs = () => {
+    const thumbs = [];
+    if (product.imageUrl) thumbs.push({ src: product.imageUrl, kind: "main" });
+    product.rawImages?.forEach((rawImg, idx) => thumbs.push({ src: rawImg.url, kind: "existing", existingIndex: idx }));
+    formData.newImages?.forEach((file, idx) => thumbs.push({ src: URL.createObjectURL(file), kind: "local", localIndex: idx }));
+    return thumbs;
   };
 
   const handleSave = async () => {
     try {
-      const payloadForm = new FormData();
-      payloadForm.append(
-        "product",
-        new Blob(
-          [
-            JSON.stringify({
-              name: formData.name,
-              price: formData.price?.toString() || "0",
-              oldPrice: formData.oldPrice?.toString() || null,
-              discount: formData.discount?.toString() || null,
-              description: formData.description,
-              categoryId: product.categoryId || null,
-            }),
-          ],
-          { type: "application/json" }
-        )
-      );
+      const uploadedUrls = [];
+      for (const file of formData.newImages) {
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+        const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: "POST", body: data });
+        const json = await res.json();
+        uploadedUrls.push(json.secure_url);
+      }
 
-      formData.newImages?.forEach((file) => payloadForm.append("newImages", file));
-      if (formData.deleteImages?.length) payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
+      const payload = {
+        name: formData.name,
+        price: formData.price,
+        oldPrice: formData.oldPrice,
+        discount: formData.discount,
+        description: formData.description,
+        categoryId: product.categoryId,
+        newImages: uploadedUrls,
+        deleteImages: formData.deleteImages,
+      };
 
-      const res = await fetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
-      if (!res.ok) throw new Error("Error al actualizar producto");
-
-      const updated = await res.json();
-
-      setProduct({
-        ...updated,
-        images: updated.images?.map((img) => (img.url ? `${API_URL}${img.url}` : "/img/default.jpg")) || ["/img/default.jpg"],
-        rawImages: updated.images || [],
+      const res = await fetch(`${API_URL}/api/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
+      if (!res.ok) throw new Error("Error actualizando producto");
+
+      const updated = await res.json();
+      setProduct({
+        ...updated,
+        images: updated.images?.map((img) => img.url || "/img/default.jpg") || ["/img/default.jpg"],
+        rawImages: updated.images || [],
+      });
       setFormData((prev) => ({ ...prev, newImages: [], deleteImages: [] }));
       setIsEditing(false);
       setToastUploadVisible(true);
       setTimeout(() => setToastUploadVisible(false), 2000);
     } catch (err) {
-      console.error("Error al guardar producto:", err);
+      console.error("Error guardando producto:", err);
     }
   };
 
-  // RENDER
   const thumbs = buildThumbs();
 
   return (
@@ -440,43 +306,29 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
           ← Volver
         </button>
 
-        {/* PRODUCTO PRINCIPAL */}
         <div className="bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-15px_rgba(168,85,247,0.6)] border border-purple-800/40 p-8 sm:p-12 transition-all duration-500 hover:shadow-[0_0_70px_-10px_rgba(168,85,247,0.8)]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Imagen principal + miniaturas debajo */}
             <div className="relative group">
               <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black rounded-3xl overflow-hidden shadow-lg flex items-center justify-center border border-purple-800/40">
                 <img
-                  src={
-                    isEditing && formData.image
-                      ? URL.createObjectURL(formData.image)
-                      : thumbs[selectedImageIndex]?.src ||
-                        (product.imageUrl ? `${API_URL}${product.imageUrl}` : "/img/default.jpg")
-                  }
+                  src={product.images[selectedImageIndex] || "/img/default.jpg"}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   onError={(e) => (e.target.src = "/img/default.jpg")}
                 />
               </div>
 
-              {/* MINIATURAS */}
               <div className="mt-4 flex items-center gap-3 overflow-x-auto">
                 {thumbs.map((thumb, idx) => (
                   <div key={idx} className="relative">
                     <button
-                      onClick={() => handleThumbnailClick(idx)}
+                      onClick={() => setSelectedImageIndex(idx)}
                       className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
                         idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
                       } focus:outline-none`}
                     >
-                      <img
-                        src={thumb.src}
-                        alt={`thumb-${idx}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.target.src = "/img/default.jpg")}
-                      />
+                      <img src={thumb.src} alt={`thumb-${idx}`} className="w-full h-full object-cover" />
                     </button>
-
                     {isAdmin && (
                       <button
                         title="Eliminar imagen"
@@ -489,30 +341,22 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                   </div>
                 ))}
 
-                {/* Botón para agregar imagen */}
                 {isAdmin && (
                   <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
-                    <input type="file" accept="image/*" multiple onChange={handleAddImages} className="hidden" />
+                    <input type="file" accept="image/*" multiple onChange={handleChange} className="hidden" />
                     <span className="text-2xl">＋</span>
                   </label>
                 )}
               </div>
-
-              {isEditing && (
-                <input type="file" name="image" onChange={handleChange} className="mt-4 text-sm text-gray-300" />
-              )}
             </div>
 
-            {/* Información */}
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
                   <input
                     name="name"
                     value={formData.name}
-                    onChange={(e) =>
-                      handleChange({ ...e, target: { ...e.target, name: "name", value: e.target.value } })
-                    }
+                    onChange={handleChange}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Nombre del producto"
                   />
@@ -521,9 +365,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                     type="number"
                     step="0.01"
                     value={formData.price}
-                    onChange={(e) =>
-                      handleChange({ ...e, target: { ...e.target, name: "price", value: e.target.value } })
-                    }
+                    onChange={handleChange}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio"
                   />
@@ -532,21 +374,14 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                     type="number"
                     step="0.01"
                     value={formData.oldPrice}
-                    onChange={(e) =>
-                      handleChange({ ...e, target: { ...e.target, name: "oldPrice", value: e.target.value } })
-                    }
+                    onChange={handleChange}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Precio anterior"
                   />
                   <textarea
                     name="description"
                     value={formData.description}
-                    onChange={(e) =>
-                      handleChange({
-                        ...e,
-                        target: { ...e.target, name: "description", value: e.target.value },
-                      })
-                    }
+                    onChange={handleChange}
                     className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
                     placeholder="Descripción"
                   />
@@ -610,7 +445,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
           </div>
         </div>
 
-        {/* RECOMENDADOS */}
+                {/* RECOMENDADOS */}
         {recommended.length > 0 && (
           <div className="mt-20">
             <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 mb-12">
@@ -655,20 +490,18 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
           </div>
         )}
 
-        {/* Modal para eliminar imagen */}
+        {/* Modal eliminar y Toast aquí (idéntico a tu original, usando handleConfirmDelete) */}
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="bg-black/80 border border-purple-700 rounded-2xl p-6 max-w-lg w-full mx-4">
               <h3 className="text-xl font-bold mb-2 text-white">
-                {deleteKindPending === "local"
-                  ? "Eliminar imagen agregada (previsualización)"
-                  : deleteKindPending === "main"
-                  ? "Eliminar imagen principal"
-                  : "Eliminar imagen existente"}
+                {deleteKindPending === "local" ? "Eliminar imagen agregada (previsualización)" :
+                 deleteKindPending === "main" ? "Eliminar imagen principal" :
+                 "Eliminar imagen existente"}
               </h3>
               <p className="text-gray-300 mb-4">
                 {deleteKindPending === "local"
-                  ? "Esta imagen fue añadida como previsualización y se quitará localmente. No se eliminará del servidor hasta que guardes los cambios."
+                  ? "Esta imagen fue añadida como previsualización y se quitará localmente."
                   : deleteKindPending === "main"
                   ? "Se eliminará la imagen principal del producto. ¿Deseas continuar?"
                   : "Se eliminará esta miniatura del servidor. ¿Deseas continuar?"}
@@ -685,10 +518,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                 >
                   Cancelar
                 </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="px-4 py-2 bg-red-600 rounded-md"
-                >
+                <button onClick={handleConfirmDelete} className="px-4 py-2 bg-red-600 rounded-md">
                   Eliminar
                 </button>
               </div>
@@ -696,7 +526,6 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
           </div>
         )}
 
-        {/* Toast visual */}
         {toastUploadVisible && <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">Miniatura(s) agregada(s) correctamente</div>}
       </div>
     </div>

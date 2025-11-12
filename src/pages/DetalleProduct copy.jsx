@@ -459,8 +459,8 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                 />
               </div>
 
-              {/* MINIATURAS */}
-              <div className="mt-4 flex items-center gap-3 overflow-x-auto">
+                {/* MINIATURAS */}
+                <div className="mt-4 flex items-center gap-3 overflow-x-auto">
                 {thumbs.map((thumb, idx) => (
                   <div key={idx} className="relative">
                     <button
