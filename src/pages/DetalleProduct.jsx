@@ -247,6 +247,64 @@ const handleConfirmDelete = async () => {
   }
 };
 
+// Cambiar imagen específica (miniatura)
+const handleReplaceImage = (thumb, idx, file) => {
+  if (!file) return;
+
+  const newUrl = URL.createObjectURL(file);
+
+  // Si es una imagen local (newImages)
+  if (thumb.kind === "local") {
+    setProduct((prev) => {
+      const images = [...prev.images];
+      images[product.rawImages.length + thumb.localIndex] = newUrl;
+      return { ...prev, images };
+    });
+
+    setFormData((prev) => {
+      const updated = [...prev.newImages];
+      updated[thumb.localIndex] = file;
+      return { ...prev, newImages: updated };
+    });
+  }
+
+  // Si es una imagen existente en el servidor (rawImages)
+  if (thumb.kind === "existing") {
+    // Marcar imagen vieja para eliminar
+    const imgId = product.rawImages[thumb.existingIndex]?.id;
+
+    setFormData((prev) => ({
+      ...prev,
+      deleteImages: [...prev.deleteImages, imgId],
+      newImages: [...prev.newImages, file],
+    }));
+
+    setProduct((prev) => {
+      const images = [...prev.images];
+      images[idx] = newUrl;
+      return { ...prev, images };
+    });
+  }
+
+  // Si es la imagen principal (main)
+  if (thumb.kind === "main") {
+    const imgId = product.rawImages?.[0]?.id;
+
+    setFormData((prev) => ({
+      ...prev,
+      deleteImages: [...prev.deleteImages, imgId],
+      newImages: [...prev.newImages, file],
+    }));
+
+    setProduct((prev) => {
+      const images = [...prev.images];
+      images[0] = newUrl;
+      return { ...prev, images };
+    });
+  }
+};
+
+
 
  const buildThumbs = () => {
     const thumbs = [];
@@ -328,38 +386,74 @@ const handleConfirmDelete = async () => {
                 />
               </div>           
               {/* Miniaturas */}
-              <div className="mt-4 flex items-center gap-3 overflow-x-auto">
-                {thumbs.map((thumb, idx) => (
-                  <div key={idx} className="relative">
-                    <button
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
-                        idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
-                      } focus:outline-none`}
-                    >
-                      <img src={thumb.src} alt={`thumb-${idx}`} className="w-full h-full object-cover" />
-                      </button>
+<div className="mt-4 flex items-center gap-3 overflow-x-auto">
+  {thumbs.map((thumb, idx) => (
+    <div key={idx} className="relative">
+      
+      {/* Miniatura */}
+      <button
+        onClick={() => setSelectedImageIndex(idx)}
+        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
+          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
+        } focus:outline-none`}
+      >
+        <img
+          src={thumb.src}
+          alt={`thumb-${idx}`}
+          className="w-full h-full object-cover"
+        />
+      </button>
 
-                      {isAdmin && (
-                      <button
-                        title="Eliminar imagen"
-                        onClick={() => openDeleteModalForThumb(thumb, idx)}
-                        className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
+      {/* ❌ Botón eliminar */}
+      {isAdmin && (
+        <button
+          title="Eliminar imagen"
+          onClick={() => openDeleteModalForThumb(thumb, idx)}
+          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+        >
+          ×
+        </button>
+      )}
 
-        {/* Botón para agregar nuevas imágenes */}
-                {isAdmin && (
-                  <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
-                    <input type="file" accept="image/*" multiple onChange={handleChange} className="hidden" name="newImages"/>
-                    <span className="text-2xl">＋</span>
-                  </label>
-                )}
-              </div>
+      {/* ✏️ Botón editar (sin dañar tu lógica) */}
+      {isAdmin && (
+        <>
+          <label
+            htmlFor={`edit-thumb-${idx}`}
+            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg cursor-pointer"
+            title="Editar imagen"
+          >
+            ✏️
+          </label>
+
+          <input
+            id={`edit-thumb-${idx}`}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleReplaceImage(thumb, idx, e.target.files[0])}
+          />
+        </>
+      )}
+    </div>
+  ))}
+
+  {/* Botón para agregar nuevas imágenes */}
+  {isAdmin && (
+    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleChange}
+        className="hidden"
+        name="newImages"
+      />
+      <span className="text-2xl">＋</span>
+    </label>
+  )}
+</div>
+
             </div>
 
             <div className="flex flex-col space-y-6">
