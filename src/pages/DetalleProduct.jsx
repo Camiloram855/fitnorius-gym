@@ -125,8 +125,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteIndexPending, setDeleteIndexPending] = useState(null);
   const [deleteIsNewPreview, setDeleteIsNewPreview] = useState(false);
-  const [deleteKindPending, setDeleteKindPending] = useState(null); // 'main'|'existing'|'local'
-
+  const [deleteKindPending, setDeleteKindPending] = useState(null); 
   useEffect(() => {
     if (!product) return;
     setFormData((prev) => ({
@@ -193,38 +192,61 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = async () => {
-    try {
-      if (deleteKindPending === "local") handleRemoveNewImagePreview(deleteIndexPending);
-      else {
-        const imgToDelete = deleteKindPending === "main" ? product.imageUrl : product.rawImages[deleteIndexPending]?.url;
-        if (imgToDelete) {
-          await fetch(`${API_URL}/api/images/delete`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: imgToDelete }),
-          });
-          setProduct((prev) => {
-            const images = [...prev.images];
-            const rawImages = [...prev.rawImages];
-            if (deleteKindPending === "main") {
-              images.splice(0, 1);
-            } else {
-              images.splice(deleteIndexPending, 1);
-              rawImages.splice(deleteIndexPending, 1);
-            }
-            return { ...prev, images, rawImages };
-          });
-        }
+const handleConfirmDelete = async () => {
+  try {
+    if (deleteKindPending === "local") {
+      handleRemoveNewImagePreview(deleteIndexPending);
+    } else {
+      const imgToDelete =
+        deleteKindPending === "main"
+          ? product.imageUrl
+          : product.rawImages[deleteIndexPending]?.url;
+
+      const imgIdToDelete =
+        deleteKindPending === "main"
+          ? product.rawImages?.[0]?.id
+          : product.rawImages?.[deleteIndexPending]?.id;
+
+      if (imgToDelete) {
+        // 🔥 1️⃣ Borrar imagen de Cloudinary
+        await fetch(`${API_URL}/api/images/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: imgToDelete }),
+        });
+
+        // 🔥 2️⃣ Marcar imagen para eliminación en base de datos
+        setFormData((prev) => ({
+          ...prev,
+          deleteImages: [...(prev.deleteImages || []), imgIdToDelete],
+        }));
+
+        // 🔥 3️⃣ Actualizar estado local para quitarla de vista
+        setProduct((prev) => {
+          const images = [...prev.images];
+          const rawImages = [...prev.rawImages];
+
+          if (deleteKindPending === "main") {
+            images.splice(0, 1);
+            rawImages.splice(0, 1);
+          } else {
+            images.splice(deleteIndexPending, 1);
+            rawImages.splice(deleteIndexPending, 1);
+          }
+
+          return { ...prev, images, rawImages };
+        });
       }
-    } catch (err) {
-      console.error("Error eliminando imagen Cloudinary:", err);
-    } finally {
-      setShowDeleteModal(false);
-      setDeleteIndexPending(null);
-      setDeleteKindPending(null);
     }
-  };
+  } catch (err) {
+    console.error("Error eliminando imagen Cloudinary:", err);
+  } finally {
+    setShowDeleteModal(false);
+    setDeleteIndexPending(null);
+    setDeleteKindPending(null);
+  }
+};
+
 
  const buildThumbs = () => {
     const thumbs = [];
@@ -512,7 +534,8 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
                 >
                   Cancelar
                 </button>
-                <button onClick={handleConfirmDelete} className="px-4 py-2 bg-red-600 rounded-md">
+                <button onClick={handleConfirmDelete} 
+                className="px-4 py-2 bg-red-600 rounded-md">
                   Eliminar
                 </button>
               </div>
