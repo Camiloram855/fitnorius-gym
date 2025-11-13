@@ -64,7 +64,7 @@ const CategoryCarousel = () => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX || e.touches[0].pageX;
-      const walk = (x - startX) * 2.2; // 🔥 más rápido
+      const walk = (x - startX) * 2.2;
       container.scrollLeft = scrollLeft - walk;
     };
 
@@ -87,7 +87,7 @@ const CategoryCarousel = () => {
     };
   }, []);
 
-  // ✅ Eliminar categoría con confirmación
+  // ✅ Eliminar categoría
   const handleDeleteCategory = async (id) => {
     const category = categories.find((c) => c.id === id);
 
@@ -185,13 +185,13 @@ const CategoryCarousel = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <div className="w-full max-w-6xl mx-auto p-2">
       {/* ====== CARRUSEL ====== */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2">
+      <div className="mb-2">
+        <h2 className="text-2xl font-bold text-white mb-1">
           Categorías de Productos
         </h2>
-        <p className="text-gray-300">
+        <p className="text-gray-400 text-sm">
           Explora nuestras categorías destacadas
         </p>
       </div>
@@ -199,22 +199,22 @@ const CategoryCarousel = () => {
       <div className="relative select-none">
         <button
           onClick={() => scroll("left")}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-2 hover:bg-purple-600 transition-colors duration-200"
+          className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-1 hover:bg-purple-600 transition-colors duration-200"
         >
-          <ChevronLeft className="w-5 h-5 text-white" />
+          <ChevronLeft className="w-4 h-4 text-white" />
         </button>
 
         <button
           onClick={() => scroll("right")}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-2 hover:bg-purple-600 transition-colors duration-200"
+          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-1 hover:bg-purple-600 transition-colors duration-200"
         >
-          <ChevronRight className="w-5 h-5 text-white" />
+          <ChevronRight className="w-4 h-4 text-white" />
         </button>
 
-        {/* 🔹 Carrusel con scroll táctil ocultando la barra */}
+        {/* 🔹 Carrusel con márgenes reducidos */}
         <div
           ref={scrollRef}
-          className="flex gap-6 px-20 py-4 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
+          className="flex gap-3 px-4 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",
@@ -231,9 +231,8 @@ const CategoryCarousel = () => {
                 <img
                   src={category.imageUrl}
                   alt={category.name}
-                  className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
-                />  
-                {/* Botón eliminar */}
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
+                />
                 {isAdmin && categories.length > 1 && (
                   <button
                     onClick={(e) => {
@@ -245,8 +244,6 @@ const CategoryCarousel = () => {
                     <X className="w-3 h-3" />
                   </button>
                 )}
-
-                {/* Botón editar */}
                 {isAdmin && (
                   <button
                     onClick={(e) => {
@@ -260,7 +257,7 @@ const CategoryCarousel = () => {
                   </button>
                 )}
               </div>
-              <p className="text-center mt-3 text-sm font-medium text-white uppercase tracking-wide">
+              <p className="text-center mt-2 text-sm font-medium text-white uppercase tracking-wide">
                 {category.name}
               </p>
             </div>
@@ -271,11 +268,11 @@ const CategoryCarousel = () => {
             <div className="flex-shrink-0">
               <button
                 onClick={() => setShowForm(true)}
-                className="w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
+                className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300 group"
               >
-                <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
+                <Plus className="w-7 h-7 text-gray-400 group-hover:text-purple-400" />
               </button>
-              <p className="text-center mt-3 text-sm font-medium text-gray-400 uppercase tracking-wide">
+              <p className="text-center mt-2 text-sm font-medium text-gray-400 uppercase tracking-wide">
                 Agregar
               </p>
             </div>
@@ -285,15 +282,15 @@ const CategoryCarousel = () => {
 
       {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold text-white mb-4">
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold text-white mb-3">
             {selectedCategory.name}
           </h3>
           <ProductList category={selectedCategory} />
         </div>
       )}
 
-      {/* ====== MODAL NUEVA CATEGORÍA ====== */}
+      {/* ====== MODALES ====== */}
       {isAdmin && showForm && (
         <CategoryForm
           setShowForm={setShowForm}
@@ -301,13 +298,10 @@ const CategoryCarousel = () => {
         />
       )}
 
-      {/* ====== MODAL EDITAR ====== */}
       {isAdmin && categoryToEdit && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-            <h3 className="text-lg font-bold text-white mb-4">
-              Editar categoría
-            </h3>
+            <h3 className="text-lg font-bold text-white mb-4">Editar categoría</h3>
             <input
               type="text"
               value={editForm.name}

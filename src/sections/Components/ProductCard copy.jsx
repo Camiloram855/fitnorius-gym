@@ -49,12 +49,12 @@ export default function ProductCard({ product, onDelete }) {
         {/* ✅ Imagen y enlace al detalle */}
         <Link
           to={`/catalog/producto/${product.id}`}
-          className="relative w-full pt-[100%] overflow-hidden rounded-t-xl block group"
+          className="relative w-full h-[280px] overflow-hidden rounded-t-xl block group"
         >
           <img
             src={imageSrc}
             alt={product.name}
-            className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => (e.target.src = "/img/default.jpg")}
           />
           {hasPromo && (
@@ -72,7 +72,7 @@ export default function ProductCard({ product, onDelete }) {
             {product.name}
           </h3>
 
-          <div className="items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-green-600 font-bold text-lg">
                 {formattedPrice}
@@ -85,7 +85,7 @@ export default function ProductCard({ product, onDelete }) {
             </div>
 
             {ahorro && (
-              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-1 py-1 rounded-full">
+              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
                 -{formattedAhorro}
               </span>
             )}

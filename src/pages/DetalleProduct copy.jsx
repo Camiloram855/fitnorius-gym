@@ -193,7 +193,52 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     setShowDeleteModal(true);
   };
 
-ayloadForm.append(
+  const handleConfirmDelete = async () => {
+    try {
+      if (deleteKindPending === "local") handleRemoveNewImagePreview(deleteIndexPending);
+      else {
+        const imgToDelete = deleteKindPending === "main" ? product.imageUrl : product.rawImages[deleteIndexPending]?.url;
+        if (imgToDelete) {
+          await fetch(`${API_URL}/api/images/delete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: imgToDelete }),
+          });
+          setProduct((prev) => {
+            const images = [...prev.images];
+            const rawImages = [...prev.rawImages];
+            if (deleteKindPending === "main") {
+              images.splice(0, 1);
+            } else {
+              images.splice(deleteIndexPending, 1);
+              rawImages.splice(deleteIndexPending, 1);
+            }
+            return { ...prev, images, rawImages };
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error eliminando imagen Cloudinary:", err);
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteIndexPending(null);
+      setDeleteKindPending(null);
+    }
+  };
+
+ const buildThumbs = () => {
+    const thumbs = [];
+    if (product.imageUrl) thumbs.push({ src: product.imageUrl.startsWith("http") ? product.imageUrl : `${API_URL}${product.imageUrl}`, kind: "main" });
+    product.rawImages?.forEach((rawImg, idx) => thumbs.push({ src: rawImg.url.startsWith("http") ? rawImg.url : `${API_URL}${rawImg.url}`, kind: "existing", existingIndex: idx }));
+    formData.newImages?.forEach((file, idx) => thumbs.push({ src: URL.createObjectURL(file), kind: "local", localIndex: idx }));
+    return thumbs;
+  };
+
+
+  const handleSave = async () => {
+    try {
+      const payloadForm = new FormData();
+      payloadForm.append(
         "product",
         new Blob(
           [

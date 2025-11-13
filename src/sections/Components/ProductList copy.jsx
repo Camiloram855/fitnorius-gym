@@ -79,45 +79,43 @@ const ProductList = ({ category }) => {
   };
 
   return (
-<div className="mt-6">
-  {/* Grid con al menos 2 columnas siempre */}
-  <div className="grid gap-4 justify-center grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    {products.length === 0 && (
-      <p className="text-gray-400 col-span-full text-center">
-        No hay productos en esta categoría
-      </p>
-    )}
+  <div className="mt-6">
+    <div className="grid gap-6 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {products.length === 0 && (
+        <p className="text-gray-400 col-span-full text-center">
+          No hay productos en esta categoría
+        </p>
+      )}
 
-    {products.map((product) => (
-      <ProductCard
-        key={product.id}
-        product={product}
-        onDelete={handleDeleteProduct}
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onDelete={handleDeleteProduct}
+        />
+      ))}
+
+      {/* 🔒 Botón visible solo para el admin */}
+      {isAdmin && (
+        <div
+          onClick={() => setShowProductForm(true)}
+          className="w-60 h-40 rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300"
+        >
+          <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
+          <p className="mt-2 text-sm text-gray-400">Agregar Producto</p>
+        </div>
+      )}
+    </div>
+
+    {/* 📦 Modal para agregar producto */}
+    {showProductForm && (
+      <ProductForm
+        setShowProductForm={setShowProductForm}
+        selectedCategory={category}
+        onProductCreated={handleProductCreated}
       />
-    ))}
-
-    {/* Botón agregar producto */}
-    {isAdmin && (
-      <div
-        onClick={() => setShowProductForm(true)}
-        className="w-full flex-1 h-full rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 hover:bg-purple-700/30 transition-all duration-300"
-      >
-        <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-400" />
-        <p className="mt-2 text-sm text-gray-400 text-center">Agregar Producto</p>
-      </div>
     )}
   </div>
-
-  {/* Modal para agregar producto */}
-  {showProductForm && (
-    <ProductForm
-      setShowProductForm={setShowProductForm}
-      selectedCategory={category}
-      onProductCreated={handleProductCreated}
-    />
-  )}
-</div>
-
 );
 
 };
