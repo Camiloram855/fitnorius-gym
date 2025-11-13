@@ -311,7 +311,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
             <div className="relative group">
               <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black rounded-3xl overflow-hidden shadow-lg flex items-center justify-center border border-purple-800/40">
                 <img
-                  src={product.images[selectedImageIndex] || "/img/default.jpg"}
+                  src={selectedImageIndex === 0 ? product.mainImage : product.images[selectedImageIndex]}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   onError={(e) => (e.target.src = "/img/default.jpg")}
@@ -444,6 +444,51 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
             </div>
           </div>
         </div>
+
+        {/* RECOMENDADOS */}
+        {recommended.length > 0 && (
+          <div className="mt-20">
+            <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 mb-12">
+              Productos Recomendados
+            </h2>
+            <div className="flex flex-wrap justify-center gap-8">
+              {recommended.map((item) => {
+                const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
+                const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
+                const imgSrc = item.imageUrl ? (item.imageUrl.startsWith("http") ? item.imageUrl : `${API_URL}${item.imageUrl}`) : "/img/default.jpg";
+
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      navigate(`/catalog/producto/${item.id}`);
+                      const scrollToTop = () => window.scrollTo({ top: 0 });
+                      [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
+                    }}
+                    className="block w-full max-w-[250px] mx-auto cursor-pointer transform transition-transform hover:scale-105"
+                  >
+                    <div className="bg-gradient-to-br from-purple-900/40 via-black/80 to-gray-900/80 backdrop-blur-xl border border-purple-800/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-purple-800/50 transition-all duration-500">
+                      <div className="relative w-full h-[280px] overflow-hidden group">
+                        <img src={imgSrc} alt={item.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onError={(e) => (e.target.src = "/img/default.jpg")} />
+                        {hasPromo && <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">¡PROMO!</div>}
+                      </div>
+                      <div className="p-4 flex flex-col">
+                        <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">{item.name}</h3>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-green-400 font-bold text-lg">{formatCurrency(item.price)}</span>
+                            {item.oldPrice && <span className="text-gray-400 line-through text-sm">{formatCurrency(item.oldPrice)}</span>}
+                          </div>
+                          {ahorro && <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">-{formatCurrency(ahorro)}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Modal eliminar y Toast aquí (idéntico a tu original, usando handleConfirmDelete) */}
         {showDeleteModal && (
