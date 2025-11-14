@@ -214,7 +214,7 @@ const CategoryCarousel = () => {
         {/* 🔹 Carrusel con márgenes reducidos */}
         <div
           ref={scrollRef}
-          className="flex gap-3 px-4 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
+          className="flex gap-3 px-8 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",
@@ -340,3 +340,4 @@ const CategoryCarousel = () => {
 };
 
 export default CategoryCarousel;
+

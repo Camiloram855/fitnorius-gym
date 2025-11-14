@@ -1,27 +1,28 @@
 import React from "react";
-import { Dumbbell, Instagram, Facebook, Twitter } from "lucide-react";
+import { Instagram, Facebook } from "lucide-react";
+import { SiTiktok } from "react-icons/si"; // Icono de TikTok desde react-icons
 
 export function Footer() {
   return (
     <footer className="bg-gradient-to-r from-black via-purple-900 to-black py-12">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8">
-          {/* Brand */}
+          {/* Marca */}
           <div className="space-y-4">
-          <div className="flex items-center gap-2 animate-pulse">
-            <img
-              src="/img/Logo.png"
-              alt="Logo EVS Fitness"
-              className="w-80 h-24 object-contain"
-            />
-          </div>
+            <div className="flex items-center gap-2 animate-pulse">
+              <img
+                src="/img/Logo.png"
+                alt="Logo FitnoriusGYM"
+                className="w-80 h-24 object-contain"
+              />
+            </div>
             <p className="text-gray-400 text-sm">
               Tu tienda de confianza para equipos de fitness de alta calidad. Transforma tu hogar en el gimnasio
               perfecto.
             </p>
           </div>
 
-          {/* Products */}
+          {/* Productos */}
           <div className="space-y-4">
             <h4 className="font-semibold text-purple-400">Productos</h4>
             <ul className="space-y-2 text-sm text-gray-400">
@@ -48,7 +49,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Soporte */}
           <div className="space-y-4">
             <h4 className="font-semibold text-purple-400">Soporte</h4>
             <ul className="space-y-2 text-sm text-gray-400">
@@ -75,21 +76,44 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Social */}
+          {/* Redes sociales */}
           <div className="space-y-4">
             <h4 className="font-semibold text-purple-400">Síguenos</h4>
             <div className="flex gap-4">
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com/fitnoriosgym?igsh=ZjhhZHQ2ODlzenRy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
+              >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com/share/1BiP3T84Rr/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
-                <Twitter className="w-5 h-5" />
+
+              {/* TikTok */}
+              <a
+                href="https://www.tiktok.com/@fitnoriosgym?_r=1&_t=ZS-9181SY0Xszn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
+              >
+                <SiTiktok className="w-5 h-5" />
               </a>
             </div>
-            <p className="text-xs text-gray-500">© 2024 FitnoriusGYM. Todos los derechos reservados.</p>
+
+            <p className="text-xs text-gray-500">
+              © 2024 FitnoriosGYM. Todos los derechos reservados.
+            </p>
           </div>
         </div>
       </div>

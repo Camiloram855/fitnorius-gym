@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 
+
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
@@ -37,37 +38,45 @@ export default function ProductDetail() {
     };
   }, []);
 
-  const fetchProductData = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/products/${id}`);
-      const data = await res.json();
+const fetchProductData = async (silent = false) => {
+  if (!silent) setLoading(true);
 
-      const rawImages = Array.isArray(data.images)
-        ? data.images.map((img) => ({ id: img.id, url: img.url })) // url ahora apunta a Cloudinary
-        : [];
+  try {
+    const res = await fetch(`${API_URL}/api/products/${id}`);
+    const data = await res.json();
 
-      setProduct({
-        ...data,
-        price: data.price ? Number(data.price) : 0,
-        oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-        discount: data.discount ? Number(data.discount) : 0,
-        images: rawImages?.length
-          ? rawImages.map((img) => img?.url || "/img/default.jpg")
-          : ["/img/default.jpg"],
-        rawImages: rawImages,
-        description: data.description || "Sin descripción disponible",
-      });
+    const rawImages = Array.isArray(data.images)
+      ? data.images.map((img) => ({ id: img.id, url: img.url }))
+      : [];
 
-      const recRes = await fetch(`${API_URL}/api/products`);
-      const recData = await recRes.json();
-      setRecommended(recData.filter((p) => p.id !== parseInt(id)).slice(0, 5));
-    } catch (err) {
-      console.error("Error cargando datos:", err);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
+    setProduct({
+      ...data,
+      price: data.price ? Number(data.price) : 0,
+      oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+      discount: data.discount ? Number(data.discount) : 0,
+      images: rawImages?.length
+        ? rawImages.map((img) => img?.url || "/img/default.jpg")
+        : ["/img/default.jpg"],
+      rawImages: rawImages,
+
+      // 👉 Mantener saltos de línea tal como vienen
+      description: data.description ? String(data.description) : "Sin descripción disponible",
+    });
+
+    const recRes = await fetch(`${API_URL}/api/products`);
+    const recData = await recRes.json();
+
+    setRecommended(
+      recData.filter((p) => p.id !== parseInt(id)).slice(0, 5)
+    );
+
+  } catch (err) {
+    console.error("Error cargando datos:", err);
+  } finally {
+    if (!silent) setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchProductData();
@@ -110,6 +119,10 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
+  const { cartItems } = useCart();
+  const [emptyWarning, setEmptyWarning] = useState(false);
+
+  
 
   const [formData, setFormData] = useState({
     name: "",
@@ -159,7 +172,15 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
-  const handleAdd = () => navigate("/catalog/checkout");
+  const handleAdd = () => {
+  if (!cartItems || cartItems.length === 0) {
+    setEmptyWarning(true);
+    setTimeout(() => setEmptyWarning(false), 2500);
+    return;
+  }
+  navigate("/catalog/checkout");
+};
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
@@ -366,10 +387,10 @@ const handleReplaceImage = (thumb, idx, file) => {
       <div className="max-w-7xl mx-auto text-white">
         <br />
         <button
-          onClick={() => window.history.back()}
+          onClick={() => navigate("/catalog")}
           className="mb-8 px-6 py-2 bg-purple-700/40 hover:bg-purple-700/60 rounded-lg transition-all duration-300 shadow-md hover:shadow-purple-600/50 backdrop-blur-sm"
         >
-          ← Volver
+          ← Volver a catalogo
         </button>
 
         {/* PRODUCTO PRINCIPAL */}
@@ -386,76 +407,75 @@ const handleReplaceImage = (thumb, idx, file) => {
                 />
               </div>           
               {/* Miniaturas */}
-<div className="mt-4 flex items-center gap-3 overflow-x-auto">
-  {thumbs.map((thumb, idx) => (
-    <div key={idx} className="relative">
-      
-      {/* Miniatura */}
-      <button
-        onClick={() => setSelectedImageIndex(idx)}
-        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
-          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
-        } focus:outline-none`}
-      >
-        <img
-          src={thumb.src}
-          alt={`thumb-${idx}`}
-          className="w-full h-full object-cover"
-        />
-      </button>
+                <div className="mt-4 flex items-center gap-3 overflow-x-auto">
+                  {thumbs.map((thumb, idx) => (
+                    <div key={idx} className="relative">
+                      
+                      {/* Miniatura */}
+                      <button
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
+                          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
+                        } focus:outline-none`}
+                      >
+                        <img
+                          src={thumb.src}
+                          alt={`thumb-${idx}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
 
-      {/* ❌ Botón eliminar */}
-      {isAdmin && (
-        <button
-          title="Eliminar imagen"
-          onClick={() => openDeleteModalForThumb(thumb, idx)}
-          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
-        >
-          ×
-        </button>
-      )}
+                      {/* ❌ Botón eliminar */}
+                      {isAdmin && (
+                        <button
+                          title="Eliminar imagen"
+                          onClick={() => openDeleteModalForThumb(thumb, idx)}
+                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+                        >
+                          ×
+                        </button>
+                      )}
 
-      {/* ✏️ Botón editar (sin dañar tu lógica) */}
-      {isAdmin && (
-        <>
-          <label
-            htmlFor={`edit-thumb-${idx}`}
-            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg cursor-pointer"
-            title="Editar imagen"
-          >
-            ✏️
-          </label>
+                      {/* ✏️ Botón editar (sin dañar tu lógica) */}
+                      {isAdmin && (
+                        <>
+                          <label
+                            htmlFor={`edit-thumb-${idx}`}
+                            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg cursor-pointer"
+                            title="Editar imagen"
+                          >
+                            ✏️
+                          </label>
 
-          <input
-            id={`edit-thumb-${idx}`}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleReplaceImage(thumb, idx, e.target.files[0])}
-          />
-        </>
-      )}
-    </div>
-  ))}
+                          <input
+                            id={`edit-thumb-${idx}`}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleReplaceImage(thumb, idx, e.target.files[0])}
+                          />
+                        </>
+                      )}
+                    </div>
+                  ))}
 
-  {/* Botón para agregar nuevas imágenes */}
-  {isAdmin && (
-    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleChange}
-        className="hidden"
-        name="newImages"
-      />
-      <span className="text-2xl">＋</span>
-    </label>
-  )}
-</div>
-
+                  {/* Botón para agregar nuevas imágenes */}
+                  {isAdmin && (
+                    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleChange}
+                        className="hidden"
+                        name="newImages"
+                      />
+                      <span className="text-2xl">＋</span>
+                    </label>
+                  )}
+                </div>
             </div>
-
+            
             <div className="flex flex-col space-y-6">
               {isEditing ? (
                 <>
@@ -516,11 +536,11 @@ const handleReplaceImage = (thumb, idx, file) => {
                     {product.name}
                   </h1>
                   <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="text-5xl font-bold text-purple-300 drop-shadow-md">{formatCurrency(product.price)}</span>
+                    <span className="text-4xl font-bold text-purple-300 drop-shadow-md">{formatCurrency(product.price)}</span>
                     {product.oldPrice && <span className="text-2xl text-gray-500 line-through">{formatCurrency(product.oldPrice)}</span>}
                   </div>
                   {savings > 0 && <p className="text-green-400 font-semibold text-lg">¡Ahorras {formatCurrency(savings)}!</p>}
-                  <p className="text-gray-300 leading-relaxed text-lg">{product.description}</p>
+                  <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-line">{product.description}</p>
 
                   {isAdmin && (
                     <button onClick={() => setIsEditing(true)} className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg font-semibold text-white hover:scale-105 transition-transform">
@@ -542,63 +562,109 @@ const handleReplaceImage = (thumb, idx, file) => {
                     </button>
                   </div>
 
-                  <button onClick={handleAddToCart} className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-900 rounded-xl font-bold shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_50px_rgba(167,85,247,0.7)] hover:scale-105 transition-all">
-                    {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
+                  <button
+                    onClick={handleAddToCart}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold shadow-lg"
+                  >
+                    Agregar al carrito
                   </button>
 
-                  <button onClick={handleAdd} className="w-full py-4 bg-gradient-to-r from-green-500 to-green-700 rounded-xl font-bold shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_50px_rgba(34,197,94,0.8)] hover:scale-105 transition-all">
+                  <button
+                    onClick={handleAdd}
+                    className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold shadow-lg"
+                  >
                     Finalizar compra
                   </button>
+                  {emptyWarning && (
+                  <p className="text-red-400 text-lg font-semibold mt-3 animate-pulse">
+                    🛒 Tu carrito está vacío — agrega un producto para continuar.
+                  </p>
+                )}
+
                 </>
               )}
             </div>
           </div>
         </div>
 
-        {/* RECOMENDADOS */}
-        {recommended.length > 0 && (
-          <div className="mt-20">
-            <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 mb-12">
-              Productos Recomendados
-            </h2>
-            <div className="flex flex-wrap justify-center gap-8">
-              {recommended.map((item) => {
-                const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
-                const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
-                const imgSrc = item.imageUrl ? (item.imageUrl.startsWith("http") ? item.imageUrl : `${API_URL}${item.imageUrl}`) : "/img/default.jpg";
+          {/* RECOMENDADOS */}
+          {recommended.length > 0 && (
+            <div className="mt-20">
+              <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 mb-12">
+                Productos Recomendados
+              </h2>
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      navigate(`/catalog/producto/${item.id}`);
-                      const scrollToTop = () => window.scrollTo({ top: 0 });
-                      [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
-                    }}
-                    className="block w-full max-w-[250px] mx-auto cursor-pointer transform transition-transform hover:scale-105"
-                  >
-                    <div className="bg-gradient-to-br from-purple-900/40 via-black/80 to-gray-900/80 backdrop-blur-xl border border-purple-800/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-purple-800/50 transition-all duration-500">
-                      <div className="relative w-full h-[280px] overflow-hidden group">
-                        <img src={imgSrc} alt={item.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onError={(e) => (e.target.src = "/img/default.jpg")} />
-                        {hasPromo && <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">¡PROMO!</div>}
-                      </div>
-                      <div className="p-4 flex flex-col">
-                        <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">{item.name}</h3>
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-green-400 font-bold text-lg">{formatCurrency(item.price)}</span>
-                            {item.oldPrice && <span className="text-gray-400 line-through text-sm">{formatCurrency(item.oldPrice)}</span>}
+              {/* 🔥 Scroll horizontal – tarjetas siempre en fila */}
+              <div
+                className="flex gap-6 overflow-x-auto px-2 pb-4 scrollbar-thin scrollbar-thumb-purple-700/60 scrollbar-track-transparent"
+                style={{ scrollSnapType: "x mandatory" }}
+              >
+                {recommended.map((item) => {
+                  const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
+                  const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
+                  const imgSrc = item.imageUrl
+                    ? item.imageUrl.startsWith("http")
+                      ? item.imageUrl
+                      : `${API_URL}${item.imageUrl}`
+                    : "/img/default.jpg";
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        navigate(`/catalog/producto/${item.id}`);
+                        const scrollToTop = () => window.scrollTo({ top: 0 });
+                        [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
+                      }}
+                      className="flex-shrink-0 w-[200px] sm:w-[230px] cursor-pointer transform transition-transform hover:scale-105"
+                      style={{ scrollSnapAlign: "start" }}
+                    >
+                      <div className="bg-gradient-to-br from-purple-900/40 via-black/80 to-gray-900/80 backdrop-blur-xl border border-purple-800/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-purple-800/50 transition-all duration-500">
+                        <div className="relative w-full h-[220px] overflow-hidden group">
+                          <img
+                            src={imgSrc}
+                            alt={item.name}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            onError={(e) => (e.target.src = "/img/default.jpg")}
+                          />
+                          {hasPromo && (
+                            <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">
+                              ¡PROMO!
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4 flex flex-col">
+                          <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">
+                            {item.name}
+                          </h3>
+
+                          <div className=" items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-green-400 font-bold text-lg">
+                                {formatCurrency(item.price)}
+                              </span>
+                              {item.oldPrice && (
+                                <span className="text-gray-400 line-through text-sm">
+                                  {formatCurrency(item.oldPrice)}
+                                </span>
+                              )}
+                            </div>
+
+                            {ahorro && (
+                              <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">
+                                -{formatCurrency(ahorro)}
+                              </span>
+                            )}
                           </div>
-                          {ahorro && <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">-{formatCurrency(ahorro)}</span>}
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
 
         {/* Modal eliminar y Toast aquí (idéntico a tu original, usando handleConfirmDelete) */}
         {showDeleteModal && (

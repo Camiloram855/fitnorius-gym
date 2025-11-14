@@ -6,15 +6,6 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function SearchSection() {
-
-  // 🔥 FORZAR SCROLL ARRIBA SIEMPRE QUE ENTRES AQUÍ
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "instant" // evita animaciones raras en móvil
-    });
-  }, []);
-
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -109,14 +100,14 @@ export default function SearchSection() {
           </div>
         </div>
 
+        {/* ⚠️ Mensaje de error */}
         {error && <p className="text-red-400 text-center mt-4">{error}</p>}
       </div>
 
       {/* 🧾 Resultados */}
       <div className="mt-12 px-4 md:px-10">
         {results.length > 0 ? (
-          <div
-            className="
+          <div className="
               grid 
               grid-cols-2 
               sm:grid-cols-2 
@@ -124,8 +115,7 @@ export default function SearchSection() {
               lg:grid-cols-4 
               gap-5
               place-items-center
-            "
-          >
+            ">
             {results.map((product) => {
               const imageSrc = product.imageUrl
                 ? product.imageUrl.startsWith("http")
@@ -135,60 +125,64 @@ export default function SearchSection() {
 
               return (
                 <div
-                  key={product.id}
-                  onClick={() => handleProductClick(product.id)}
-                  className="
-                    w-[170px] h-[310px]
-                    sm:w-[180px] sm:h-[330px]
-                    md:w-[200px] md:h-[360px]
-                    lg:w-[230px] lg:h-[390px]
-                    xl:w-[250px] xl:h-[420px]
-                    bg-[#181818] rounded-2xl border border-white/10 
-                    hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 
-                    transition-all duration-300 cursor-pointer group flex flex-col
-                  "
-                >
-                  <div
-                    className="
-                      w-full 
-                      h-[170px] sm:h-[180px] md:h-[200px] lg:h-[230px] xl:h-[250px]
-                      bg-[#121212] 
-                      rounded-t-2xl 
-                      overflow-hidden 
-                      flex items-center justify-center
-                    "
-                  >
-                    <img
-                      src={imageSrc}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => (e.target.src = "/no-image.png")}
-                    />
-                  </div>
+  key={product.id}
+  onClick={() => handleProductClick(product.id)}
+  className="
+    w-[170px] h-[310px]         /* tamaño base móvil */
+    sm:w-[180px] sm:h-[330px]   /* tablet */
+    md:w-[200px] md:h-[360px]   /* escritorio pequeño */
+    lg:w-[230px] lg:h-[390px]   /* escritorio grande */
+    xl:w-[250px] xl:h-[420px]   /* monitores grandes */
+    
+    bg-[#181818] rounded-2xl border border-white/10 
+    hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 
+    transition-all duration-300 cursor-pointer group flex flex-col
+  "
+>
+  {/* 🖼 Imagen cuadrada, escala con la tarjeta */}
+  <div
+    className="
+      w-full 
+      h-[170px] sm:h-[180px] md:h-[200px] lg:h-[230px] xl:h-[250px]
+      bg-[#121212] 
+      rounded-t-2xl 
+      overflow-hidden 
+      flex items-center justify-center
+    "
+  >
+    <img
+      src={imageSrc}
+      alt={product.name}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      onError={(e) => (e.target.src = "/no-image.png")}
+    />
+  </div>
 
-                  <div
-                    className="
-                      p-3 flex flex-col justify-between 
-                      h-[140px] sm:h-[150px] md:h-[160px] lg:h-[170px] xl:h-[180px]
-                    "
-                  >
-                    <h3 className="text-white text-sm md:text-base font-semibold mb-1 line-clamp-1">
-                      {product.name}
-                    </h3>
+  {/* 📄 Información del producto */}
+  <div className="
+      p-3 flex flex-col justify-between 
+      h-[140px] sm:h-[150px] md:h-[160px] lg:h-[170px] xl:h-[180px]
+    "
+  >
+    <h3 className="text-white text-sm md:text-base font-semibold mb-1 line-clamp-1">
+      {product.name}
+    </h3>
 
-                    <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2 whitespace-pre-line">
-                      {product.description}
-                    </p>
+    <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2 whitespace-pre-line">
+      {product.description}
+    </p>
 
-                    <p className="text-purple-400 font-bold text-base md:text-lg mt-auto">
-                      {new Intl.NumberFormat("es-CO", {
-                        style: "currency",
-                        currency: "COP",
-                        minimumFractionDigits: 2,
-                      }).format(product.price)}
-                    </p>
-                  </div>
-                </div>
+    <p className="text-purple-400 font-bold text-base md:text-lg mt-auto">
+      {new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 2,
+      }).format(product.price)}
+    </p>
+  </div>
+</div>
+
+
               );
             })}
           </div>

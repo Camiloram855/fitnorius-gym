@@ -51,17 +51,11 @@ export default function ProductCard({ product, onDelete }) {
         {/* ----------------------------------------- */}
         {/* ✅ Imagen — sigue abriendo el detalle normal */}
         {/* ----------------------------------------- */}
-          <Link
-            to={`/catalog/producto/${product.id}`}
-            onClick={() => {
+          <button onClick={() => navigate('/catalog/producto/' + id
+            
               // Fuerza scroll ANTES de navegar (Safari fix)
-              window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-
-              // Previene el scroll restore de Safari/iPhone
-              if ("scrollRestoration" in window.history) {
-                window.history.scrollRestoration = "manual";
-              }
-            }}
+              
+            )}
             className="relative w-full pt-[100%] overflow-hidden rounded-t-xl block group"
           >
 
@@ -78,7 +72,7 @@ export default function ProductCard({ product, onDelete }) {
               </span>
             </div>
           )}
-        </Link>
+        </button>
 
         {/* ----------------------------------------- */}
         {/* CONTENIDO */}

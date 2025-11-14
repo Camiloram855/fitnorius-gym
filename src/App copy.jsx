@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// src/App.jsx
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 // Secciones
 import Hero from "./sections/Hero";
@@ -15,9 +17,35 @@ import { Footer } from "./Layout/Footer";
 // Página independiente
 import Catalog from "./pages/Catalog";
 
-function App() {
+// 🔄 Nuevo componente global para controlar el scroll en TODAS las rutas
+function ScrollToTopOnRouteChange() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Desactivar restauración automática del navegador
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    // Forzar scroll al inicio de la página
+    window.scrollTo(0, 0);
+
+    // Refuerzo para casos donde el navegador restaura después del render
+    const fix = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 250);
+
+    return () => clearTimeout(fix);
+  }, [location.pathname]);
+
+  return null;
+}
+
+function AppContent() {
   return (
-    <Router>
+    <>
+      <ScrollToTopOnRouteChange /> {/* 👈 Aquí se aplica a TODA la app */}
+
       <Routes>
         {/* Ruta principal (Home) */}
         <Route
@@ -39,9 +67,15 @@ function App() {
 
         {/* Ruta para el Catálogo */}
         <Route path="/catalog/*" element={<Catalog />} />
-        
-        
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
