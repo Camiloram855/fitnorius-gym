@@ -32,8 +32,9 @@ export function GallerySection() {
             Entrena donde quieras
           </h2>
           <p className="text-purple-700 max-w-2xl mx-auto">
-            Nuestras mancuernas ajustables te permiten tener un gimnasio completo en casa. 
-            Perfectas para cualquier espacio y nivel de entrenamiento.
+            Llévalas contigo a todas partes
+            <p>Set x3 de bandas de tela, diferentes resistencias, un solo objetivo </p>
+            <p>¡entrena sin excusas!</p>
           </p>
         </div>
 
