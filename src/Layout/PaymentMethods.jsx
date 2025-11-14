@@ -1,11 +1,12 @@
 export function PaymentMethods() {
   const paymentMethods = [
-    { name: "Mastercard", logo: "img/MasterCard_Logo.png" },
-    { name: "Visa", logo: "img/visa.png" },
-    { name: "Nequi", logo: "img/nequi.jpg" },
+    
+    { name: "Visa", logo: "img/bancolombia.png" },
+    { name: "Nequi", logo: "img/nequi.png" },
     { name: "Visa", logo: "img/addi-3.png" },
-    { name: "Nequi", logo: "img/contra-entrega.png" },
     { name: "Nequi", logo: "img/bold.png" },
+    { name: "Nequi", logo: "img/contra-entrega.png" },
+
   ];
 
   return (
@@ -31,7 +32,8 @@ export function PaymentMethods() {
         </div>
 
         <p className="text-purple-200 mt-8 font-light">
-          Compra con total seguridad y confianza
+          Elige tu método de pago favorito y recive tus 
+          productos sin complicaciones.
         </p>
       </div>
     </section>

@@ -61,7 +61,7 @@ export function GallerySection() {
         {/* Sección dinámica de video/gif */}
         <div className="text-center">
           <h3 className="text-2xl font-bold text-purple-900 mb-6">
-            Mira nuestras mancuernas en acción
+            NUESTRAS BANDAS EN ACCIÓN
           </h3>
           <div className="rounded-2xl overflow-hidden shadow-lg max-w-2xl mx-auto">
             {isGif ? (
@@ -82,7 +82,7 @@ export function GallerySection() {
             )}
           </div>
           <p className="mt-4 text-purple-700">
-            Un entrenamiento dinámico, compacto y al alcance de tu hogar
+            Fuerza, estilo y resultados en cada movimiento.
           </p>
         </div>
       </div>

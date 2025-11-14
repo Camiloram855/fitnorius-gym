@@ -42,7 +42,9 @@ export default function CatalogSection() {
 
         {/* Subtitle */}
         <p className="text-xl md:text-2xl text-purple-100 mb-12 leading-relaxed font-light">
-          Descubre nuestros productos exclusivos para tu entrenamiento
+          ¡No te quedes solo con las bandas!
+          Tenemos Todo lo que necesitas para
+          armar tu espacio de entrenamiento perfecto!
         </p>
 
         {/* CTA Button */}

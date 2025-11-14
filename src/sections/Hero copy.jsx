@@ -58,7 +58,7 @@ export default function Hero() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
             BANDAS DE TELA
             <span className="block text-yellow-400">
-              SET X 3
+              INCLUYE: 3 BANDAS DE RESISTENCIA
             </span>
           </h1>
         </div>
@@ -86,19 +86,10 @@ export default function Hero() {
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-2 text-center sm:text-left">
-                Incluye
+                Incluye 6 meses de rutina de entrenamiento con videos
               </h3>
               <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                -  3 RESISTENCIAS DIFERENTES      
-              </p>
-              <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                -  GRASI MÁRMOL: 90 LIBRAS
-              </p>
-              <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                -  ROSADO MÁRMOL: 120 LIBRAS
-              </p>
-              <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                -  NEGRA MÁRMOL: 150 LIBRAS
+                Acceso completo a nuestra plataforma de entrenamiento personalizado
               </p>
             </div>
           </div>
@@ -112,7 +103,7 @@ export default function Hero() {
                 OBSEQUIO:
               </h3>
               <p className="text-gray-300 text-sm sm:text-base text-center sm:text-left">
-                RUTINA DE ENTRENAMIENTO GLUTEOS Y PIERNAS
+                1 barra extensora acolchada gratis
               </p>
             </div>
           </div>
@@ -130,7 +121,7 @@ export default function Hero() {
             }
           }}
         >
-          MAS OPCIONES CON BANDAS
+          VER DETALLES DE BANDAS
         </Button>
         </div>
       </div>

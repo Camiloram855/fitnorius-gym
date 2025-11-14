@@ -166,7 +166,7 @@ const PurchaseButton = () => {
         onClick={openModal}
         className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl shadow-lg transition-all duration-300 hover:from-purple-700 hover:to-purple-900 hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300 animate-bounce hover:animate-none overflow-hidden"
       >
-        Comprar contra entrega
+        COMPRAR AHORA
       </button>
 
       {/* Modal */}
