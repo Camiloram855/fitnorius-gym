@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
+import FAQDOS from "../sections/FAQDOS";
 
 
 const API_URL =
@@ -704,7 +705,9 @@ const handleReplaceImage = (thumb, idx, file) => {
         )}
 
         {toastUploadVisible && <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">Miniatura(s) agregada(s) correctamente</div>}
+      
       </div>
+      
     </div>
   );
 }

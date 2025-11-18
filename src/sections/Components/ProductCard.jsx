@@ -72,7 +72,7 @@ export default function ProductCard({ product, onDelete }) {
             onError={(e) => (e.target.src = "/img/default.jpg")}
           />
           {hasPromo && (
-            <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-3 py-1 rounded-full shadow-md">
+            <div className="absolute bottom-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-2 py-1 rounded-full shadow-md">
               <span className="text-white font-bold text-xs uppercase">
                 ¡PROMO!
               </span>

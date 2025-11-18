@@ -214,7 +214,7 @@ const CategoryCarousel = () => {
         {/* 🔹 Carrusel con márgenes reducidos */}
         <div
           ref={scrollRef}
-          className="flex gap-3 px-8 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide"
+          className="flex gap-10 px-8 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide text-lg"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",
@@ -257,7 +257,7 @@ const CategoryCarousel = () => {
                   </button>
                 )}
               </div>
-              <p className="text-center mt-2 text-sm font-medium text-white uppercase tracking-wide">
+              <p className="text-center mt-2 text-sm font-medium text-white uppercase tracking-wide whitespace-normal leading-tight max-w-[90px]">
                 {category.name}
               </p>
             </div>
