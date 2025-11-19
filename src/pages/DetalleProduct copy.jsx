@@ -123,6 +123,9 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const { isAdmin } = useAuth();
   const { cartItems } = useCart();
   const [emptyWarning, setEmptyWarning] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
 
   
 
@@ -398,52 +401,91 @@ const handleReplaceImage = (thumb, idx, file) => {
         {/* PRODUCTO PRINCIPAL */}
         <div className="bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-15px_rgba(168,85,247,0.6)] border border-purple-800/40 p-8 sm:p-12 transition-all duration-500 hover:shadow-[0_0_70px_-10px_rgba(168,85,247,0.8)]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Imagen principal + miniaturas debajo */}
-            <div className="relative group">
-              <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black rounded-3xl overflow-hidden shadow-lg flex items-center justify-center border border-purple-800/40">
-                <img
+              {/* SLIDER DE IMÁGENES — Imagen más pequeña + swipe táctil */}
+              <div className="relative w-full flex flex-col items-center">
+
+                {/* Imagen principal con soporte táctil */}
+                <div
+                  className="w-90 h-90 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-gradient-to-br from-purple-900/40 to-black 
+                  rounded-3xl overflow-hidden shadow-lg border border-purple-800/40 flex items-center justify-center select-none"
+                  
+                  onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
+                  onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
+                  onTouchEnd={() => {
+                    if (!touchStart || !touchEnd) return;
+                    const distance = touchStart - touchEnd;
+
+                    if (distance > 60) {
+                      // → swipe izquierda (imagen siguiente)
+                      setSelectedImageIndex((prev) =>
+                        prev === thumbs.length - 1 ? 0 : prev + 1
+                      );
+                    }
+                    if (distance < -60) {
+                      // ← swipe derecha (imagen anterior)
+                      setSelectedImageIndex((prev) =>
+                        prev === 0 ? thumbs.length - 1 : prev - 1
+                      );
+                    }
+
+                    setTouchStart(null);
+                    setTouchEnd(null);
+                  }}
+                >
+                  <img
                   src={thumbs[selectedImageIndex]?.src || "/img/default.jpg"}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   onError={(e)=> (e.target.src = "/img/default.jpg")}
                 />
-              </div>           
-              {/* Miniaturas */}
-                <div className="mt-4 flex items-center gap-3 overflow-x-auto">
+                </div>
+
+                {/* Puntos del slider */}
+                <div className="flex gap-2 mt-4">
+                  {thumbs.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        idx === selectedImageIndex
+                          ? "bg-purple-400 scale-125"
+                          : "bg-gray-500"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Miniaturas debajo */}
+                <div className="mt-6 flex items-center gap-3 overflow-x-auto max-w-full px-2">
                   {thumbs.map((thumb, idx) => (
                     <div key={idx} className="relative">
-                      
-                      {/* Miniatura */}
                       <button
                         onClick={() => setSelectedImageIndex(idx)}
                         className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
                           idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
-                        } focus:outline-none`}
+                        }`}
                       >
-                        <img
-                          src={thumb.src}
-                          alt={`thumb-${idx}`}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={thumb.src} className="w-full h-full object-cover" />
                       </button>
 
-                      {/* ❌ Botón eliminar */}
                       {isAdmin && (
                         <button
                           title="Eliminar imagen"
                           onClick={() => openDeleteModalForThumb(thumb, idx)}
-                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white 
+                          rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
                         >
                           ×
                         </button>
                       )}
 
-                      {/* ✏️ Botón editar (sin dañar tu lógica) */}
                       {isAdmin && (
                         <>
                           <label
                             htmlFor={`edit-thumb-${idx}`}
-                            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg cursor-pointer"
+                            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 
+                            text-white rounded-full w-6 h-6 flex items-center justify-center text-xs 
+                            shadow-lg cursor-pointer"
                             title="Editar imagen"
                           >
                             ✏️
@@ -454,16 +496,18 @@ const handleReplaceImage = (thumb, idx, file) => {
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => handleReplaceImage(thumb, idx, e.target.files[0])}
+                            onChange={(e) =>
+                              handleReplaceImage(thumb, idx, e.target.files[0])
+                            }
                           />
                         </>
                       )}
                     </div>
                   ))}
 
-                  {/* Botón para agregar nuevas imágenes */}
                   {isAdmin && (
-                    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+                    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 
+                    border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
                       <input
                         type="file"
                         accept="image/*"
@@ -476,7 +520,9 @@ const handleReplaceImage = (thumb, idx, file) => {
                     </label>
                   )}
                 </div>
-            </div>
+              </div>
+
+
             
             <div className="flex flex-col space-y-6">
               {isEditing ? (
