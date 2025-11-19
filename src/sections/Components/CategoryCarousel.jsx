@@ -33,6 +33,31 @@ const CategoryCarousel = () => {
     fetchCategories();
   }, []);
 
+  // ✅ Restaurar categoría abierta al regresar
+useEffect(() => {
+  const savedCatId = sessionStorage.getItem("openCategoryId");
+
+  if (savedCatId && categories.length > 0) {
+    const cat = categories.find((c) => String(c.id) === String(savedCatId));
+    if (cat) setSelectedCategory(cat);
+  }
+}, [categories]);
+
+// ✅ Restaurar scroll
+useEffect(() => {
+  const lastScroll = sessionStorage.getItem("scrollPosition");
+  if (lastScroll) {
+    setTimeout(() => {
+      window.scrollTo({
+        top: Number(lastScroll),
+        behavior: "auto",
+      });
+    }, 80);
+  }
+}, []);
+
+
+
   const scroll = (direction) => {
     const container = scrollRef.current;
     if (container) {
@@ -225,7 +250,11 @@ const CategoryCarousel = () => {
             <div
               key={category.id}
               className="flex-shrink-0 group cursor-pointer"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => {
+              setSelectedCategory(category);
+              sessionStorage.setItem("openCategoryId", category.id);
+            }}
+
             >
               <div className="relative">
                 <img

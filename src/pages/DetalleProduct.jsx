@@ -6,6 +6,7 @@ import { useAuth } from "../pages/AuthContext";
 import FAQDOS from "../sections/FAQDOS";
 
 
+
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"

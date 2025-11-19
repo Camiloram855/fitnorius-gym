@@ -54,13 +54,10 @@ export default function ProductCard({ product, onDelete }) {
           <Link
             to={`/catalog/producto/${product.id}`}
             onClick={() => {
-              // 1️⃣ Guardar la posición del scroll actual
-              sessionStorage.setItem("scrollPosition", window.scrollY);
+              // Fuerza scroll ANTES de navegar (Safari fix)
+              window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
-              // 2️⃣ Guardar la categoría abierta (si el catálogo la guarda en sessionStorage)
-              //    Esto lo maneja el componente del catálogo — aquí no se toca
-
-              // 3️⃣ Safari Fix para evitar que haga scroll automático
+              // Previene el scroll restore de Safari/iPhone
               if ("scrollRestoration" in window.history) {
                 window.history.scrollRestoration = "manual";
               }

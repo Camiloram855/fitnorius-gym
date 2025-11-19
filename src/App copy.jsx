@@ -19,19 +19,27 @@ import Catalog from "./pages/Catalog";
 
 // 🔄 Nuevo componente global para controlar el scroll en TODAS las rutas
 function ScrollToTopOnRouteChange() {
-  const { pathname } = useLocation();
+  const location = useLocation();
 
   useEffect(() => {
+    // Desactivar restauración automática del navegador
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
+    // Forzar scroll al inicio de la página
     window.scrollTo(0, 0);
-  }, [pathname]);
+
+    // Refuerzo para casos donde el navegador restaura después del render
+    const fix = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 250);
+
+    return () => clearTimeout(fix);
+  }, [location.pathname]);
 
   return null;
 }
-
 
 function AppContent() {
   return (

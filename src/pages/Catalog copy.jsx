@@ -19,7 +19,22 @@ export default function Catalog() {
     location.pathname === "/catalog/login" ||
     location.pathname === "/catalog/checkout";
 
+  // ✅ Control completo del scroll
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
 
+    // Forzar scroll al tope inmediatamente
+    window.scrollTo(0, 0);
+
+    // 🔁 Refuerzo en caso de que el navegador intente restaurar la posición anterior
+    const fixScroll = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 300);
+
+    return () => clearTimeout(fixScroll);
+  }, [location.pathname]);
 
   return (
     <AuthProvider>
@@ -33,7 +48,7 @@ export default function Catalog() {
               element={
                 <>
                   <HeroBanner />
-                  
+                  <FAQDOS />
                 </>
               }
             />

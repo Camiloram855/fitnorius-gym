@@ -5,13 +5,21 @@ export default function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Evita que el navegador intente restaurar el scroll automáticamente
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
-    // Forzar que SIEMPRE suba cuando cambias de página
+    // 1. Fuerza scroll al tope de inmediato
     window.scrollTo(0, 0);
+
+    // 2. Asegura después del render
+    const t1 = setTimeout(() => window.scrollTo(0, 0), 50);
+    const t2 = setTimeout(() => window.scrollTo(0, 0), 200);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [pathname]);
 
   return null;
