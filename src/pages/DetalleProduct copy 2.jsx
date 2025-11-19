@@ -433,11 +433,11 @@ const handleReplaceImage = (thumb, idx, file) => {
                   }}
                 >
                   <img
-                  src={thumbs[selectedImageIndex]?.src || "/img/default.jpg"}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  onError={(e)=> (e.target.src = "/img/default.jpg")}
-                />
+                    src={thumbs[selectedImageIndex]?.src || "/img/default.jpg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500 ease-out"
+                    onError={(e) => (e.target.src = "/img/default.jpg")}
+                  />
                 </div>
 
                 {/* Puntos del slider */}
