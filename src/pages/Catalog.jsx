@@ -5,7 +5,7 @@ import HeroBanner from "../sections/Components/HeroBanner";
 import { Footer } from "../Layout/Footer";
 import ScrollingHeader from "../sections/Components/ScrollingHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
-import FAQDOS from "../sections/FAQDOS";
+
 import DetalleProduct from "./DetalleProduct";
 import Login from "./Login";
 import Checkout from "./Checkout";
