@@ -1,4 +1,4 @@
-/* ====== ESTILOS GLOBALES ====== */
+/* ====== ESTILOS GLOBALES con history ====== */
 
 html, body {
   width: 100%;
@@ -9,7 +9,7 @@ html, body {
   background-color: #000; /* Mantiene coherencia con tu fondo oscuro */
   color: #fff;
   font-family: 'Inter', sans-serif; 
-}
+}    
 
 #root {
   width: 100%;
