@@ -8,7 +8,7 @@ html, body {
   overflow-x: hidden; /* Evita scroll horizontal en móviles */
   background-color: #000; /* Mantiene coherencia con tu fondo oscuro */
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', sans-serif; 
 }
 
 #root {
