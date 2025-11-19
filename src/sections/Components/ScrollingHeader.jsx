@@ -24,7 +24,7 @@ const ScrollingHeader = () => {
   // ======================================
   const scrollRef = useRef(null)
   const pos = useRef(0)
-  const speed = 2.8
+  const speed = 1.1
 
   useEffect(() => {
     if (!scrollRef.current || messages.length === 0) return
