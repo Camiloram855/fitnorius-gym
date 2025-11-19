@@ -399,7 +399,7 @@ const handleReplaceImage = (thumb, idx, file) => {
         </button>
 
         {/* PRODUCTO PRINCIPAL */}
-        <div className="bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-15px_rgba(168,85,247,0.6)] border border-purple-800/40 p-8 sm:p-12 transition-all duration-500 hover:shadow-[0_0_70px_-10px_rgba(168,85,247,0.8)]">
+        <div className="">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               {/* SLIDER DE IMÁGENES — Imagen más pequeña + swipe táctil */}
               <div className="relative w-full flex flex-col items-center">
