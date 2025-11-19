@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { User, ShoppingCart, X, Pencil, Check } from "lucide-react";
+import { User, ShoppingCart, X, Pencil, Check, Plus } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
 
@@ -14,19 +14,13 @@ const ScrollingHeader = () => {
   const [phase, setPhase] = useState("enter");
   const [resetting, setResetting] = useState(false);
 
-  // --- Editar mensajes ---
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [editIndex, setEditIndex] = useState(0);
 
-  // --- Carrito ---
   const { cartItems, removeFromCart } = useCart();
   const [showCart, setShowCart] = useState(false);
-  const cartRef = useRef(null);
 
-  // --------------------------------------------------------------------
-  // 🔹 1. CARGAR MENSAJES DESDE EL BACKEND
-  // --------------------------------------------------------------------
   useEffect(() => {
     fetch(API_URL)
       .then((res) => res.json())
@@ -34,9 +28,6 @@ const ScrollingHeader = () => {
       .catch(() => setMessages([]));
   }, []);
 
-  // --------------------------------------------------------------------
-  // 🔹 2. ANIMACIÓN DEL MENSAJE
-  // --------------------------------------------------------------------
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -60,9 +51,6 @@ const ScrollingHeader = () => {
     return () => clearTimeout(timer);
   }, [phase, messages.length]);
 
-  // --------------------------------------------------------------------
-  // 🔹 3. GUARDAR MENSAJES EN BACKEND
-  // --------------------------------------------------------------------
   const updateMessagesInBackend = async (newMsgs) => {
     await fetch(API_URL, {
       method: "PUT",
@@ -73,20 +61,13 @@ const ScrollingHeader = () => {
     setMessages(newMsgs);
   };
 
-  // --------------------------------------------------------------------
-  // 🔹 4. Abrir editor
-  // --------------------------------------------------------------------
   const handleEdit = (i) => {
-    if (!isAdmin) return; // No permitir editar si no es admin
-
+    if (!isAdmin) return;
     setEditIndex(i);
     setEditValue(messages[i]);
     setIsEditing(true);
   };
 
-  // --------------------------------------------------------------------
-  // 🔹 5. Guardar edición
-  // --------------------------------------------------------------------
   const saveEdit = async () => {
     const newMsgs = [...messages];
     newMsgs[editIndex] = editValue;
@@ -95,19 +76,12 @@ const ScrollingHeader = () => {
     setIsEditing(false);
   };
 
-  // --------------------------------------------------------------------
-  // 🔹 6. Agregar mensaje nuevo (solo admin)
-  // --------------------------------------------------------------------
   const addMessage = async () => {
     if (!isAdmin) return;
-
     const newMsgs = [...messages, "Nuevo mensaje"];
     await updateMessagesInBackend(newMsgs);
   };
 
-  // --------------------------------------------------------------------
-  // 🔹 7. Carrito
-  // --------------------------------------------------------------------
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -119,20 +93,15 @@ const ScrollingHeader = () => {
     return `http://localhost:8080/${path}`;
   };
 
-  // --------------------------------------------------------------------
-  // 🔹 8. RENDER
-  // --------------------------------------------------------------------
   return (
     <div className="w-full fixed top-0 left-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-700 text-white font-medium text-sm md:text-base h-12 flex items-center justify-between px-6 shadow-lg">
 
-      {/* Mensajes animados */}
-      <div className="flex-1 overflow-hidden relative h-full flex items-center">
-
+      {/* MENSAJES ANIMADOS */}
+      <div className="flex-1 overflow-hidden relative h-full flex items-center pointer-events-none">
         {messages.length > 0 && (
           <div
             key={index}
-            onClick={() => handleEdit(index)}
-            className="absolute w-full text-center cursor-pointer"
+            className="absolute w-full text-center pointer-events-none"
             style={{
               transition: resetting ? "none" : "transform 0.7s ease-in-out",
               transform:
@@ -145,24 +114,29 @@ const ScrollingHeader = () => {
                   : "translateX(100%)",
             }}
           >
-            {messages[index]}
+            {/* CLICK SOLO AQUÍ */}
+            <span
+              className="inline-block px-2 cursor-pointer pointer-events-auto"
+              onClick={() => handleEdit(index)}
+            >
+              {messages[index]}
+            </span>
           </div>
         )}
-
       </div>
 
-      {/* Botón agregar mensaje (solo admin) */}
+      {/* AGREGAR MENSAJE (SOLO ADMIN) */}
       {isAdmin && (
         <button
           onClick={addMessage}
-          className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all mr-3"
+          className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all mr-3 z-[200]"
         >
-          <Pencil size={18} />
+          <Plus size={18} />
         </button>
       )}
 
-      {/* Iconos */}
-      <div className="flex items-center gap-4 relative">
+      {/* ICONOS */}
+      <div className="flex items-center gap-4 relative z-[300]">
         <Link
           to="/catalog/login"
           className="p-2 rounded-full bg-white/10 hover:bg-white/20"
@@ -182,9 +156,8 @@ const ScrollingHeader = () => {
           )}
         </button>
 
-        {/* Mini carrito */}
         {showCart && (
-          <div className="absolute right-0 top-10 w-80 bg-white text-gray-800 rounded-xl shadow-2xl p-4 z-50 border border-gray-200">
+          <div className="absolute right-0 top-10 w-80 bg-white text-gray-800 rounded-xl shadow-2xl p-4 z-[999] border border-gray-200">
 
             <div className="flex justify-between items-center mb-3 border-b pb-2">
               <h3 className="text-lg font-bold text-purple-700">Tu carrito</h3>
@@ -249,10 +222,8 @@ const ScrollingHeader = () => {
         )}
       </div>
 
-      {/* Editor mensajes admin */}
       {isAdmin && isEditing && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-white text-black p-3 rounded-xl shadow-2xl w-[350px] flex flex-col gap-3 z-[999]">
-
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-white text-black p-3 rounded-xl shadow-2xl w-[350px] flex flex-col gap-3 z-[9999]">
           <div className="flex justify-between items-center">
             <span className="font-semibold">Editar mensaje</span>
             <button onClick={() => setIsEditing(false)}>
