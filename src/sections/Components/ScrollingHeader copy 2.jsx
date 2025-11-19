@@ -70,27 +70,18 @@ const ScrollingHeader = () => {
   };
 
   const saveEdit = async () => {
-  let newMsgs = [...messages];
-
-  // Si estamos agregando uno nuevo
-  if (editIndex === messages.length) {
-    newMsgs.push(editValue);
-  } else {
+    const newMsgs = [...messages];
     newMsgs[editIndex] = editValue;
-  }
 
-  await updateMessagesInBackend(newMsgs);
-  setIsEditing(false);
-};
-
-
-  const addMessage = () => {
-    if (!isAdmin) return;
-    setEditValue("");   // Campo vacío
-    setEditIndex(messages.length); // Se agrega al final
-    setIsEditing(true); // Abrir modal
+    await updateMessagesInBackend(newMsgs);
+    setIsEditing(false);
   };
 
+  const addMessage = async () => {
+    if (!isAdmin) return;
+    const newMsgs = [...messages, "Nuevo mensaje"];
+    await updateMessagesInBackend(newMsgs);
+  };
 
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
