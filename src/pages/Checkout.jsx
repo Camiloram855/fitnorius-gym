@@ -66,7 +66,7 @@ export default function Checkout() {
 
     // 💬 Mensaje completo para WhatsApp
     const message = `
-📦 *NUEVO PEDIDO - FITNORIUS*
+📦 *NUEVO PEDIDO - FITNORIOS*
 
 👤 *Cliente:*
 Nombre: ${formData.nombre} ${formData.apellido}
