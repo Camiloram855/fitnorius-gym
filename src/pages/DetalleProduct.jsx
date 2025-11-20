@@ -172,7 +172,8 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
       name: product.name,
       price: Number(product.price),
       quantity,
-      image: product.images?.[0] || "/img/default.jpg",
+      image: thumbs[selectedImageIndex]?.src || "/img/default.jpg",
+
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
