@@ -5,26 +5,13 @@ import { useNavigate } from "react-router-dom";
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-// Normalizador universal para imágenes
-const normalizeImg = (url) => {
-  if (!url) return "/no-image.png";
-
-  // Si viene con http (Cloudinary u otra URL)
-  if (url.startsWith("http")) return url;
-
-  // Si viene del backend (/uploads/xxx.png)
-  if (url.startsWith("/")) return `${API_BASE_URL}${url}`;
-
-  return "/no-image.png";
-};
-
 export default function SearchSection() {
 
   // 🔥 FORZAR SCROLL ARRIBA SIEMPRE QUE ENTRES AQUÍ
   useEffect(() => {
     window.scrollTo({
       top: 0,
-      behavior: "instant"
+      behavior: "instant" // evita animaciones raras en móvil
     });
   }, []);
 
@@ -140,7 +127,11 @@ export default function SearchSection() {
             "
           >
             {results.map((product) => {
-              const imageSrc = normalizeImg(product.imageUrl);
+              const imageSrc = product.imageUrl
+                ? product.imageUrl.startsWith("http")
+                  ? product.imageUrl
+                  : `${API_BASE_URL}${product.imageUrl}`
+                : "/no-image.png";
 
               return (
                 <div

@@ -172,7 +172,8 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
       name: product.name,
       price: Number(product.price),
       quantity,
-      image: product.images?.[0] || "/img/default.jpg",
+      image: thumbs[selectedImageIndex]?.src || "/img/default.jpg",
+
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -399,15 +400,16 @@ const handleReplaceImage = (thumb, idx, file) => {
         </button>
 
         {/* PRODUCTO PRINCIPAL */}
-        <div className="bg-black/40 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-15px_rgba(168,85,247,0.6)] border border-purple-800/40 p-8 sm:p-12 transition-all duration-500 hover:shadow-[0_0_70px_-10px_rgba(168,85,247,0.8)]">
+        <div className="">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               {/* SLIDER DE IMÁGENES — Imagen más pequeña + swipe táctil */}
               <div className="relative w-full flex flex-col items-center">
 
                 {/* Imagen principal con soporte táctil */}
                 <div
-                  className="w-90 h-90 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-gradient-to-br from-purple-900/40 to-black 
+                  className="w-[380px] h-[380px] bg-gradient-to-br from-purple-900/40 to-black 
                   rounded-3xl overflow-hidden shadow-lg border border-purple-800/40 flex items-center justify-center select-none"
+
                   
                   onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
                   onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
