@@ -66,7 +66,7 @@ export default function Checkout() {
 
     // 💬 Mensaje completo para WhatsApp
     const message = `
-📦 *NUEVO PEDIDO - FITNORIOS*
+📦 *NUEVO PEDIDO - FITNORIOSGYM*
 
 👤 *Cliente:*
 Nombre: ${formData.nombre} ${formData.apellido}
@@ -93,7 +93,7 @@ ${orderDetails}
     const phone = "573043317223"
 
     // 🧠 Codificar mensaje para la URL
-    const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    const whatsappURL = `https://wa.me/${phone}?text=${fixEmojiEncoding(message)}`
 
     // 📱 Detección de iPhone para compatibilidad total
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
