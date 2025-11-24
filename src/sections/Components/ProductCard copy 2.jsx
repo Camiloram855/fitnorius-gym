@@ -4,14 +4,6 @@ import { useAuth } from "../../pages/AuthContext";
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
-// 🔥 Función para optimizar imágenes Cloudinary
-const optimizeCloudinaryUrl = (url) => {
-  if (!url || typeof url !== "string") return url;
-  if (!url.includes("res.cloudinary.com")) return url;
-  if (url.includes("f_auto") || url.includes("q_auto")) return url;
-  return url.replace("/upload/", "/upload/f_auto,q_auto/");
-};
-
 export default function ProductCard({ product, onDelete, onUpdate }) {
   const { isAdmin } = useAuth();
 
@@ -54,14 +46,13 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
     }
   };
 
-  // 🔥 Optimizar imagen automáticamente
-  const rawImageUrl = product.imageUrl
+  const imageSrc = product.imageUrl
     ? product.imageUrl.startsWith("http")
       ? product.imageUrl
-      : `${API_BASE_URL}${product.imageUrl.startsWith("/") ? "" : "/"}${product.imageUrl}`
+      : `${API_BASE_URL}${
+          product.imageUrl.startsWith("/") ? "" : "/"
+        }${product.imageUrl}`
     : "/img/default.jpg";
-
-  const imageSrc = optimizeCloudinaryUrl(rawImageUrl);
 
   const formatCurrency = (value) =>
     Number(value).toLocaleString("es-CO", {
@@ -80,7 +71,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
     <div className="block w-full max-w-[250px] mx-auto">
       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
 
-        {/* ---------- IMAGEN ---------- */}
+        {/* ---------- IMAGEN + LABELS ---------- */}
         <Link
           to={`/catalog/producto/${product.id}`}
           onClick={() => {
@@ -115,7 +106,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           )}
         </Link>
 
-        {/* ---------- INFO ---------- */}
+        {/* ---------- INFORMACIÓN ---------- */}
         <div className="p-4 flex flex-col flex-1 justify-between">
           <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
             {product.name}
@@ -132,12 +123,15 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             )}
 
             {ahorro && (
-              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full mt-1 inline-flex whitespace-nowrap">
-                Ahorra: {formattedAhorro.replace("COP", "")}
-              </span>
+  <span
+    className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full mt-1 inline-flex whitespace-nowrap"
+  >
+    Ahorra: {formattedAhorro.replace("COP", "")}
+  </span>
             )}
           </div>
 
+          {/* ---------- BOTONES DE ADMIN FUERA DEL LINK ---------- */}
           {isAdmin && (
             <button
               onClick={handleDelete}
@@ -151,6 +145,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             <button
               onClick={(e) => {
                 e.preventDefault();
+                console.log("CLICK BOTÓN AGOTADO", product.id);
                 handleToggleAgotado(product.id, !product.agotado);
               }}
               className={`mt-3 ${
