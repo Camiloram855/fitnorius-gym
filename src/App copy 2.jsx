@@ -19,18 +19,7 @@ import Catalog from "./pages/Catalog";
 
 // 🔄 Nuevo componente global para controlar el scroll en TODAS las rutas
 function ScrollToTopOnRouteChange() {
-  useEffect(() => {
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-
-  const isInstagram = ua.includes("Instagram");
-  const isIOS = /iPhone|iPad|iPod/i.test(ua);
-
-  // Si el usuario abre desde Instagram en iPhone → Forzar abrir en Safari
-  if (isInstagram && isIOS) {
-    window.location.href = window.location.href; // fuerza apertura fuera del in-app browser
-  }
-}, []);
-
+  
   const { pathname } = useLocation();
 
   useEffect(() => {
