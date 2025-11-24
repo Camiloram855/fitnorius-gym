@@ -6,17 +6,23 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 // Normalizador universal para imágenes
+// Normalizador universal para imágenes con WebP automático
 const normalizeImg = (url) => {
-  if (!url) return "/no-image.png";
+  if (!url) return "/no-image.webp";
 
-  // Si viene con http (Cloudinary u otra URL)
-  if (url.startsWith("http")) return url;
+  // Si es imagen de Cloudinary → convertir a WebP
+  if (url.startsWith("http") && url.includes("res.cloudinary.com")) {
+    return url.replace("/upload/", "/upload/f_webp,q_auto/");
+  }
 
   // Si viene del backend (/uploads/xxx.png)
-  if (url.startsWith("/")) return `${API_BASE_URL}${url}`;
+  if (url.startsWith("/")) {
+    return `${API_BASE_URL}${url}`;
+  }
 
-  return "/no-image.png";
+  return url;
 };
+
 
 export default function SearchSection() {
 
