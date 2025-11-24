@@ -123,9 +123,12 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             )}
 
             {ahorro && (
-              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-1 py-1 rounded-full mt-1 inline-block">
-                -{formattedAhorro}
-              </span>
+                <span
+                  className="inline-block mt-2 px-4 py-1 rounded-full text-white text-xs font-bold tracking-wide"
+                  style={{ backgroundColor: "#C19FFF" }}
+                >
+                  AHORRA {formattedAhorro.replace("COP", "")}
+                </span>
             )}
           </div>
 
