@@ -15,28 +15,11 @@ import { AuthProvider } from "./AuthContext";
 export default function Catalog() {
   const location = useLocation();
 
-  // 🔥 Detectar Instagram + iPhone y forzar salir del navegador interno
-  useEffect(() => {
-    try {
-      const ua = navigator.userAgent || navigator.vendor || window.opera || "";
-
-      const isInstagram = /Instagram/i.test(ua);
-      const isIOS = /iPhone|iPad|iPod/i.test(ua);
-
-      if (isInstagram && isIOS) {
-        // evitar loop
-        setTimeout(() => {
-          window.location.replace(window.location.href);
-        }, 60);
-      }
-    } catch (err) {
-      console.warn("IG iOS detection failed:", err);
-    }
-  }, []);
-
   const isSpecialPage =
     location.pathname === "/catalog/login" ||
     location.pathname === "/catalog/checkout";
+
+
 
   return (
     <AuthProvider>
@@ -50,6 +33,7 @@ export default function Catalog() {
               element={
                 <>
                   <HeroBanner />
+                  
                 </>
               }
             />
@@ -62,6 +46,8 @@ export default function Catalog() {
           {!isSpecialPage && <Footer />}
         </div>
       </CartProvider>
+      
     </AuthProvider>
+    
   );
 }

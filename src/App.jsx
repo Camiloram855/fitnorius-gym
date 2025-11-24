@@ -32,7 +32,7 @@ function ScrollToTopOnRouteChange() {
 
   return null;
 }
-
+  
 
 function AppContent() {
   useEffect(() => {
