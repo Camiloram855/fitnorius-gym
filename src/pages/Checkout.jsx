@@ -6,6 +6,12 @@ import { X } from "lucide-react" // Ícono para eliminar
 
 export default function Checkout() {
   const { cartItems, removeFromCart /*, clearCart*/ } = useCart()
+  
+  const fixEmojiEncoding = (text) => {
+  return encodeURIComponent(text)
+    .replace(/%E2%80%8B/g, "")
+    .replace(/%0A/g, "%0A");
+}
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -93,7 +99,7 @@ ${orderDetails}
     const phone = "573043317223"
 
     // 🧠 Codificar mensaje para la URL
-    const whatsappURL = `https://wa.me/${phone}?text=${fixEmojiEncoding(message)}`
+      const whatsappURL = `https://wa.me/${phone}?text=${fixEmojiEncoding(message)}`
 
     // 📱 Detección de iPhone para compatibilidad total
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
