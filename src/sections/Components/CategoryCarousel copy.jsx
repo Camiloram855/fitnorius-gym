@@ -39,19 +39,9 @@ useEffect(() => {
 
   if (savedCatId && categories.length > 0) {
     const cat = categories.find((c) => String(c.id) === String(savedCatId));
-    if (cat) {
-      setSelectedCategory(cat);
-      return;
-    }
-  }
-
-  // 🔥 Si no había una categoría guardada → abre la primera automáticamente
-  if (!savedCatId && categories.length > 0) {
-    setSelectedCategory(categories[0]);
-    sessionStorage.setItem("openCategoryId", categories[0].id);
+    if (cat) setSelectedCategory(cat);
   }
 }, [categories]);
-
 
 // ✅ Restaurar scroll
 useEffect(() => {
