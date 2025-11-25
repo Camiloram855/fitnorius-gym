@@ -136,17 +136,15 @@ export default function SearchSection() {
         {results.length > 0 ? (
           <div
             className="
-              flex 
-              gap-5 
-              overflow-x-auto 
-              pb-4
-              scrollbar-thin 
-              scrollbar-thumb-purple-600 
-              scrollbar-track-gray-800
+              grid 
+              grid-cols-2 
+              sm:grid-cols-2 
+              md:grid-cols-3 
+              lg:grid-cols-4 
+              gap-5
+              place-items-center
             "
-            style={{ scrollSnapType: "x mandatory" }}
           >
-
             {results.map((product) => {
               const imageSrc = normalizeImg(product.imageUrl);
 
@@ -155,17 +153,16 @@ export default function SearchSection() {
                   key={product.id}
                   onClick={() => handleProductClick(product.id)}
                   className="
-                    w-[200px] h-[310px]
-                    sm:w-[220px] sm:h-[330px]
-                    md:w-[240px] md:h-[360px]
-                    lg:w-[260px] lg:h-[390px]
-                    xl:w-[280px] xl:h-[420px]
+                    w-[170px] h-[310px]
+                    sm:w-[180px] sm:h-[330px]
+                    md:w-[200px] md:h-[360px]
+                    lg:w-[230px] lg:h-[390px]
+                    xl:w-[250px] xl:h-[420px]
                     bg-[#181818] rounded-2xl border border-white/10 
                     hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 
                     transition-all duration-300 cursor-pointer group flex flex-col
                   "
                 >
-
                   <div
                     className="
                       w-full 
