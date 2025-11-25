@@ -93,8 +93,8 @@ export default function SearchSection() {
   };
 
   return (
-    <section className="py-16 px-4">
-      <div className="max-w-2xl mx-auto">
+    <section className="py-16">
+      <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             ¿Qué estás buscando?
@@ -132,7 +132,7 @@ export default function SearchSection() {
       </div>
 
       {/* 🧾 Resultados */}
-      <div className="mt-12 px-2 md:px-10">
+      <div className="mt-12  md:px-10">
         {results.length > 0 ? (
           <div
             className="

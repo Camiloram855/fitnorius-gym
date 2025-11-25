@@ -132,19 +132,21 @@ export default function SearchSection() {
       </div>
 
       {/* 🧾 Resultados */}
-      <div className="mt-12 px-4 md:px-10">
+      <div className="mt-12 px-2 md:px-10">
         {results.length > 0 ? (
           <div
             className="
-              grid 
-              grid-cols-2 
-              sm:grid-cols-2 
-              md:grid-cols-3 
-              lg:grid-cols-4 
-              gap-5
-              place-items-center
+              flex 
+              gap-3 
+              overflow-x-auto 
+              pb-4
+              scrollbar-thin 
+              scrollbar-thumb-purple-600 
+              scrollbar-track-gray-800
             "
+            style={{ scrollSnapType: "x mandatory" }}
           >
+
             {results.map((product) => {
               const imageSrc = normalizeImg(product.imageUrl);
 
@@ -153,25 +155,28 @@ export default function SearchSection() {
                   key={product.id}
                   onClick={() => handleProductClick(product.id)}
                   className="
-                    w-[170px] h-[310px]
-                    sm:w-[180px] sm:h-[330px]
-                    md:w-[200px] md:h-[360px]
-                    lg:w-[230px] lg:h-[390px]
-                    xl:w-[250px] xl:h-[420px]
-                    bg-[#181818] rounded-2xl border border-white/10 
-                    hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 
-                    transition-all duration-300 cursor-pointer group flex flex-col
-                    "
+                    min-w-[250px] 
+                    bg-[#181818] 
+                    rounded-2xl 
+                    border border-white/10 
+                    hover:border-purple-400/30 
+                    shadow-lg hover:shadow-purple-500/20 
+                    transition-all duration-300 cursor-pointer 
+                    group flex flex-col
+                  "
+
                 >
+
                   <div
                     className="
-                      w-full 
-                      h-[170px] sm:h-[180px] md:h-[200px] lg:h-[230px] xl:h-[250px]
+                    w-full 
+                      h-[250px] sm:h-[180px] md:h-[200px] lg:h-[230px] xl:h-[250px]
                       bg-[#121212] 
                       rounded-t-2xl 
                       overflow-hidden 
                       flex items-center justify-center
                     "
+
                   >
                     <img
                       src={imageSrc}
