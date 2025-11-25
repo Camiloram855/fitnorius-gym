@@ -220,13 +220,13 @@ useEffect(() => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-2">
+    <div className="w-full max-w-6xl mx-auto">
       {/* ====== CARRUSEL ====== */}
       <div className="mb-2">
-        <h2 className="text-2xl font-bold text-white mb-1">
+        <h2 className="text-2xl font-bold text-white mb-1 text-center">
           Categorías de Productos
         </h2>
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 text-sm text-center mb-6">
           Selecciona la categoria de productos que deseas ver.
         </p>
       </div>
@@ -321,7 +321,7 @@ useEffect(() => {
 
       {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (
-        <div className="mt-4">
+        <div className="mt-4 p-2">
           <h3 className="text-lg font-semibold text-white mb-3">
             {selectedCategory.name}
           </h3>

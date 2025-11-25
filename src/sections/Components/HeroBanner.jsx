@@ -121,7 +121,7 @@ export default function HeroBanner({ image }) {
 
           {/* 🎛️ Botones solo para admin */}
           {isAdmin && (
-            <div className="absolute top-5 right-5 z-20 flex gap-2">
+            <div className="absolute top-5 right-5 z-20 flex gap-2 py-8">
               <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
                 Cambiar banner
                 <input
