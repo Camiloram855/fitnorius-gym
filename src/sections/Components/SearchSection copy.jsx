@@ -161,7 +161,7 @@ export default function SearchSection() {
                     bg-[#181818] rounded-2xl border border-white/10 
                     hover:border-purple-400/30 shadow-lg hover:shadow-purple-500/20 
                     transition-all duration-300 cursor-pointer group flex flex-col
-                  "
+                    "
                 >
                   <div
                     className="
