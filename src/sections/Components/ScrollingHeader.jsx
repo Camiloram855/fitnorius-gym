@@ -4,7 +4,7 @@ import { User, ShoppingCart, X, Pencil, Check, Plus } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
 
-const API_URL = "https://fitnorius-backend-production.up.railway.app/header-messages";
+const API_URL = "https://fitnorios-backend-production.up.railway.app/header-messages";
 
 
 const ScrollingHeader = () => {

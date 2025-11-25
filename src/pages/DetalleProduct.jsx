@@ -11,7 +11,7 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "localhost"
     ? "http://localhost:8080"
-    : "https://fitnorius-production.up.railway.app");
+    : "https://fitnorios-production.up.railway.app");
 
 // Cloudinary config
 const CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/<TU_CLOUD_NAME>/upload";

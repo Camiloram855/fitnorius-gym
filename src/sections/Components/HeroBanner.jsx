@@ -21,7 +21,7 @@ export default function HeroBanner({ image }) {
   const { isAdmin } = useAuth();
 
   const API_URL =
-    import.meta.env.VITE_API_URL || "https://fitnorius-production.up.railway.app";
+    import.meta.env.VITE_API_URL || "https://fitnorios-production.up.railway.app";
 
   // ✅ Cargar imagen desde el backend
   useEffect(() => {
