@@ -147,7 +147,7 @@ export default function HeroBanner({ image }) {
 
       {/* 🔽 Secciones debajo del banner */}
       <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black">
-        <div className="max-w-full mx-auto px-2">
+        <div className="">
           <SearchSection />
           <div className="mt-8">
             <CategoryCarousel />

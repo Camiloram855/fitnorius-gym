@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
-
+  import.meta.env.VITE_API_URL || "http://localhost:8080";  
+  
 const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const [newCategory, setNewCategory] = useState({ name: "", image: null });
   const [previewImage, setPreviewImage] = useState(null);
@@ -84,7 +84,7 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
             />
             {previewImage && (
               <img
-                src={previewImage}
+                src={url}
                 alt="Preview"
                 className="mt-4 w-28 h-28 rounded-full object-cover border border-purple-500"
               />
