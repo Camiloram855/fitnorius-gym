@@ -84,7 +84,7 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
             />
             {previewImage && (
               <img
-                src={url}
+                src={previewImage}
                 alt="Preview"
                 className="mt-4 w-28 h-28 rounded-full object-cover border border-purple-500"
               />
