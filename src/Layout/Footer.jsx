@@ -1,122 +1,235 @@
-import React from "react";
-import { Instagram, Facebook } from "lucide-react";
-import { SiTiktok } from "react-icons/si"; // Icono de TikTok desde react-icons
+import React, { useState } from "react";
+import { Instagram, Facebook, X } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 
 export function Footer() {
+  const [modalContent, setModalContent] = useState(null);
+
+  const handleModalOpen = (content) => {
+    setModalContent(content);
+  };
+
+  const handleModalClose = () => {
+    setModalContent(null);
+  };
+
+  const modalData = {
+    ayuda: {
+      title: "Centro de Ayuda",
+      content: (
+        <>
+          <p className="mb-4">
+            No importa si estás empezando hoy.
+            <br />
+            No importa si eres principiante o avanzado.
+            <br />
+            No importa tu peso actual.
+          </p>
+          <p className="mb-4 font-semibold">
+            Lo que importa es que decidiste hacer algo por ti.
+          </p>
+          <p className="mb-4">
+            En Fitnoriosgym creemos que el cambio comienza en casa, con disciplina,
+            decisión y las herramientas correctas 💪🔥
+          </p>
+          <p className="mb-4">
+            No estás comprando unas mancuernas…
+            <br />
+            Estás invirtiendo en tu proceso.
+          </p>
+          <p className="font-semibold">Y nosotros caminamos contigo.</p>
+        </>
+      ),
+    },
+
+    envios: {
+      title: "Envíos y Devoluciones",
+      content: (
+        <>
+          <p className="mb-4">
+            No necesitas un gimnasio para cambiar tu cuerpo.
+            <br />
+            Necesitas decisión… y empezar.
+          </p>
+          <p className="mb-4">
+            Enviamos a todo el país para que entrenes donde estés.
+          </p>
+          <p className="mb-4">
+            Te enviamos número de guía para que sigas tu pedido paso a paso.
+          </p>
+          <p className="font-semibold">
+            Tu proceso es serio.  
+            Y nosotros también.
+          </p>
+        </>
+      ),
+    },
+
+    garantia: {
+      title: "Garantía",
+      content: (
+        <>
+          <p className="mb-4">
+            Cada implemento cuenta con garantía por defectos de fabricación.
+          </p>
+          <p className="mb-4">
+            Más que una garantía, ofrecemos respaldo.
+          </p>
+          <p className="font-semibold">
+            Vendemos herramientas para transformar hábitos.
+          </p>
+        </>
+      ),
+    },
+
+    contacto: {
+      title: "Contacto",
+      content: (
+        <>
+          <p className="mb-6 text-lg">
+            ¿Tienes preguntas? Estamos aquí para ayudarte.
+          </p>
+
+          <a
+            href="https://wa.me/573043317223?text=Hola%20quiero%20información%20sobre%20FitnoriosGYM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            Enviar mensaje a FITNORIOS
+          </a>
+        </>
+      ),
+    },
+  };
+
   return (
-    <footer className="bg-gradient-to-r from-black via-purple-900 to-black py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-8">
-          {/* Marca */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 animate-pulse">
-              <img
-                src="/img/Logo.png"
-                alt="Logo FitnoriusGYM"
-                className="w-80 h-24 object-contain"
-              />
-            </div>
-            <p className="text-gray-400 text-sm">
-              Tu tienda de confianza para equipos de fitness de alta calidad. Transforma tu hogar en el gimnasio
-              perfecto.
-            </p>
-          </div>
-
-          {/* Productos */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-purple-400">Productos</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Mancuernas Ajustables
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Mancuernas Rusas
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Barras Extensoras
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Accesorios
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Soporte */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-purple-400">Soporte</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Centro de Ayuda
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Envíos y Devoluciones
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Garantía
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Contacto
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Redes sociales */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-purple-400">Síguenos</h4>
-            <div className="flex gap-4">
-              {/* Instagram */}
-              <a
-                href="https://www.instagram.com/fitnoriosgym?igsh=ZjhhZHQ2ODlzenRy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-
-              {/* Facebook */}
-              <a
-                href="https://www.facebook.com/share/1BiP3T84Rr/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-
-              {/* TikTok */}
-              <a
-                href="https://www.tiktok.com/@fitnoriosgym?_r=1&_t=ZS-9181SY0Xszn"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-purple-400 transition-transform transform hover:scale-110"
-              >
-                <SiTiktok className="w-5 h-5" />
-              </a>
+    <>
+      <footer className="bg-gradient-to-r from-black via-purple-900 to-black py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            
+            {/* Marca */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 animate-pulse">
+                <img
+                  src="/img/Logo.png"
+                  alt="Logo FitnoriosGYM"
+                  className="w-80 h-24 object-contain"
+                />
+              </div>
+              <p className="text-gray-400 text-sm">
+                Tu tienda de confianza para equipos de fitness de alta calidad.
+                Transforma tu hogar en el gimnasio perfecto.
+              </p>
             </div>
 
-            <p className="text-xs text-gray-500">
-              © 2024 FitnoriosGYM. Todos los derechos reservados.
-            </p>
+            {/* Productos */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-purple-400">Productos</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white">Mancuernas Ajustables</a></li>
+                <li><a href="#" className="hover:text-white">Mancuernas Rusas</a></li>
+                <li><a href="#" className="hover:text-white">Barras Extensoras</a></li>
+                <li><a href="#" className="hover:text-white">Accesorios</a></li>
+              </ul>
+            </div>
+
+            {/* Soporte */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-purple-400">Soporte</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>
+                  <button onClick={() => handleModalOpen("ayuda")} className="hover:text-white text-left">
+                    Centro de Ayuda
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleModalOpen("envios")} className="hover:text-white text-left">
+                    Envíos y Devoluciones
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleModalOpen("garantia")} className="hover:text-white text-left">
+                    Garantía
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleModalOpen("contacto")} className="hover:text-white text-left">
+                    Contacto
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Redes sociales */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-purple-400">Síguenos</h4>
+              <div className="flex gap-4">
+
+                <a
+                  href="https://www.instagram.com/fitnoriosgym?igsh=ZjhhZHQ2ODlzenRy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110"
+                >
+                  <Instagram className="w-5 h-5" />
+                </a>
+
+                <a
+                  href="https://www.facebook.com/share/1BiP3T84Rr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110"
+                >
+                  <Facebook className="w-5 h-5" />
+                </a>
+
+                <a
+                  href="https://www.tiktok.com/@fitnoriosgym?_r=1&_t=ZS-9181SY0Xszn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110"
+                >
+                  <SiTiktok className="w-5 h-5" />
+                </a>
+
+              </div>
+
+              <p className="text-xs text-gray-500">
+                © 2024 FitnoriosGYM. Todos los derechos reservados.
+              </p>
+            </div>
+
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+
+      {/* Modal */}
+      {modalContent && (
+        <div
+          className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+          onClick={handleModalClose}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-purple-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-800 p-6 rounded-t-lg flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">
+                {modalData[modalContent].title}
+              </h2>
+              <button onClick={handleModalClose} className="text-white hover:text-gray-300">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 text-gray-200 leading-relaxed">
+              {modalData[modalContent].content}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
