@@ -15,7 +15,7 @@ export function Footer() {
 
   const modalData = {
     ayuda: {
-      title: "Centro de Ayuda",
+      title: "💜 Centro de Ayuda",
       content: (
         <>
           <p className="mb-4">
@@ -24,7 +24,12 @@ export function Footer() {
             No importa si eres principiante o avanzado.
             <br />
             No importa tu peso actual.
+            <br />
+            No importa si eres principiante o avanzado.
+            <br />
+            No importa tu peso actual.
           </p>
+
           <p className="mb-4 font-semibold">
             Lo que importa es que decidiste hacer algo por ti.
           </p>
@@ -33,6 +38,10 @@ export function Footer() {
             decisión y las herramientas correctas 💪🔥
           </p>
           <p className="mb-4">
+            Aquí encontrarás respuestas claras sobre nuestros productos, pagos, envíos y recomendaciones.
+            <br /><br />
+            Y si aún tienes dudas, escríbenos.
+            <br />
             No estás comprando unas mancuernas…
             <br />
             Estás invirtiendo en tu proceso.
@@ -43,22 +52,25 @@ export function Footer() {
     },
 
     envios: {
-      title: "Envíos y Devoluciones",
+      title: "🚚 Envíos y Devoluciones",
       content: (
         <>
           <p className="mb-4">
             No necesitas un gimnasio para cambiar tu cuerpo.
-            <br />
             Necesitas decisión… y empezar.
+            <br />
+            Por eso enviamos nuestros productos a todo el país, para que entrenes donde estés, sin excusas.
           </p>
           <p className="mb-4">
-            Enviamos a todo el país para que entrenes donde estés.
+            Cada pedido que sale de Fitnoriosgym representa una persona que decidió dejar de postergar su cambio.
           </p>
           <p className="mb-4">
             Te enviamos número de guía para que sigas tu pedido paso a paso.
+            Y si algo no llega como esperabas, estamos aquí para responder con responsabilidad y respeto.
           </p>
           <p className="font-semibold">
-            Tu proceso es serio.  
+            Tu proceso es serio.
+            <br></br>
             Y nosotros también.
           </p>
         </>
@@ -66,28 +78,55 @@ export function Footer() {
     },
 
     garantia: {
-      title: "Garantía",
+      title: "🛡  Garantía",
       content: (
         <>
           <p className="mb-4">
-            Cada implemento cuenta con garantía por defectos de fabricación.
+            Nuestros productos están diseñados para personas reales.
+            Para quienes entrenan con disciplina, sudan en casa y no se rinden.
           </p>
           <p className="mb-4">
-            Más que una garantía, ofrecemos respaldo.
+            Cada implemento cuenta con garantía por defectos de fabricación, porque confiamos en lo que vendemos.
           </p>
           <p className="font-semibold">
-            Vendemos herramientas para transformar hábitos.
+            Pero más que una garantía de producto, ofrecemos respaldo.
+            Porque cuando decides cambiar tu cuerpo, necesitas seguridad.
+
+            Aquí no vendemos algo común.
+            Vendemos herramientas para transformar hábitos
           </p>
         </>
       ),
     },
 
     contacto: {
-      title: "Contacto",
+      title: "📲 Contacto",
       content: (
         <>
           <p className="mb-6 text-lg">
-            ¿Tienes preguntas? Estamos aquí para ayudarte.
+            ¿No sabes qué kit elegir?
+            ¿Sientes que estás empezando desde cero?
+            ¿Quieres avanzar al siguiente nivel?
+            <br /><br />
+
+            Escríbenos.
+            <br /><br />
+
+            No importa si estás comenzando o si ya llevas tiempo entrenando.
+            No importa tu peso actual.
+            No importa tu punto de partida.
+            <br /><br />
+
+            Lo único que importa es que empieces.
+            <br /><br />
+
+            📩 Instagram: @fitnoriosgym
+        
+            <br /><br />
+
+            Fitnoriosgym no es solo una tienda.
+            Es el recordatorio de que sí puedes cambiar…
+            desde casa 💪💜
           </p>
 
           <a
@@ -215,7 +254,7 @@ export function Footer() {
             className="bg-gradient-to-br from-gray-900 to-purple-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-800 p-6 rounded-t-lg flex justify-between items-center">
+            <div className="sticky top-0 bg-gradient-to-r from-purple-900 to-purple-600 p-6 rounded-t-lg flex justify-between items-center">
               <h2 className="text-2xl font-bold text-white">
                 {modalData[modalContent].title}
               </h2>
