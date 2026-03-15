@@ -3,45 +3,48 @@
 import { useState } from "react"
 import { useCart } from "./CartContext"
 import { X } from "lucide-react"
-import ScratchCard from "./ScratchCard"   // ← componente de Raspa y Gana
+import ScratchCard from "./ScratchCard"   // ← único import nuevo
 
 export default function Checkout() {
   const { cartItems, removeFromCart } = useCart()
 
-  const [formData, setFormData] = useState({
-    nombre: "", apellido: "", telefono: "", email: "",
-    departamento: "", ciudad: "", direccion: "",
-    barrio: "", apartamento: "", comentario: "",
-  })
-
-  // ── Descuento del Raspa y Gana ───────────────────────────────────────────
-  const [appliedPrize, setAppliedPrize] = useState(null)
-
-  /**
-   * prize = { type: "percent"|"fixed"|"none", value: number, label: string, emoji: string }
-   */
-  function handlePrizeApplied(prize) {
-    if (prize.type !== "none") setAppliedPrize(prize)
+  const fixEmojiEncoding = (text) => {
+    return encodeURIComponent(text)
+      .replace(/%E2%80%8B/g, "")
+      .replace(/%0A/g, "%0A");
   }
 
-  // ── Totales ───────────────────────────────────────────────────────────────
+  const [formData, setFormData] = useState({
+    nombre: "",
+    apellido: "",
+    telefono: "",
+    email: "",
+    departamento: "",
+    ciudad: "",
+    direccion: "",
+    barrio: "",
+    apartamento: "",
+    comentario: "",
+  })
+
+  // Descuento del Raspa y Gana
+  const [appliedPrize, setAppliedPrize] = useState(null)
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  // Totales
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   const discount = (() => {
     if (!appliedPrize) return 0
     if (appliedPrize.type === "percent") return Math.round(subtotal * (appliedPrize.value / 100))
-    if (appliedPrize.type === "fixed") return Math.min(appliedPrize.value, subtotal)
+    if (appliedPrize.type === "fixed")   return Math.min(appliedPrize.value, subtotal)
     return 0
   })()
 
   const total = subtotal - discount
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const fixEmojiEncoding = (text) =>
-    encodeURIComponent(text).replace(/%E2%80%8B/g, "").replace(/%0A/g, "%0A")
-
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value })
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/placeholder.jpg"
@@ -51,18 +54,23 @@ export default function Checkout() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (cartItems.length === 0) { alert("Tu carrito está vacío 🛒"); return }
+
+    if (cartItems.length === 0) {
+      alert("Tu carrito está vacío 🛒")
+      return
+    }
+
     if (!formData.telefono.match(/^\d{10}$/)) {
       alert("Por favor ingresa un número de teléfono válido (10 dígitos).")
       return
     }
 
     const orderDetails = cartItems
-      .map((item) => `• ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toLocaleString()}`)
+      .map(item => `• ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toLocaleString()}`)
       .join("\n")
 
-    const prizeLine = appliedPrize
-      ? `\n🎁 Descuento aplicado: ${appliedPrize.emoji} ${appliedPrize.label} (-$${discount.toLocaleString()})`
+    const prizeLine = appliedPrize && appliedPrize.type !== "none"
+      ? `\n🎁 Descuento: ${appliedPrize.emoji} ${appliedPrize.label} (-$${discount.toLocaleString()})`
       : ""
 
     const message = `
@@ -93,6 +101,7 @@ ${prizeLine}
     const phone = "573043317223"
     const whatsappURL = `https://wa.me/${phone}?text=${fixEmojiEncoding(message)}`
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+
     if (isIOS) window.location.href = whatsappURL
     else window.open(whatsappURL, "_blank")
   }
@@ -103,64 +112,100 @@ ${prizeLine}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
           {/* ── Formulario ── */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Información de Envío</h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Información de Envío</h2>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-                <Field label="Nombre" id="nombre" name="nombre" value={formData.nombre} onChange={handleChange} required />
-                <Field label="Apellido" id="apellido" name="apellido" value={formData.apellido} onChange={handleChange} required />
-                <Field label="Número de teléfono" id="telefono" name="telefono" type="tel"
-                  placeholder="Ej: 3001234567" value={formData.telefono} onChange={handleChange} required />
-                <Field label="Correo electrónico" id="email" name="email" type="email"
-                  value={formData.email} onChange={handleChange} required />
+              <div>
+                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                <input type="text" id="nombre" name="nombre" value={formData.nombre} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
 
-                {/* Departamento */}
-                <div>
-                  <label htmlFor="departamento" className="block text-sm font-medium text-gray-700 mb-2">
-                    Seleccionar Departamento
-                  </label>
-                  <select id="departamento" name="departamento" value={formData.departamento}
-                    onChange={handleChange} required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white">
-                    <option value="">Seleccione un departamento</option>
-                    {DEPARTAMENTOS.map((d) => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="apellido" className="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
+                <input type="text" id="apellido" name="apellido" value={formData.apellido} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
 
-                <Field label="Ciudad" id="ciudad" name="ciudad" value={formData.ciudad} onChange={handleChange} required />
-                <Field label="Dirección" id="direccion" name="direccion" value={formData.direccion} onChange={handleChange} required />
-                <Field label="Barrio" id="barrio" name="barrio" value={formData.barrio} onChange={handleChange} />
-                <Field label="Ej: Apartamento - Torre" id="apartamento" name="apartamento"
-                  placeholder="Apto 301, Torre B" value={formData.apartamento} onChange={handleChange} />
+              <div>
+                <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
+                <input type="tel" id="telefono" name="telefono" value={formData.telefono} onChange={handleChange}
+                  placeholder="Ej: 3001234567"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
 
-                {/* Comentario */}
-                <div>
-                  <label htmlFor="comentario" className="block text-sm font-medium text-gray-700 mb-2">Comentario</label>
-                  <textarea id="comentario" name="comentario" value={formData.comentario} onChange={handleChange}
-                    rows={3} placeholder="Instrucciones especiales de entrega..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none" />
-                </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
+                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
 
-                {/* ── RASPA Y GANA ── */}
-                <div className="rounded-2xl border-2 border-dashed border-purple-300 bg-purple-50/60 p-5">
-                  <h3 className="text-base font-bold text-purple-800 mb-4 flex items-center gap-2">
-                    🎰 Raspa y Gana
-                    <span className="text-xs font-normal text-purple-500 bg-purple-100 rounded-full px-2 py-0.5">
-                      ¡Un premio exclusivo para ti!
-                    </span>
-                  </h3>
-                  <ScratchCard onPrizeApplied={handlePrizeApplied} />
-                </div>
+              <div>
+                <label htmlFor="departamento" className="block text-sm font-medium text-gray-700 mb-2">Seleccionar Departamento</label>
+                <select id="departamento" name="departamento" value={formData.departamento} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white" required>
+                  <option value="">Seleccione un departamento</option>
+                  {["Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá",
+                    "Casanare","Cauca","Cesar","Chocó","Córdoba","Cundinamarca","Guainía","Guaviare",
+                    "Huila","La Guajira","Magdalena","Meta","Nariño","Norte de Santander","Putumayo",
+                    "Quindío","Risaralda","San Andrés y Providencia","Santander","Sucre","Tolima",
+                    "Valle del Cauca","Vaupés","Vichada"].map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
 
-                <button type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 px-6 rounded-lg
-                    hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl
-                    transform hover:-translate-y-0.5">
-                  Confirmar Pedido
-                </button>
-              </form>
-            </div>
+              <div>
+                <label htmlFor="ciudad" className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                <input type="text" id="ciudad" name="ciudad" value={formData.ciudad} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
+
+              <div>
+                <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                <input type="text" id="direccion" name="direccion" value={formData.direccion} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required />
+              </div>
+
+              <div>
+                <label htmlFor="barrio" className="block text-sm font-medium text-gray-700 mb-2">Barrio</label>
+                <input type="text" id="barrio" name="barrio" value={formData.barrio} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" />
+              </div>
+
+              <div>
+                <label htmlFor="apartamento" className="block text-sm font-medium text-gray-700 mb-2">Ej: Apartamento - Torre</label>
+                <input type="text" id="apartamento" name="apartamento" value={formData.apartamento} onChange={handleChange}
+                  placeholder="Apto 301, Torre B"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" />
+              </div>
+
+              <div>
+                <label htmlFor="comentario" className="block text-sm font-medium text-gray-700 mb-2">Comentario</label>
+                <textarea id="comentario" name="comentario" value={formData.comentario} onChange={handleChange}
+                  rows={4} placeholder="Instrucciones especiales de entrega..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none" />
+              </div>
+
+              {/* ── Raspa y Gana ── */}
+              <div className="rounded-2xl border-2 border-dashed border-purple-300 bg-purple-50/60 p-5">
+                <h3 className="text-base font-bold text-purple-800 mb-4 flex items-center gap-2">
+                  🎰 Raspa y Gana
+                  <span className="text-xs font-normal text-purple-500 bg-purple-100 rounded-full px-2 py-0.5">
+                    ¡Un premio exclusivo para ti!
+                  </span>
+                </h3>
+                <ScratchCard onPrizeApplied={(prize) => {
+                  if (prize.type !== "none") setAppliedPrize(prize)
+                }} />
+              </div>
+
+              <button type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                Confirmar Pedido
+              </button>
+            </form>
           </div>
 
           {/* ── Resumen ── */}
@@ -191,7 +236,6 @@ ${prizeLine}
                   </div>
                 ))}
 
-                {/* Subtotal / Descuento / Total */}
                 <div className="mt-6 pt-4 border-t border-purple-400 space-y-2">
                   <div className="flex justify-between text-purple-800 text-sm">
                     <span>Subtotal</span>
@@ -199,7 +243,7 @@ ${prizeLine}
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-green-700 text-sm font-medium">
-                      <span>Descuento ({appliedPrize?.emoji} {appliedPrize?.label})</span>
+                      <span>{appliedPrize?.emoji} {appliedPrize?.label}</span>
                       <span>-${discount.toLocaleString()}</span>
                     </div>
                   )}
@@ -211,11 +255,13 @@ ${prizeLine}
               </div>
             )}
 
-            <div className="mt-8 bg-white/50 backdrop-blur-sm rounded-lg p-4">
-              <p className="text-purple-900 font-medium mb-1">Compra 100% Segura</p>
-              <p className="text-purple-800 text-sm">
-                Todos los pedidos son procesados con la máxima seguridad y cuidado.
-              </p>
+            <div className="mt-8 space-y-4">
+              <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-purple-900 font-medium mb-2">Compra 100% Segura</p>
+                <p className="text-purple-800 text-sm">
+                  Todos los pedidos son procesados con la máxima seguridad y cuidado.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -224,23 +270,3 @@ ${prizeLine}
     </div>
   )
 }
-
-// ─── Helper Field ─────────────────────────────────────────────────────────────
-function Field({ label, id, name, type = "text", placeholder, value, onChange, required }) {
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
-      <input type={type} id={id} name={name} value={value} onChange={onChange}
-        placeholder={placeholder} required={required}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" />
-    </div>
-  )
-}
-
-const DEPARTAMENTOS = [
-  "Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá",
-  "Casanare","Cauca","Cesar","Chocó","Córdoba","Cundinamarca","Guainía","Guaviare",
-  "Huila","La Guajira","Magdalena","Meta","Nariño","Norte de Santander","Putumayo",
-  "Quindío","Risaralda","San Andrés y Providencia","Santander","Sucre","Tolima",
-  "Valle del Cauca","Vaupés","Vichada",
-]
