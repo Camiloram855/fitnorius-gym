@@ -6,9 +6,8 @@ import { useState, useEffect, useCallback } from "react"
 const API = "http://localhost:8080/api/admin/scratch"
 
 const TYPE_OPTIONS = [
-  { value: "percent", label: "% Porcentaje", hint: "Ej: 10 → 10% de descuento" },
+  { value: "percent", label: "% Porcentaje",  hint: "Ej: 10 → 10% de descuento" },
   { value: "fixed",   label: "$ Valor fijo",  hint: "Ej: 5000 → $5.000 de descuento" },
-  { value: "gift",    label: "🎁 Regalo",     hint: "Ej: Camiseta, botella de agua, etc." },
   { value: "none",    label: "🍀 Sin premio", hint: "El usuario no gana nada" },
 ]
 
