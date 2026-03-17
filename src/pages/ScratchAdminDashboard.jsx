@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useScratchVisible } from "./useScratchVisible"
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const API = "http://localhost:8080/api/admin/scratch"
@@ -32,13 +33,16 @@ export default function ScratchAdminDashboard() {
   const [prizes, setPrizes]       = useState([])
   const [results, setResults]     = useState([])
   const [loading, setLoading]     = useState(true)
-  const [tab, setTab]             = useState("prizes")   // "prizes" | "results"
+  const [tab, setTab]             = useState("prizes")
   const [form, setForm]           = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm]   = useState(false)
   const [resetIP, setResetIP]     = useState("")
   const [toast, setToast]         = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+
+  // ── Switch visibilidad ────────────────────────────────────────────────────
+  const { scratchVisible, setScratchVisible } = useScratchVisible()
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchPrizes = useCallback(async () => {
@@ -154,7 +158,6 @@ export default function ScratchAdminDashboard() {
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-medium
-          transition-all animate-bounce-in
           ${toast.type === "error" ? "bg-red-500" : "bg-emerald-500"}`}>
           {toast.msg}
         </div>
@@ -166,9 +169,7 @@ export default function ScratchAdminDashboard() {
           <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm mx-4">
             <div className="text-3xl mb-3 text-center">⚠️</div>
             <h3 className="text-lg font-bold text-gray-800 text-center mb-2">¿Eliminar premio?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">
-              Esta acción no se puede deshacer.
-            </p>
+            <p className="text-sm text-gray-500 text-center mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDelete(null)}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition text-sm font-medium">
@@ -198,7 +199,6 @@ export default function ScratchAdminDashboard() {
             </div>
 
             <div className="p-6 space-y-5">
-
               {/* Emoji */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Emoji</label>
@@ -219,8 +219,7 @@ export default function ScratchAdminDashboard() {
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre del premio</label>
-                <input value={form.label}
-                  onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+                <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
                   placeholder="Ej: 10% de descuento"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition" />
               </div>
@@ -266,9 +265,7 @@ export default function ScratchAdminDashboard() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Peso de probabilidad
-                  <span className="ml-2 text-xs font-normal text-gray-400">
-                    (mayor número = más probable)
-                  </span>
+                  <span className="ml-2 text-xs font-normal text-gray-400">(mayor número = más probable)</span>
                 </label>
                 <input type="range" min="1" max="100" value={form.weight}
                   onChange={e => setForm(f => ({ ...f, weight: Number(e.target.value) }))}
@@ -286,9 +283,7 @@ export default function ScratchAdminDashboard() {
                   <p className="text-purple-700 font-medium text-xs mb-1">Vista previa de probabilidad aproximada:</p>
                   <p className="text-purple-900 font-bold">
                     ~{(() => {
-                      const others = prizes
-                        .filter(p => p.active && p.id !== editingId)
-                        .reduce((s, p) => s + p.weight, 0)
+                      const others = prizes.filter(p => p.active && p.id !== editingId).reduce((s, p) => s + p.weight, 0)
                       const total = others + Number(form.weight)
                       return total ? ((form.weight / total) * 100).toFixed(1) : 0
                     })()}% de aparecer
@@ -330,6 +325,39 @@ export default function ScratchAdminDashboard() {
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
+        {/* ══════════════════════════════════════════
+            SWITCH DE VISIBILIDAD — nuevo bloque
+        ══════════════════════════════════════════ */}
+        <div className={`rounded-2xl border-2 p-5 flex items-center justify-between transition-all
+          ${scratchVisible
+            ? "bg-green-50 border-green-200"
+            : "bg-gray-50 border-gray-200"}`}>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{scratchVisible ? "🟢" : "⭕"}</span>
+            <div>
+              <p className="font-bold text-gray-800">
+                {scratchVisible ? "Raspa y Gana VISIBLE" : "Raspa y Gana OCULTO"}
+              </p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {scratchVisible
+                  ? "Los clientes pueden ver y jugar en el checkout"
+                  : "Los clientes no ven el raspa y gana en el checkout"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setScratchVisible(!scratchVisible)
+              showToast(scratchVisible ? "Raspa y Gana ocultado" : "Raspa y Gana activado ✅")
+            }}
+            className={`relative w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0
+              ${scratchVisible ? "bg-green-500" : "bg-gray-300"}`}
+          >
+            <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300
+              ${scratchVisible ? "translate-x-7" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+
         {/* ── Tabs ── */}
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
           {[["prizes","🎁 Premios"], ["results","📋 Participaciones"]].map(([key, label]) => (
@@ -341,17 +369,13 @@ export default function ScratchAdminDashboard() {
           ))}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            TAB: PREMIOS
-        ══════════════════════════════════════════════════════════════════ */}
+        {/* ══ TAB: PREMIOS ══ */}
         {tab === "prizes" && (
           <div className="space-y-4">
-
-            {/* Stats rápidas */}
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: "Total premios", value: prizes.length, color: "text-purple-700 bg-purple-50" },
-                { label: "Activos",       value: prizes.filter(p => p.active).length, color: "text-emerald-700 bg-emerald-50" },
+                { label: "Total premios", value: prizes.length,                        color: "text-purple-700 bg-purple-50" },
+                { label: "Activos",       value: prizes.filter(p => p.active).length,  color: "text-emerald-700 bg-emerald-50" },
                 { label: "Inactivos",     value: prizes.filter(p => !p.active).length, color: "text-gray-600 bg-gray-100" },
               ].map(s => (
                 <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
@@ -361,7 +385,6 @@ export default function ScratchAdminDashboard() {
               ))}
             </div>
 
-            {/* Lista de premios */}
             {prizes.length === 0 ? (
               <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
                 <p className="text-4xl mb-3">🎰</p>
@@ -387,16 +410,10 @@ export default function ScratchAdminDashboard() {
                       px-5 py-4 transition hover:bg-gray-50
                       ${i !== prizes.length - 1 ? "border-b border-gray-100" : ""}
                       ${!prize.active ? "opacity-50" : ""}`}>
-
-                    {/* Emoji */}
                     <div className="w-10 text-2xl">{prize.emoji}</div>
-
-                    {/* Nombre */}
                     <div>
                       <p className="font-semibold text-gray-800 text-sm">{prize.label}</p>
                     </div>
-
-                    {/* Tipo/Valor */}
                     <div className="w-24 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
                         ${prize.type === "percent" ? "bg-blue-50 text-blue-700"
@@ -407,8 +424,6 @@ export default function ScratchAdminDashboard() {
                           : "Sin premio"}
                       </span>
                     </div>
-
-                    {/* Probabilidad */}
                     <div className="w-24 text-center">
                       {prize.active ? (
                         <div>
@@ -422,8 +437,6 @@ export default function ScratchAdminDashboard() {
                         <span className="text-xs text-gray-400">—</span>
                       )}
                     </div>
-
-                    {/* Toggle activo */}
                     <div className="w-20 flex justify-center">
                       <button onClick={() => toggleActive(prize)}
                         className={`relative w-10 h-5 rounded-full transition-colors duration-300
@@ -432,8 +445,6 @@ export default function ScratchAdminDashboard() {
                           ${prize.active ? "translate-x-5" : "translate-x-0.5"}`} />
                       </button>
                     </div>
-
-                    {/* Acciones */}
                     <div className="w-20 flex justify-center gap-1">
                       <button onClick={() => openEdit(prize)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 text-purple-500 transition text-sm"
@@ -447,30 +458,21 @@ export default function ScratchAdminDashboard() {
               </div>
             )}
 
-            {/* Nota sobre pesos */}
             {prizes.filter(p => p.active).length > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
                 <p className="font-semibold mb-1">💡 ¿Cómo funciona la probabilidad?</p>
-                <p>Los porcentajes se calculan automáticamente según el <strong>peso</strong> de cada premio activo.
-                  Si tienes un premio con peso 50 y otro con peso 50, cada uno tiene 50% de probabilidad.
-                  Si uno tiene 70 y el otro 30, el primero sale el 70% de las veces.</p>
+                <p>Los porcentajes se calculan automáticamente según el <strong>peso</strong> de cada premio activo.</p>
               </div>
             )}
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            TAB: PARTICIPACIONES
-        ══════════════════════════════════════════════════════════════════ */}
+        {/* ══ TAB: PARTICIPACIONES ══ */}
         {tab === "results" && (
           <div className="space-y-5">
-
-            {/* Reiniciar IP */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-bold text-gray-800 mb-1">🔄 Reiniciar participación por IP</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Permite que un usuario vuelva a jugar. Útil para pruebas o casos especiales.
-              </p>
+              <p className="text-sm text-gray-500 mb-4">Permite que un usuario vuelva a jugar.</p>
               <div className="flex gap-3">
                 <input value={resetIP} onChange={e => setResetIP(e.target.value)}
                   placeholder="Ej: 192.168.1.100"
@@ -485,13 +487,11 @@ export default function ScratchAdminDashboard() {
               </div>
             </div>
 
-            {/* Tabla de participaciones */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800">Historial de participaciones</h3>
                 <span className="text-sm text-gray-400">{results.length} registros</span>
               </div>
-
               {results.length === 0 ? (
                 <div className="p-12 text-center">
                   <p className="text-3xl mb-3">📋</p>
