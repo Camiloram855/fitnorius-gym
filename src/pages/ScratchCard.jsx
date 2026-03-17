@@ -50,7 +50,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
   async function checkIfPlayed() {
     setStatus("loading")
     try {
-      const res = await fetch(`${API_BASE}/check`, {
+      const res = await fetch(`${API_BASE}/api/scratch/check`, {
         method: "GET",
         credentials: "include",   // envía cookies de sesión si las usas
       })
@@ -172,7 +172,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
     setStatus("revealed")
 
     try {
-      const res = await fetch(`${API_BASE}/play`, {
+      const res = await fetch(`${API_BASE}/api/scratch/play`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
