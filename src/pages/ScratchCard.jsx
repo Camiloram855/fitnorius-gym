@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 
 // ─── Configuración ────────────────────────────────────────────────────────────
-const API_BASE = "http://localhost:8080/api/scratch"   // Ajusta si tu backend tiene otro prefijo
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080"
 const SCRATCH_THRESHOLD = 0.55  // 55% raspado para revelar el premio
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

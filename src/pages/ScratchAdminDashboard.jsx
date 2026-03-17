@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { useScratchVisible } from "./useScratchVisible"
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const API = "http://localhost:8080/api/admin/scratch"
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+const API = `${API_BASE_URL}/api/admin/scratch`
 
 const TYPE_OPTIONS = [
   { value: "percent", label: "% Porcentaje", hint: "Ej: 10 → 10% de descuento" },
