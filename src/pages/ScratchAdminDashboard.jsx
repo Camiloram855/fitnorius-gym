@@ -28,6 +28,16 @@ function calcProb(prize, prizes) {
   return ((prize.weight / tw) * 100).toFixed(1)
 }
 
+// Tiempo restante de bloqueo (2 horas desde playedAt). Null = ya puede jugar.
+function timeLeft(playedAt) {
+  const unlocksAt = new Date(new Date(playedAt).getTime() + 2 * 60 * 60 * 1000)
+  const diff = unlocksAt - new Date()
+  if (diff <= 0) return null
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  return h > 0 ? `${h}h ${m}min` : `${m} min`
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function ScratchAdminDashboard() {
   const [prizes, setPrizes]       = useState([])
@@ -502,7 +512,7 @@ export default function ScratchAdminDashboard() {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
                       <tr>
-                        {["IP", "Premio", "Tipo", "Valor", "Fecha"].map(h => (
+                        {["IP", "Premio", "Tipo", "Valor", "Fecha", "⏳ Bloqueo"].map(h => (
                           <th key={h} className="px-5 py-3 text-left font-semibold">{h}</th>
                         ))}
                       </tr>
@@ -534,6 +544,17 @@ export default function ScratchAdminDashboard() {
                           </td>
                           <td className="px-5 py-3 text-gray-400 text-xs">
                             {new Date(r.playedAt).toLocaleString("es-CO")}
+                          </td>
+                          <td className="px-5 py-3">
+                            {timeLeft(r.playedAt) ? (
+                              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                ⏳ {timeLeft(r.playedAt)}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                ✅ Puede jugar
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
