@@ -392,7 +392,10 @@ export default function ScratchAdminDashboard() {
                     <div className="w-24 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
                         ${prize.type === "percent" ? "bg-blue-50 text-blue-700" : prize.type === "fixed" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
-                        {prize.type === "percent" ? `${prize.value}%` : prize.type === "fixed" ? `$${prize.value.toLocaleString()}` : "Sin premio"}
+                        {prize.type === "percent" ? `${prize.value}%` 
+                          : prize.type === "fixed" ? `$${prize.value.toLocaleString()}` 
+                          : prize.type === "gift" ? "🎁 Regalo"
+                          : "Sin premio"}
                       </span>
                     </div>
                     <div className="w-24 text-center">
