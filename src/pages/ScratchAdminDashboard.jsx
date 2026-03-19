@@ -109,7 +109,7 @@ export default function ScratchAdminDashboard() {
 
   async function savePrize() {
     if (!form.label.trim()) return showToast("El nombre del premio es obligatorio", "error")
-    if (form.type !== "none" && (!form.value || Number(form.value) <= 0))
+    if (form.type !== "none" && form.type !== "gift" && (!form.value || Number(form.value) <= 0))
       return showToast("Ingresa un valor mayor a 0", "error")
     if (Number(form.weight) <= 0) return showToast("El peso debe ser mayor a 0", "error")
 
