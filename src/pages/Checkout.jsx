@@ -191,9 +191,11 @@ ${prizeLine}
                 Internamente consulta el backend y si el admin lo ocultó, retorna null solo.
                 No necesita ningún wrapper condicional.
               */}
-              <ScratchCard onPrizeApplied={(prize) => {
-                if (prize.type !== "none") setAppliedPrize(prize)
-              }} />
+              {subtotal >= 50000 && (
+                <ScratchCard onPrizeApplied={(prize) => {
+                  if (prize.type !== "none") setAppliedPrize(prize)
+                }} />
+               )}
 
               <button type="submit"
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
