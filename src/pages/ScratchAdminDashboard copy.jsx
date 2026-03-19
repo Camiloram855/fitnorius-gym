@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useScratchVisible } from "./useScratchVisible"
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080"
-const API      = `${API_BASE}/api/admin/scratch`
+// ─── Config ───────────────────────────────────────────────────────────────────
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+const API = `${API_BASE_URL}/api/admin/scratch`
 
 const TYPE_OPTIONS = [
   { value: "percent", label: "% Porcentaje", hint: "Ej: 10 → 10% de descuento" },
@@ -13,8 +15,10 @@ const TYPE_OPTIONS = [
 ]
 
 const EMOJI_PRESETS = ["🎉","🌟","💰","🎁","🛍️","🏆","💎","🎊","🔥","🍀","⚡","🎯"]
+
 const EMPTY_FORM = { label: "", emoji: "🎉", type: "percent", value: "", weight: 20, active: true }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function totalWeight(prizes) {
   return prizes.filter(p => p.active).reduce((s, p) => s + p.weight, 0)
 }
@@ -25,6 +29,7 @@ function calcProb(prize, prizes) {
   return ((prize.weight / tw) * 100).toFixed(1)
 }
 
+// Tiempo restante de bloqueo (2 horas desde playedAt). Null = ya puede jugar.
 function timeLeft(playedAt) {
   const unlocksAt = new Date(new Date(playedAt).getTime() + 2 * 60 * 60 * 1000)
   const diff = unlocksAt - new Date()
@@ -34,6 +39,7 @@ function timeLeft(playedAt) {
   return h > 0 ? `${h}h ${m}min` : `${m} min`
 }
 
+// ─── Componente principal ─────────────────────────────────────────────────────
 export default function ScratchAdminDashboard() {
   const [prizes, setPrizes]       = useState([])
   const [results, setResults]     = useState([])
@@ -46,56 +52,27 @@ export default function ScratchAdminDashboard() {
   const [toast, setToast]         = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
-  // ── Visibilidad — guardada en el backend ──────────────────────────────────
-  const [scratchVisible, setScratchVisibleState] = useState(true)
-  const [savingVisible, setSavingVisible]         = useState(false)
+  // ── Switch visibilidad ────────────────────────────────────────────────────
+  const { scratchVisible, setScratchVisible } = useScratchVisible()
 
   // ── Fetch ────────────────────────────────────────────────────────────────
-  const fetchVisible = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/visible`)
-      const data = await res.json()
-      setScratchVisibleState(data.visible)
-    } catch {}
-  }, [])
-
   const fetchPrizes = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/prizes`)
+      const res = await fetch(`${API}/prizes`, { credentials: "include" })
       setPrizes(await res.json())
     } catch { showToast("Error al cargar premios", "error") }
   }, [])
 
   const fetchResults = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/results`)
+      const res = await fetch(`${API}/results`, { credentials: "include" })
       setResults(await res.json())
     } catch { showToast("Error al cargar participaciones", "error") }
   }, [])
 
   useEffect(() => {
-    Promise.all([fetchVisible(), fetchPrizes(), fetchResults()]).finally(() => setLoading(false))
-  }, [fetchVisible, fetchPrizes, fetchResults])
-
-  // ── Toggle visibilidad → guarda en backend ────────────────────────────────
-  async function toggleVisible() {
-    const next = !scratchVisible
-    setSavingVisible(true)
-    try {
-      const res = await fetch(`${API}/visible`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visible: next }),
-      })
-      const data = await res.json()
-      setScratchVisibleState(data.visible)
-      showToast(data.visible ? "Raspa y Gana activado ✅" : "Raspa y Gana ocultado")
-    } catch {
-      showToast("Error al guardar", "error")
-    } finally {
-      setSavingVisible(false)
-    }
-  }
+    Promise.all([fetchPrizes(), fetchResults()]).finally(() => setLoading(false))
+  }, [fetchPrizes, fetchResults])
 
   // ── Toast ────────────────────────────────────────────────────────────────
   function showToast(msg, type = "success") {
@@ -103,23 +80,40 @@ export default function ScratchAdminDashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // ── CRUD premios ───────────────────────────────────────────────────────────
-  function openCreate() { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true) }
-  function openEdit(prize) { setForm({ ...prize }); setEditingId(prize.id); setShowForm(true) }
+  // ── CRUD de premios ───────────────────────────────────────────────────────
+  function openCreate() {
+    setForm(EMPTY_FORM)
+    setEditingId(null)
+    setShowForm(true)
+  }
+
+  function openEdit(prize) {
+    setForm({ ...prize })
+    setEditingId(prize.id)
+    setShowForm(true)
+  }
 
   async function savePrize() {
     if (!form.label.trim()) return showToast("El nombre del premio es obligatorio", "error")
     if (form.type !== "none" && (!form.value || Number(form.value) <= 0))
       return showToast("Ingresa un valor mayor a 0", "error")
-    if (Number(form.weight) <= 0) return showToast("El peso debe ser mayor a 0", "error")
+    if (Number(form.weight) <= 0)
+      return showToast("El peso debe ser mayor a 0", "error")
 
     const payload = { ...form, value: Number(form.value), weight: Number(form.weight) }
     const url     = editingId ? `${API}/prizes/${editingId}` : `${API}/prizes`
     const method  = editingId ? "PUT" : "POST"
+
     try {
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
       if (!res.ok) throw new Error()
-      await fetchPrizes(); setShowForm(false)
+      await fetchPrizes()
+      setShowForm(false)
       showToast(editingId ? "Premio actualizado ✅" : "Premio creado ✅")
     } catch { showToast("Error al guardar el premio", "error") }
   }
@@ -127,7 +121,9 @@ export default function ScratchAdminDashboard() {
   async function toggleActive(prize) {
     try {
       await fetch(`${API}/prizes/${prize.id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ ...prize, active: !prize.active }),
       })
       await fetchPrizes()
@@ -137,23 +133,30 @@ export default function ScratchAdminDashboard() {
 
   async function deletePrize(id) {
     try {
-      await fetch(`${API}/prizes/${id}`, { method: "DELETE" })
-      await fetchPrizes(); setConfirmDelete(null)
+      await fetch(`${API}/prizes/${id}`, { method: "DELETE", credentials: "include" })
+      await fetchPrizes()
+      setConfirmDelete(null)
       showToast("Premio eliminado")
     } catch { showToast("Error al eliminar", "error") }
   }
 
+  // ── Reiniciar IP ──────────────────────────────────────────────────────────
   async function handleResetIP() {
     const ip = resetIP.trim()
     if (!ip) return showToast("Ingresa una IP válida", "error")
     try {
-      const res = await fetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, { method: "DELETE" })
+      const res = await fetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
       const data = await res.json()
-      await fetchResults(); setResetIP("")
+      await fetchResults()
+      setResetIP("")
       showToast(data.message || "IP reiniciada ✅")
     } catch { showToast("Error al reiniciar IP", "error") }
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
@@ -171,7 +174,7 @@ export default function ScratchAdminDashboard() {
         </div>
       )}
 
-      {/* Modal eliminar */}
+      {/* Modal confirmación eliminar */}
       {confirmDelete && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm mx-4">
@@ -196,12 +199,18 @@ export default function ScratchAdminDashboard() {
       {showForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-800">{editingId ? "✏️ Editar premio" : "✨ Nuevo premio"}</h3>
-              <button onClick={() => setShowForm(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition">✕</button>
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800">
+                  {editingId ? "✏️ Editar premio" : "✨ Nuevo premio"}
+                </h3>
+                <button onClick={() => setShowForm(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition">✕</button>
+              </div>
             </div>
+
             <div className="p-6 space-y-5">
+              {/* Emoji */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Emoji</label>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -217,26 +226,36 @@ export default function ScratchAdminDashboard() {
                   className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-center text-lg"
                   placeholder="🎁" maxLength={2} />
               </div>
+
+              {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre del premio</label>
                 <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
                   placeholder="Ej: 10% de descuento"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition" />
               </div>
+
+              {/* Tipo */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de premio</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {TYPE_OPTIONS.map(opt => (
                     <button key={opt.value} onClick={() => setForm(f => ({ ...f, type: opt.value }))}
                       className={`py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition
-                        ${form.type === opt.value ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:border-purple-300"}`}>
+                        ${form.type === opt.value
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 text-gray-600 hover:border-purple-300"}`}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-1.5">{TYPE_OPTIONS.find(o => o.value === form.type)?.hint}</p>
+                <p className="text-xs text-gray-400 mt-1.5">
+                  {TYPE_OPTIONS.find(o => o.value === form.type)?.hint}
+                </p>
               </div>
-              {form.type !== "none" && form.type !== "gift" && (
+
+              {/* Valor */}
+              {form.type !== "none" && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {form.type === "percent" ? "Porcentaje (%)" : "Valor ($)"}
@@ -252,9 +271,12 @@ export default function ScratchAdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Peso */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Peso de probabilidad <span className="ml-2 text-xs font-normal text-gray-400">(mayor = más probable)</span>
+                  Peso de probabilidad
+                  <span className="ml-2 text-xs font-normal text-gray-400">(mayor número = más probable)</span>
                 </label>
                 <input type="range" min="1" max="100" value={form.weight}
                   onChange={e => setForm(f => ({ ...f, weight: Number(e.target.value) }))}
@@ -265,9 +287,11 @@ export default function ScratchAdminDashboard() {
                   <span>Común (100)</span>
                 </div>
               </div>
+
+              {/* Preview probabilidad */}
               {prizes.length > 0 && (
                 <div className="bg-purple-50 rounded-xl p-3 text-sm">
-                  <p className="text-purple-700 font-medium text-xs mb-1">Vista previa de probabilidad:</p>
+                  <p className="text-purple-700 font-medium text-xs mb-1">Vista previa de probabilidad aproximada:</p>
                   <p className="text-purple-900 font-bold">
                     ~{(() => {
                       const others = prizes.filter(p => p.active && p.id !== editingId).reduce((s, p) => s + p.weight, 0)
@@ -278,6 +302,7 @@ export default function ScratchAdminDashboard() {
                 </div>
               )}
             </div>
+
             <div className="p-6 border-t border-gray-100 flex gap-3">
               <button onClick={() => setShowForm(false)}
                 className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition font-medium">
@@ -311,9 +336,13 @@ export default function ScratchAdminDashboard() {
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
-        {/* ── Switch visibilidad ── */}
+        {/* ══════════════════════════════════════════
+            SWITCH DE VISIBILIDAD — nuevo bloque
+        ══════════════════════════════════════════ */}
         <div className={`rounded-2xl border-2 p-5 flex items-center justify-between transition-all
-          ${scratchVisible ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}>
+          ${scratchVisible
+            ? "bg-green-50 border-green-200"
+            : "bg-gray-50 border-gray-200"}`}>
           <div className="flex items-center gap-3">
             <span className="text-3xl">{scratchVisible ? "🟢" : "⭕"}</span>
             <div>
@@ -328,11 +357,12 @@ export default function ScratchAdminDashboard() {
             </div>
           </div>
           <button
-            onClick={toggleVisible}
-            disabled={savingVisible}
+            onClick={() => {
+              setScratchVisible(!scratchVisible)
+              showToast(scratchVisible ? "Raspa y Gana ocultado" : "Raspa y Gana activado ✅")
+            }}
             className={`relative w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0
-              ${scratchVisible ? "bg-green-500" : "bg-gray-300"}
-              ${savingVisible ? "opacity-50 cursor-wait" : ""}`}
+              ${scratchVisible ? "bg-green-500" : "bg-gray-300"}`}
           >
             <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300
               ${scratchVisible ? "translate-x-7" : "translate-x-0.5"}`} />
@@ -374,7 +404,9 @@ export default function ScratchAdminDashboard() {
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3 border-b border-gray-100 bg-gray-50">
+                <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-0
+                  text-xs font-semibold text-gray-400 uppercase tracking-wide
+                  px-5 py-3 border-b border-gray-100 bg-gray-50">
                   <span className="w-10">Emoji</span>
                   <span>Premio</span>
                   <span className="w-24 text-center">Tipo / Valor</span>
@@ -382,17 +414,25 @@ export default function ScratchAdminDashboard() {
                   <span className="w-20 text-center">Estado</span>
                   <span className="w-20 text-center">Acciones</span>
                 </div>
+
                 {prizes.map((prize, i) => (
                   <div key={prize.id}
-                    className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center px-5 py-4 transition hover:bg-gray-50
+                    className={`grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-0 items-center
+                      px-5 py-4 transition hover:bg-gray-50
                       ${i !== prizes.length - 1 ? "border-b border-gray-100" : ""}
                       ${!prize.active ? "opacity-50" : ""}`}>
                     <div className="w-10 text-2xl">{prize.emoji}</div>
-                    <div><p className="font-semibold text-gray-800 text-sm">{prize.label}</p></div>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm">{prize.label}</p>
+                    </div>
                     <div className="w-24 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
-                        ${prize.type === "percent" ? "bg-blue-50 text-blue-700" : prize.type === "fixed" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
-                        {prize.type === "percent" ? `${prize.value}%` : prize.type === "fixed" ? `$${prize.value.toLocaleString()}` : "Sin premio"}
+                        ${prize.type === "percent" ? "bg-blue-50 text-blue-700"
+                          : prize.type === "fixed" ? "bg-amber-50 text-amber-700"
+                          : "bg-gray-100 text-gray-500"}`}>
+                        {prize.type === "percent" ? `${prize.value}%`
+                          : prize.type === "fixed" ? `$${prize.value.toLocaleString()}`
+                          : "Sin premio"}
                       </span>
                     </div>
                     <div className="w-24 text-center">
@@ -400,29 +440,39 @@ export default function ScratchAdminDashboard() {
                         <div>
                           <p className="text-sm font-bold text-purple-700">{calcProb(prize, prizes)}%</p>
                           <div className="mt-1 h-1.5 bg-gray-100 rounded-full w-16 mx-auto">
-                            <div className="h-1.5 bg-purple-400 rounded-full" style={{ width: `${calcProb(prize, prizes)}%` }} />
+                            <div className="h-1.5 bg-purple-400 rounded-full"
+                              style={{ width: `${calcProb(prize, prizes)}%` }} />
                           </div>
                         </div>
-                      ) : <span className="text-xs text-gray-400">—</span>}
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </div>
                     <div className="w-20 flex justify-center">
                       <button onClick={() => toggleActive(prize)}
-                        className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${prize.active ? "bg-emerald-400" : "bg-gray-200"}`}>
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${prize.active ? "translate-x-5" : "translate-x-0.5"}`} />
+                        className={`relative w-10 h-5 rounded-full transition-colors duration-300
+                          ${prize.active ? "bg-emerald-400" : "bg-gray-200"}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300
+                          ${prize.active ? "translate-x-5" : "translate-x-0.5"}`} />
                       </button>
                     </div>
                     <div className="w-20 flex justify-center gap-1">
-                      <button onClick={() => openEdit(prize)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 text-purple-500 transition text-sm" title="Editar">✏️</button>
-                      <button onClick={() => setConfirmDelete(prize.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition text-sm" title="Eliminar">🗑️</button>
+                      <button onClick={() => openEdit(prize)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 text-purple-500 transition text-sm"
+                        title="Editar">✏️</button>
+                      <button onClick={() => setConfirmDelete(prize.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition text-sm"
+                        title="Eliminar">🗑️</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+
             {prizes.filter(p => p.active).length > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
                 <p className="font-semibold mb-1">💡 ¿Cómo funciona la probabilidad?</p>
-                <p>Los porcentajes se calculan según el <strong>peso</strong> de cada premio activo.</p>
+                <p>Los porcentajes se calculan automáticamente según el <strong>peso</strong> de cada premio activo.</p>
               </div>
             )}
           </div>
@@ -437,47 +487,74 @@ export default function ScratchAdminDashboard() {
               <div className="flex gap-3">
                 <input value={resetIP} onChange={e => setResetIP(e.target.value)}
                   placeholder="Ej: 192.168.1.100"
-                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition text-sm" />
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2
+                    focus:ring-purple-400 focus:border-transparent outline-none transition text-sm" />
                 <button onClick={handleResetIP}
-                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition shadow-md text-sm whitespace-nowrap">
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600
+                    hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl
+                    transition shadow-md text-sm whitespace-nowrap">
                   Reiniciar
                 </button>
               </div>
             </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800">Historial de participaciones</h3>
                 <span className="text-sm text-gray-400">{results.length} registros</span>
               </div>
               {results.length === 0 ? (
-                <div className="p-12 text-center"><p className="text-3xl mb-3">📋</p><p className="text-gray-400 text-sm">Nadie ha jugado todavía</p></div>
+                <div className="p-12 text-center">
+                  <p className="text-3xl mb-3">📋</p>
+                  <p className="text-gray-400 text-sm">Nadie ha jugado todavía</p>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
-                      <tr>{["IP", "Premio", "Tipo", "Valor", "Fecha", "⏳ Bloqueo"].map(h => (
-                        <th key={h} className="px-5 py-3 text-left font-semibold">{h}</th>
-                      ))}</tr>
+                      <tr>
+                        {["IP", "Premio", "Tipo", "Valor", "Fecha", "⏳ Bloqueo"].map(h => (
+                          <th key={h} className="px-5 py-3 text-left font-semibold">{h}</th>
+                        ))}
+                      </tr>
                     </thead>
                     <tbody>
                       {[...results].reverse().map((r, i) => (
-                        <tr key={r.id} className={`border-t border-gray-100 hover:bg-gray-50 transition ${i % 2 === 0 ? "" : "bg-gray-50/50"}`}>
+                        <tr key={r.id}
+                          className={`border-t border-gray-100 hover:bg-gray-50 transition
+                            ${i % 2 === 0 ? "" : "bg-gray-50/50"}`}>
                           <td className="px-5 py-3 font-mono text-xs text-gray-600">{r.ipAddress}</td>
-                          <td className="px-5 py-3"><span className="flex items-center gap-1.5"><span>{r.prizeEmoji}</span><span className="font-medium text-gray-800">{r.prizeLabel}</span></span></td>
                           <td className="px-5 py-3">
-                            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${r.prizeType === "percent" ? "bg-blue-50 text-blue-700" : r.prizeType === "fixed" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                            <span className="flex items-center gap-1.5">
+                              <span>{r.prizeEmoji}</span>
+                              <span className="font-medium text-gray-800">{r.prizeLabel}</span>
+                            </span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold
+                              ${r.prizeType === "percent" ? "bg-blue-50 text-blue-700"
+                                : r.prizeType === "fixed" ? "bg-amber-50 text-amber-700"
+                                : "bg-gray-100 text-gray-500"}`}>
                               {r.prizeType === "percent" ? "%" : r.prizeType === "fixed" ? "$" : "—"}
                             </span>
                           </td>
                           <td className="px-5 py-3 text-gray-700 font-medium">
-                            {r.prizeType === "percent" ? `${r.prizeValue}%` : r.prizeType === "fixed" ? `$${r.prizeValue.toLocaleString()}` : "—"}
+                            {r.prizeType === "percent" ? `${r.prizeValue}%`
+                              : r.prizeType === "fixed" ? `$${r.prizeValue.toLocaleString()}`
+                              : "—"}
                           </td>
-                          <td className="px-5 py-3 text-gray-400 text-xs">{new Date(r.playedAt).toLocaleString("es-CO")}</td>
+                          <td className="px-5 py-3 text-gray-400 text-xs">
+                            {new Date(r.playedAt).toLocaleString("es-CO")}
+                          </td>
                           <td className="px-5 py-3">
                             {timeLeft(r.playedAt) ? (
-                              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 text-xs font-semibold px-2.5 py-1 rounded-lg">⏳ {timeLeft(r.playedAt)}</span>
+                              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                ⏳ {timeLeft(r.playedAt)}
+                              </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-1 rounded-lg">✅ Puede jugar</span>
+                              <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                ✅ Puede jugar
+                              </span>
                             )}
                           </td>
                         </tr>

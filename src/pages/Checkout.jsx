@@ -4,11 +4,9 @@ import { useState } from "react"
 import { useCart } from "./CartContext"
 import { X } from "lucide-react"
 import ScratchCard from "./ScratchCard"
-import { useScratchVisible } from "./useScratchVisible"
 
 export default function Checkout() {
   const { cartItems, removeFromCart } = useCart()
-  const { scratchVisible } = useScratchVisible()
 
   const fixEmojiEncoding = (text) => {
     return encodeURIComponent(text)
@@ -188,20 +186,14 @@ ${prizeLine}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none" />
               </div>
 
-              {/* ── Raspa y Gana — solo visible si el admin lo activó ── */}
-              {scratchVisible && (
-                <div className="rounded-2xl border-2 border-dashed border-purple-300 bg-purple-50/60 p-5">
-                  <h3 className="text-base font-bold text-purple-800 mb-4 flex items-center gap-2">
-                    🎰 Raspa y Gana
-                    <span className="text-xs font-normal text-purple-500 bg-purple-100 rounded-full px-2 py-0.5">
-                      ¡Un premio exclusivo para ti!
-                    </span>
-                  </h3>
-                  <ScratchCard onPrizeApplied={(prize) => {
-                    if (prize.type !== "none") setAppliedPrize(prize)
-                  }} />
-                </div>
-              )}
+              {/*
+                ScratchCard se muestra siempre aquí.
+                Internamente consulta el backend y si el admin lo ocultó, retorna null solo.
+                No necesita ningún wrapper condicional.
+              */}
+              <ScratchCard onPrizeApplied={(prize) => {
+                if (prize.type !== "none") setAppliedPrize(prize)
+              }} />
 
               <button type="submit"
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
