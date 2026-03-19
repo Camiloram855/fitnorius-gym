@@ -54,26 +54,52 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
+
+    // Degradado dorado
     const grad = ctx.createLinearGradient(0, 0, W, H)
-    grad.addColorStop(0, "#c0c0c0")
-    grad.addColorStop(0.4, "#e8e8e8")
-    grad.addColorStop(0.6, "#a8a8a8")
-    grad.addColorStop(1, "#d0d0d0")
+    grad.addColorStop(0,    "#b8860b")
+    grad.addColorStop(0.25, "#ffd700")
+    grad.addColorStop(0.5,  "#fff5a0")
+    grad.addColorStop(0.75, "#ffd700")
+    grad.addColorStop(1,    "#b8860b")
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = "rgba(255,255,255,0.15)"
-    for (let x = 0; x < W; x += 12) {
-      for (let y = 0; y < H; y += 12) {
-        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill()
+
+    // Brillo diagonal
+    const shine = ctx.createLinearGradient(0, 0, W * 0.7, H * 0.7)
+    shine.addColorStop(0, "rgba(255,255,255,0.45)")
+    shine.addColorStop(1, "rgba(255,255,255,0.0)")
+    ctx.fillStyle = shine
+    ctx.fillRect(0, 0, W, H)
+
+    // Puntos decorativos
+    ctx.fillStyle = "rgba(255,255,255,0.18)"
+    for (let x = 12; x < W; x += 16) {
+      for (let y = 12; y < H; y += 16) {
+        ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill()
       }
     }
-    ctx.font = "bold 15px Georgia, serif"
-    ctx.fillStyle = "rgba(100,100,100,0.7)"
+
+    // Borde interior
+    ctx.strokeStyle = "rgba(120,75,0,0.4)"
+    ctx.lineWidth = 2
+    ctx.strokeRect(10, 10, W - 20, H - 20)
+
+    // Texto — doble pasada para simular sombra sin shadowBlur
     ctx.textAlign = "center"
-    ctx.fillText("🪙  RASPA AQUÍ  🪙", W / 2, H / 2 - 8)
-    ctx.font = "11px Georgia, serif"
-    ctx.fillStyle = "rgba(120,120,120,0.6)"
-    ctx.fillText("Descubre tu premio", W / 2, H / 2 + 14)
+    ctx.font = "bold 20px Georgia, serif"
+    ctx.fillStyle = "rgba(90,45,0,0.55)"
+    ctx.fillText("✨  RASPA Y GANA  ✨", W / 2 + 1, H / 2 - 7)
+    ctx.fillStyle = "#3d1f00"
+    ctx.fillText("✨  RASPA Y GANA  ✨", W / 2, H / 2 - 9)
+
+    ctx.font = "bold 12px Georgia, serif"
+    ctx.fillStyle = "rgba(90,45,0,0.45)"
+    ctx.fillText("🏆  Descubre tu premio  🏆", W / 2 + 1, H / 2 + 16)
+    ctx.fillStyle = "rgba(60,30,0,0.8)"
+    ctx.fillText("🏆  Descubre tu premio  🏆", W / 2, H / 2 + 15)
+
+    // Activar modo raspado AL FINAL
     ctx.globalCompositeOperation = "destination-out"
   }, [])
 
@@ -147,8 +173,19 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
   // ── Renders ───────────────────────────────────────────────────────────────
 
   if (status === "hidden")  return null
-  if (status === "blocked") return null
   if (status === "idle")    return null
+
+  if (status === "blocked") return (
+    <div className="rounded-2xl p-5 text-center bg-gray-50 border-2 border-gray-200 shadow-inner">
+      <div className="text-3xl mb-2 opacity-50">🔒</div>
+      <p className="text-sm font-semibold text-gray-600 mb-1">Ya participaste</p>
+      {prize && (
+        <p className="text-sm text-gray-500">
+          Tu premio fue: <span className="font-bold text-purple-700">{prize.emoji} {prize.label}</span>
+        </p>
+      )}
+    </div>
+  )
 
   if (status === "loading") return (
     <div className="flex items-center justify-center h-44 rounded-2xl bg-gray-100">
@@ -170,19 +207,27 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
       <p className="text-sm text-purple-700 font-medium">
         🎉 ¡Tienes un Raspa y Gana! Desliza el dedo sobre la tarjeta
       </p>
-      <div className="relative rounded-2xl overflow-hidden shadow-xl border-2 border-purple-300"
+
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-yellow-600"
         style={{ width: W, height: H }}>
+
+        {/* ── Capa 1 (fondo): premio morado oculto ── */}
         <PrizeBackground />
+
+        {/* ── Capa 2 (encima): superficie dorada que se raspa ── */}
         <canvas ref={canvasRef} width={W} height={H}
           className="absolute inset-0 cursor-crosshair touch-none"
           onMouseDown={startScratch} onMouseMove={scratch} onMouseUp={stopScratch} onMouseLeave={stopScratch}
           onTouchStart={startScratch} onTouchMove={scratch} onTouchEnd={stopScratch} />
       </div>
-      <div className="w-full max-w-xs bg-purple-100 rounded-full h-2">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-100"
+
+      <div className="w-full max-w-xs bg-yellow-100 rounded-full h-2.5 border border-yellow-300">
+        <div className="bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 h-2.5 rounded-full transition-all duration-100"
           style={{ width: `${Math.min(scratchPct * 100, 100).toFixed(1)}%` }} />
       </div>
-      <p className="text-xs text-purple-500">{Math.min(scratchPct * 100, 100).toFixed(0)}% raspado</p>
+      <p className="text-xs text-yellow-700 font-semibold">
+        {Math.min(scratchPct * 100, 100).toFixed(0)}% raspado
+      </p>
     </div>
   )
 
