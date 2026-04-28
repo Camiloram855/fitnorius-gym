@@ -194,7 +194,7 @@ export default function HeroBanner({ image }) {
       <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black">
         <div>
           <SearchSection />
-          <div className="mt-8">
+          <div className="">
             <CategoryCarousel />
           </div>
         </div>

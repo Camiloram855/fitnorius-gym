@@ -132,7 +132,7 @@ export default function SearchSection() {
       </div>
 
       {/* 🧾 Resultados */}
-      <div className="mt-12  md:px-10">
+      <div className="">
         {results.length > 0 ? (
           <div
             className="
