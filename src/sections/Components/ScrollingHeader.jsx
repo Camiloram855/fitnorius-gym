@@ -104,7 +104,7 @@ const ScrollingHeader = () => {
   };
 
   return (
-    <div className="w-full fixed top-0 left-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-700 text-white font-medium text-sm md:text-base h-12 flex items-center justify-between px-6 shadow-lg">
+      <div className="w-full sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-700 text-white font-medium text-sm md:text-base h-12 flex items-center justify-between px-6 shadow-lg">
 
       {/* MENSAJES ANIMADOS */}
       <div className="flex-1 overflow-hidden relative h-full flex items-center pointer-events-none">

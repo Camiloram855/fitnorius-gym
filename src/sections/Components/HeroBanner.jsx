@@ -122,12 +122,12 @@ export default function HeroBanner({ image }) {
   return (
     <>
       <section className="relative overflow-hidden w-full bg-neutral-950">
-        <div className="relative flex items-center justify-center w-full h-[240px] sm:h-[320px] md:h-[420px] lg:h-[520px] xl:h-[600px] bg-neutral-950">
+        <div className="relative w-full aspect-[8/3] bg-neutral-950">
           {finalImage && (
             <img
               src={finalImage}
               alt={`Banner ${currentIndex + 1}`}
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain"
             />
           )}
 
