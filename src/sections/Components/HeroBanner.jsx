@@ -135,20 +135,6 @@ export default function HeroBanner({ image }) {
 
           {bannerImages.length > 1 && (
             <>
-              <button
-                type="button"
-                onClick={goToPrev}
-                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-md"
-              >
-                {'<'}
-              </button>
-              <button
-                type="button"
-                onClick={goToNext}
-                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-md"
-              >
-                {'>'}
-              </button>
 
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                 {bannerImages.map((_, idx) => (
