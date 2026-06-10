@@ -288,7 +288,7 @@ const ProductList = ({ category }) => {
             <div
               key={product.id}
               data-product-id={product.id}
-              className={`relative transition-all duration-200 ${
+              className={`relative h-full transition-all duration-200 ${
                 isDragging ? "opacity-20 scale-95" : "opacity-100"
               } ${isDropTarget ? "ring-2 ring-purple-500 ring-offset-2 rounded-xl" : ""}`}
             >

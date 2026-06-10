@@ -77,8 +77,8 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
   const formattedAhorro = ahorro ? formatCurrency(ahorro) : null;
 
   return (
-    <div className="block w-full max-w-[250px] mx-auto">
-      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer">
+    <div className="block w-full max-w-[250px] mx-auto h-full">
+      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer h-full min-h-[390px]">
 
         {/* ---------- IMAGEN ---------- */}
         <Link
@@ -89,7 +89,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
               window.history.scrollRestoration = "manual";
             }
           }}
-          className="relative w-full pt-[100%] overflow-hidden rounded-t-xl block group"
+          className="relative w-full pt-[100%] overflow-hidden rounded-t-xl block group shrink-0"
         >
           <img
             src={imageSrc}
@@ -116,12 +116,12 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
         </Link>
 
         {/* ---------- INFO ---------- */}
-        <div className="p-4 flex flex-col flex-1 justify-between">
-          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-1">
+        <div className="p-4 flex flex-col flex-1">
+          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-2 min-h-[2.5rem]">
             {product.name}
           </h3>
 
-          <div>
+          <div className="min-h-[4.5rem] flex flex-col justify-start">
             <span className="text-green-600 font-bold text-lg">
               {formattedPrice}
             </span>
@@ -130,18 +130,26 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
                 {formattedOldPrice}
               </span>
             )}
+          </div>
 
-            {ahorro && (
-              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full mt-1 inline-flex whitespace-nowrap">
-                Ahorra: {formattedAhorro.replace("COP", "")}
-              </span>
-            )}
+          <div className="mt-auto pt-3 flex items-end justify-between gap-2 min-h-[2.25rem]">
+            <div className="min-h-[1.75rem]">
+              {ahorro ? (
+                <span className="inline-flex bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
+                  Ahorra: {formattedAhorro.replace("COP", "")}
+                </span>
+              ) : (
+                <span className="inline-flex h-[1.75rem] opacity-0 select-none">
+                  Ahorra:
+                </span>
+              )}
+            </div>
           </div>
 
           {isAdmin && (
             <button
               onClick={handleDelete}
-              className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition"
+              className="mt-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition min-h-[2.35rem]"
             >
               Eliminar
             </button>
@@ -155,7 +163,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
               }}
               className={`mt-3 ${
                 product.agotado ? "bg-gray-500" : "bg-orange-500"
-              } hover:opacity-80 text-white text-xs font-semibold px-3 py-2 rounded-lg transition`}
+              } hover:opacity-80 text-white text-xs font-semibold px-3 py-2 rounded-lg transition min-h-[2.35rem]`}
             >
               {product.agotado ? "Disponible" : "Marcar Agotado"}
             </button>

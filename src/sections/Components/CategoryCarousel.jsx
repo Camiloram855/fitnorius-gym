@@ -259,7 +259,11 @@ useEffect(() => {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="flex-shrink-0 group cursor-pointer"
+              className={`flex-shrink-0 group cursor-pointer rounded-2xl px-2 py-2 transition-all duration-200 ${
+                selectedCategory?.id === category.id
+                  ? "bg-purple-700/15 ring-2 ring-purple-500/80 shadow-lg shadow-purple-500/10"
+                  : "hover:bg-white/5"
+              }`}
               onClick={() => {
               setSelectedCategory(category);
               sessionStorage.setItem("openCategoryId", category.id);
@@ -270,7 +274,11 @@ useEffect(() => {
                 <img
                   src={category.imageUrl}
                   alt={category.name}
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border border-purple-500 group-hover:scale-105 transition-transform duration-300"
+                  className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
+                    selectedCategory?.id === category.id
+                      ? "border-purple-300 ring-4 ring-purple-400/30 scale-105"
+                      : "border-purple-500 group-hover:scale-105"
+                  }`}
                 />
                 {isAdmin && categories.length > 1 && (
                   <button
@@ -296,7 +304,13 @@ useEffect(() => {
                   </button>
                 )}
               </div>
-              <p className="text-center mt-2 text-sm font-medium text-white uppercase tracking-wide whitespace-normal leading-tight max-w-[90px]">
+              <p
+                className={`text-center mt-2 text-sm font-medium uppercase tracking-wide whitespace-normal leading-tight max-w-[90px] mx-auto transition-colors duration-200 ${
+                  selectedCategory?.id === category.id
+                    ? "text-purple-200"
+                    : "text-white"
+                }`}
+              >
                 {category.name}
               </p>
             </div>
