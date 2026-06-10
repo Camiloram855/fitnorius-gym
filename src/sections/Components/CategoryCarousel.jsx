@@ -280,7 +280,7 @@ useEffect(() => {
                 <div
                   className={`relative rounded-full p-[3px] transition-all duration-200 ${
                     selectedCategory?.id === category.id
-                      ? "bg-gradient-to-br from-purple-300 via-fuchsia-500 to-purple-700 shadow-[0_0_26px_rgba(168,85,247,0.55)]"
+                      ? "bg-gradient-to-br from-purple-200 via-fuchsia-400 to-purple-700 p-[5px] shadow-[0_0_34px_rgba(168,85,247,0.65)]"
                       : "bg-transparent"
                   }`}
                 >
@@ -296,7 +296,7 @@ useEffect(() => {
                   alt={category.name}
                   className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
                     selectedCategory?.id === category.id
-                      ? "border-white/80 scale-[1.09]"
+                      ? "border-white/90 scale-[1.12]"
                       : "border-purple-500 group-hover:scale-105"
                   }`}
                 />
