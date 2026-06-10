@@ -261,7 +261,7 @@ useEffect(() => {
               key={category.id}
               className={`flex-shrink-0 group cursor-pointer rounded-2xl px-2 py-2 transition-all duration-200 ${
                 selectedCategory?.id === category.id
-                  ? "bg-purple-700/15 ring-2 ring-purple-500/80 shadow-lg shadow-purple-500/10"
+                  ? "bg-purple-700/10"
                   : "hover:bg-white/5"
               }`}
               onClick={() => {
@@ -270,16 +270,32 @@ useEffect(() => {
             }}
 
             >
-              <div className="relative">
+              <div className="relative mx-auto w-fit">
+                <div
+                  className={`relative rounded-full p-[3px] transition-all duration-200 ${
+                    selectedCategory?.id === category.id
+                      ? "bg-gradient-to-br from-purple-300 via-fuchsia-500 to-purple-700 shadow-[0_0_18px_rgba(168,85,247,0.45)]"
+                      : "bg-transparent"
+                  }`}
+                >
+                  <div
+                    className={`rounded-full p-[2px] transition-all duration-200 ${
+                      selectedCategory?.id === category.id
+                        ? "bg-white/10"
+                        : "bg-transparent"
+                    }`}
+                  >
                 <img
                   src={category.imageUrl}
                   alt={category.name}
                   className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
                     selectedCategory?.id === category.id
-                      ? "border-purple-300 ring-4 ring-purple-400/30 scale-105"
+                      ? "border-white/70 scale-105"
                       : "border-purple-500 group-hover:scale-105"
                   }`}
                 />
+                  </div>
+                </div>
                 {isAdmin && categories.length > 1 && (
                   <button
                     onClick={(e) => {
@@ -307,7 +323,7 @@ useEffect(() => {
               <p
                 className={`text-center mt-2 text-sm font-medium uppercase tracking-wide whitespace-normal leading-tight max-w-[90px] mx-auto transition-colors duration-200 ${
                   selectedCategory?.id === category.id
-                    ? "text-purple-200"
+                    ? "text-purple-100"
                     : "text-white"
                 }`}
               >

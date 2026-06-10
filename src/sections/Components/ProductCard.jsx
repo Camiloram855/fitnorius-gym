@@ -4,7 +4,6 @@ import { useAuth } from "../../pages/AuthContext";
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
 
-// 🔥 Función para optimizar imágenes Cloudinary
 const optimizeCloudinaryUrl = (url) => {
   if (!url || typeof url !== "string") return url;
   if (!url.includes("res.cloudinary.com")) return url;
@@ -54,7 +53,6 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
     }
   };
 
-  // 🔥 Optimizar imagen automáticamente
   const rawImageUrl = product.imageUrl
     ? product.imageUrl.startsWith("http")
       ? product.imageUrl
@@ -77,10 +75,8 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
   const formattedAhorro = ahorro ? formatCurrency(ahorro) : null;
 
   return (
-    <div className="block w-full max-w-[250px] mx-auto h-full">
-      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer h-full min-h-[390px]">
-
-        {/* ---------- IMAGEN ---------- */}
+    <div className="block w-full max-w-[240px] mx-auto h-full">
+      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer h-full min-h-[360px]">
         <Link
           to={`/catalog/producto/${product.id}`}
           onClick={() => {
@@ -98,14 +94,6 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             onError={(e) => (e.target.src = "/img/default.jpg")}
           />
 
-          {hasPromo && (
-            <div className="absolute bottom-3 left-3 bg-gradient-to-r from-yellow-500 to-yellow-700 px-2 py-1 rounded-full shadow-md">
-              <span className="text-white font-bold text-xs uppercase">
-                ¡PROMO!
-              </span>
-            </div>
-          )}
-
           {product.agotado && (
             <div className="absolute top-3 left-3 bg-red-600 px-2 py-1 rounded-full shadow-md">
               <span className="text-white font-bold text-xs uppercase">
@@ -115,7 +103,6 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           )}
         </Link>
 
-        {/* ---------- INFO ---------- */}
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2 line-clamp-2 min-h-[2.5rem]">
             {product.name}
@@ -133,7 +120,18 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           </div>
 
           <div className="mt-auto pt-3 flex items-end justify-between gap-2 min-h-[2.25rem]">
-            <div className="min-h-[1.75rem]">
+            <div className="min-h-[1.75rem] flex items-start justify-start">
+              {hasPromo ? (
+                <span className="inline-flex bg-gradient-to-r from-yellow-500 to-yellow-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm">
+                  !PROMO!
+                </span>
+              ) : (
+                <span className="inline-flex h-[1.75rem] opacity-0 select-none">
+                  PROMO
+                </span>
+              )}
+            </div>
+            <div className="min-h-[1.75rem] flex items-end justify-end">
               {ahorro ? (
                 <span className="inline-flex bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
                   Ahorra: {formattedAhorro.replace("COP", "")}
