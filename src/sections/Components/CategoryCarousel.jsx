@@ -265,11 +265,7 @@ useEffect(() => {
           {categories.map((category) => (
             <div
               key={category.id}
-              className={`flex-shrink-0 group cursor-pointer rounded-2xl px-2 py-2 transition-all duration-200 ${
-                selectedCategory?.id === category.id
-                  ? "bg-purple-700/10"
-                  : "hover:bg-white/5"
-              }`}
+              className="flex-shrink-0 group cursor-pointer px-2 py-2 transition-all duration-200 hover:bg-white/5 rounded-2xl"
               onClick={() => {
               setSelectedCategory(category);
               sessionStorage.setItem("openCategoryId", category.id);
@@ -280,27 +276,19 @@ useEffect(() => {
                 <div
                   className={`relative rounded-full p-[3px] transition-all duration-200 ${
                     selectedCategory?.id === category.id
-                      ? "bg-gradient-to-br from-purple-200 via-fuchsia-400 to-purple-700 p-[5px] shadow-[0_0_34px_rgba(168,85,247,0.65)]"
-                      : "bg-transparent"
+                      ? "border-[4px] border-white/90 p-[5px] scale-110"
+                      : "border-[2px] border-transparent"
                   }`}
                 >
-                  <div
-                    className={`rounded-full p-[2px] transition-all duration-200 ${
-                      selectedCategory?.id === category.id
-                        ? "bg-white/10"
-                        : "bg-transparent"
-                    }`}
-                  >
                 <img
                   src={category.imageUrl}
                   alt={category.name}
                   className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
                     selectedCategory?.id === category.id
-                      ? "border-white/90 scale-[1.12]"
+                      ? "border-white/90 scale-110"
                       : "border-purple-500 group-hover:scale-105"
                   }`}
                 />
-                  </div>
                 </div>
                 {isAdmin && categories.length > 1 && (
                   <button
