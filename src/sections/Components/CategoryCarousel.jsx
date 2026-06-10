@@ -276,7 +276,7 @@ useEffect(() => {
                 <div
                   className={`relative rounded-full p-[3px] transition-all duration-200 ${
                     selectedCategory?.id === category.id
-                      ? "border-[4px] border-white/90 p-[5px] scale-110"
+                      ? "border-[4px] border-purple-400/90 p-[5px] scale-110"
                       : "border-[2px] border-transparent"
                   }`}
                 >
@@ -285,7 +285,7 @@ useEffect(() => {
                   alt={category.name}
                   className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
                     selectedCategory?.id === category.id
-                      ? "border-white/90 scale-110"
+                      ? "border-purple-200/90 scale-110"
                       : "border-purple-500 group-hover:scale-105"
                   }`}
                 />
