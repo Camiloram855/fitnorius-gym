@@ -315,7 +315,7 @@ useEffect(() => {
               </p>
             </div>
           ))}
-
+       
           {/* + AGREGAR CATEGORÍA */}
           {isAdmin && (
             <div className="flex-shrink-0">
