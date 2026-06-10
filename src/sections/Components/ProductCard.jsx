@@ -76,7 +76,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   return (
     <div className="block w-full max-w-[240px] mx-auto h-full">
-      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer h-full min-h-[360px]">
+      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out hover:-translate-y-1 flex flex-col cursor-pointer h-full min-h-[350px]">
         <Link
           to={`/catalog/producto/${product.id}`}
           onClick={() => {
@@ -119,26 +119,25 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             )}
           </div>
 
-          <div className="mt-auto pt-3 flex items-end justify-between gap-2 min-h-[2.25rem]">
-            <div className="min-h-[1.75rem] flex items-start justify-start">
-              {hasPromo ? (
-                <span className="inline-flex bg-gradient-to-r from-yellow-500 to-yellow-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm">
-                  !PROMO!
-                </span>
-              ) : (
-                <span className="inline-flex h-[1.75rem] opacity-0 select-none">
-                  PROMO
-                </span>
-              )}
-            </div>
-            <div className="min-h-[1.75rem] flex items-end justify-end">
+          <div className="mt-auto pt-3 flex flex-col gap-2 min-h-[3.9rem]">
+            <div className="flex items-end justify-start min-h-[1.75rem]">
               {ahorro ? (
                 <span className="inline-flex bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
                   Ahorra: {formattedAhorro.replace("COP", "")}
                 </span>
               ) : (
+                <span className="inline-flex h-[1.75rem] opacity-0 select-none">Ahorra:</span>
+              )}
+            </div>
+
+            <div className="flex items-end justify-start min-h-[1.75rem]">
+              {hasPromo ? (
+                <span className="inline-flex bg-gradient-to-r from-yellow-500 to-yellow-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm">
+                  PROMO
+                </span>
+              ) : (
                 <span className="inline-flex h-[1.75rem] opacity-0 select-none">
-                  Ahorra:
+                  PROMO
                 </span>
               )}
             </div>

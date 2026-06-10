@@ -232,6 +232,12 @@ useEffect(() => {
       </div>
 
       <div className="relative select-none">
+        <div className="mb-3 flex items-center justify-center gap-2 text-xs text-gray-400">
+          <span className="animate-pulse">↔</span>
+          <span>Desliza el carrusel</span>
+          <span className="animate-pulse">↔</span>
+        </div>
+
         <button
           onClick={() => scroll("left")}
           className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/60 shadow-lg rounded-full p-1 hover:bg-purple-600 transition-colors duration-200"
@@ -274,7 +280,7 @@ useEffect(() => {
                 <div
                   className={`relative rounded-full p-[3px] transition-all duration-200 ${
                     selectedCategory?.id === category.id
-                      ? "bg-gradient-to-br from-purple-300 via-fuchsia-500 to-purple-700 shadow-[0_0_18px_rgba(168,85,247,0.45)]"
+                      ? "bg-gradient-to-br from-purple-300 via-fuchsia-500 to-purple-700 shadow-[0_0_26px_rgba(168,85,247,0.55)]"
                       : "bg-transparent"
                   }`}
                 >
@@ -290,7 +296,7 @@ useEffect(() => {
                   alt={category.name}
                   className={`w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-md border transition-all duration-300 ${
                     selectedCategory?.id === category.id
-                      ? "border-white/70 scale-105"
+                      ? "border-white/80 scale-[1.09]"
                       : "border-purple-500 group-hover:scale-105"
                   }`}
                 />
