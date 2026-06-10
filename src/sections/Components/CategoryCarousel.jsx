@@ -221,6 +221,17 @@ useEffect(() => {
 
   return (
     <div className="w-full max-w-6xl mx-auto">
+      <style>{`
+        @keyframes carouselHintLeft {
+          0%, 100% { transform: translateX(0); opacity: 0.85; }
+          50% { transform: translateX(-4px); opacity: 1; }
+        }
+        @keyframes carouselHintRight {
+          0%, 100% { transform: translateX(0); opacity: 0.85; }
+          50% { transform: translateX(4px); opacity: 1; }
+        }
+      `}</style>
+
       {/* ====== CARRUSEL ====== */}
       <div className="mb-2">
         <h2 className="text-2xl font-bold text-white mb-1 text-center">
@@ -232,10 +243,19 @@ useEffect(() => {
       </div>
 
       <div className="relative select-none">
-        <div className="mb-3 flex items-center justify-center gap-2 text-xs text-gray-400">
-          <span className="animate-pulse">↔</span>
-          <span>Desliza el carrusel</span>
-          <span className="animate-pulse">↔</span>
+        <div className="mb-3 flex items-center justify-center gap-8 text-white/95">
+          <span
+            className="text-3xl font-black drop-shadow-[0_0_14px_rgba(255,255,255,0.8)]"
+            style={{ animation: "carouselHintLeft 1.6s ease-in-out infinite" }}
+          >
+            {"<"}
+          </span>
+          <span
+            className="text-3xl font-black drop-shadow-[0_0_14px_rgba(255,255,255,0.8)]"
+            style={{ animation: "carouselHintRight 1.6s ease-in-out infinite" }}
+          >
+            {">"}
+          </span>
         </div>
 
         <button
