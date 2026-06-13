@@ -110,15 +110,9 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             </div>
           )}
         </Link>
-
-        <div className="p-3 flex flex-col flex-1">
-          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-0.5 line-clamp-2 min-h-[1.75rem]">
-            {product.name}
-          </h3>
-
-            <div className="flex items-end justify-start min-h-[1.15rem] -mt-0.5">
+            <div className="flex items-end justify-start min-h-[1.15rem] mt-3 ml-3">
               {hasPromo ? (
-                <span className="inline-flex bg-gradient-to-r from-yellow-500 to-yellow-700 text-white text-[14px] font-bold px-2.5 py-[2px] rounded-full whitespace-nowrap shadow-sm">
+                <span className="inline-flex bg-gradient-to-r from-yellow-500 to-yellow-700 text-white text-[16px] font-bold px-2.5 py-[2px] rounded-full whitespace-nowrap shadow-sm">
                   PROMO
                 </span>
               ) : (
@@ -126,20 +120,26 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
               )}
             </div>
 
-          <div className="min-h-[2.7rem] flex flex-col justify-start">
+        <div className="p-5 flex flex-col flex-1 mt-0.1 ">
+          <h3 className="text-gray-800 font-semibold text-base uppercase tracking-wide mb-0.5 line-clamp-2 min-h-[2.5rem]">
+            {product.name}
+          </h3>
+
+          <div className="min-h-[2.7rem] flex flex-row items-baseline gap-2 justify-start">
             <span className="text-green-600 font-bold text-[0.98rem] leading-tight">
               {formattedPrice}
             </span>
             {formattedOldPrice && (
-              <span className="text-gray-400 line-through text-[0.78rem] block -mt-1">
+
+              <span className="text-gray-600 line-through text-[0.98rem]">
                 {formattedOldPrice}
               </span>
             )}
           </div>
 
-          <div className="mt-auto pt-1 min-h-[2.9rem]">
+          <div className="mt-auto pt-1 min-h-[1.9rem]">
             {ahorro && (
-              <span className="inline-flex bg-purple-100 text-purple-700 text-[11px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap">
+              <span className="inline-flex bg-purple-100 text-purple-700 text-[15px] font-semibold px-1 py-[2px] rounded-full whitespace-nowrap">
                 Ahorra: {formattedAhorro.replace("COP", "")}
               </span>
             )}
