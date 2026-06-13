@@ -125,13 +125,12 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             {product.name}
           </h3>
 
-          <div className="min-h-[2.7rem] flex flex-row items-baseline gap-2 justify-start">
+          <div className="min-h-[2.7rem] flex flex-col justify-start">
             <span className="text-green-600 font-bold text-[0.98rem] leading-tight">
               {formattedPrice}
             </span>
             {formattedOldPrice && (
-
-              <span className="text-gray-600 line-through text-[0.98rem]">
+              <span className="text-gray-600 line-through text-[0.88rem] block -mt-0.1">
                 {formattedOldPrice}
               </span>
             )}
