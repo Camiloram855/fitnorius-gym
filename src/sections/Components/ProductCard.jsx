@@ -121,7 +121,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             </div>
 
         <div className="p-5 flex flex-col flex-1 mt-0.1 ">
-          <h3 className="text-gray-800 font-semibold text-base uppercase tracking-wide mb-0.5 line-clamp-2 min-h-[2.5rem]">
+          <h3 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-1 leading-snug">
             {product.name}
           </h3>
 
