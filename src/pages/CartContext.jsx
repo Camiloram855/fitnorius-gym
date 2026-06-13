@@ -7,6 +7,10 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
   const addToCart = (product) => {
+    if (!product || product.agotado) {
+      return;
+    }
+
     setCartItems((prev) => [...prev, product]);
   };
 

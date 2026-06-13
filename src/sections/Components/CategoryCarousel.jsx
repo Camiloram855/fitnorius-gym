@@ -238,7 +238,7 @@ useEffect(() => {
           Categorías de Productos
         </h2>
         <p className="text-gray-400 text-sm text-center mb-6">
-          Selecciona la categoria de productos que deseas ver.
+          Desliza para seleccionar mas productos.
         </p>
       </div>
 
@@ -423,4 +423,3 @@ useEffect(() => {
 };
 
 export default CategoryCarousel;
-

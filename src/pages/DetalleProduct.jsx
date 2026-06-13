@@ -167,6 +167,10 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
   const savings = product.oldPrice && product.price ? Number(product.oldPrice) - Number(product.price) : 0;
   const handleQuantityChange = (delta) => setQuantity((prev) => Math.max(1, prev + delta));
   const handleAddToCart = () => {
+    if (product.agotado) {
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -614,9 +618,14 @@ const handleReplaceImage = (thumb, idx, file) => {
 
                   <button
                     onClick={handleAddToCart}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold shadow-lg"
+                    disabled={product.agotado}
+                    className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition ${
+                      product.agotado
+                        ? "bg-gray-500 cursor-not-allowed opacity-70"
+                        : "bg-purple-600 hover:bg-purple-700"
+                    }`}
                   >
-                    Agregar al carrito
+                    {product.agotado ? "Producto agotado" : "Agregar al carrito"}
                   </button>
 
                   <button
