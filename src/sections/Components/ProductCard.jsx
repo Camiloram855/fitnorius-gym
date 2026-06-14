@@ -178,18 +178,12 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
               draggable="false"
             />
           </div>
-
-          {/* Badge PROMO — cinta lado derecho */}
+           {/* Badge PROMO — cinta lado derecho */}
           {hasPromo && (
-            <div className="absolute right-0 top-4 z-10">
-              <div
-                className="bg-gradient-to-r from-amber-500 to-amber-600 py-1 pl-3 pr-3.5 shadow-md"
-                style={{ clipPath: "polygon(10% 0, 100% 0, 100% 100%, 10% 100%, 0 50%)" }}
-              >
-                <span className="text-[0.6rem] font-black uppercase tracking-widest text-white">
-                  PROMO
-                </span>
-              </div>
+            <div className="absolute bottom-3 left-3 z-10">
+              <span className="rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1 text-[0.6rem] font-black uppercase tracking-widest text-white shadow-md">
+                Promo
+              </span>
             </div>
           )}
 

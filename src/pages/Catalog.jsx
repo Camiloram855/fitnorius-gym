@@ -2,6 +2,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import HeroBanner from "../sections/Components/HeroBanner";
+import PromotionPopup from "../sections/Components/PromotionPopup";
 import { Footer } from "../Layout/Footer";
 import ScrollingHeader from "../sections/Components/ScrollingHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
@@ -25,6 +26,7 @@ function CatalogContent() {
   return (
     <div className="App">
       {!isSpecialPage && <ScrollingHeader />}
+      {!isSpecialPage && <PromotionPopup />}
 
       <Routes>
         <Route
