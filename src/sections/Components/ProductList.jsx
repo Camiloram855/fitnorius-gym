@@ -275,7 +275,7 @@ const ProductList = ({ category }) => {
         </div>
       )}
 
-      <div className="grid gap-4 justify-center grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid justify-center gap-6 sm:gap-7 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {products.length === 0 && (
           <p className="text-gray-400 col-span-full text-center">No hay productos en esta categoria</p>
         )}

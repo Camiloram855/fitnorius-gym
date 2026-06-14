@@ -16,6 +16,7 @@ const API_URL =
 // Cloudinary config
 const CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/<TU_CLOUD_NAME>/upload";
 const CLOUDINARY_UPLOAD_PRESET = "<TU_UPLOAD_PRESET>";
+const IMAGE_ACCEPT = "image/*,.gif,image/gif";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -56,6 +57,7 @@ const fetchProductData = async (silent = false) => {
       price: data.price ? Number(data.price) : 0,
       oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
       discount: data.discount ? Number(data.discount) : 0,
+      highlights: Array.isArray(data.highlights) ? data.highlights : [],
       images: rawImages?.length
         ? rawImages.map((img) => img?.url || "/img/default.jpg")
         : ["/img/default.jpg"],
@@ -91,7 +93,10 @@ const fetchProductData = async (silent = false) => {
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
-        <p className="text-purple-400 text-xl animate-pulse">Cargando producto...</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-purple-500/30 border-t-purple-400" />
+          <p className="text-purple-300 text-sm font-medium tracking-wide">Cargando producto...</p>
+        </div>
       </div>
     );
 
@@ -391,30 +396,33 @@ const handleReplaceImage = (thumb, idx, file) => {
 
 
   const thumbs = buildThumbs();
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-12 px-4 sm:px-6 lg:px-10">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto text-white">
-        <br />
+
+        {/* Volver */}
         <button
           onClick={() => navigate("/catalog")}
-          className="mb-8 px-6 py-2 bg-purple-700/40 hover:bg-purple-700/60 rounded-lg transition-all duration-300 shadow-md hover:shadow-purple-600/50 backdrop-blur-sm"
+          className="mb-6 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm"
         >
-          ← Volver a catalogo
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Volver al catálogo
         </button>
 
         {/* PRODUCTO PRINCIPAL */}
-        <div className="">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              {/* SLIDER DE IMÁGENES — Imagen más pequeña + swipe táctil */}
+        <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-4 sm:p-6 lg:p-10 backdrop-blur-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start">
+
+              {/* SLIDER DE IMÁGENES */}
               <div className="relative w-full flex flex-col items-center">
 
                 {/* Imagen principal con soporte táctil */}
                 <div
-                  className="w-[380px] h-[380px] bg-gradient-to-br from-purple-900/40 to-black 
-                  rounded-3xl overflow-hidden shadow-lg border border-purple-800/40 flex items-center justify-center select-none"
+                  className="relative w-full max-w-[420px] aspect-square bg-gradient-to-br from-purple-900/30 to-black/60
+                  rounded-2xl overflow-hidden shadow-2xl border border-purple-800/30 flex items-center justify-center select-none group"
 
-                  
                   onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
                   onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
                   onTouchEnd={() => {
@@ -444,31 +452,57 @@ const handleReplaceImage = (thumb, idx, file) => {
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   onError={(e)=> (e.target.src = "/img/default.jpg")}
                 />
+
+                {product.agotado && (
+                  <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="text-white font-bold text-xs uppercase tracking-[0.2em]">Agotado</span>
+                  </div>
+                )}
+
+                {/* Flechas de navegación (desktop) */}
+                {thumbs.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev === 0 ? thumbs.length - 1 : prev - 1))}
+                      className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    </button>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev === thumbs.length - 1 ? 0 : prev + 1))}
+                      className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                    </button>
+                  </>
+                )}
                 </div>
 
                 {/* Puntos del slider */}
-                <div className="flex gap-2 mt-4">
-                  {thumbs.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        idx === selectedImageIndex
-                          ? "bg-purple-400 scale-125"
-                          : "bg-gray-500"
-                      }`}
-                    />
-                  ))}
-                </div>
+                {thumbs.length > 1 && (
+                  <div className="flex gap-1.5 mt-4">
+                    {thumbs.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          idx === selectedImageIndex
+                            ? "bg-purple-400 w-6"
+                            : "bg-gray-600 w-1.5 hover:bg-gray-500"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
 
                 {/* Miniaturas debajo */}
-                <div className="mt-6 flex items-center gap-3 overflow-x-auto max-w-full px-2">
+                <div className="mt-5 flex items-center gap-2.5 overflow-x-auto max-w-full px-1 pb-1">
                   {thumbs.map((thumb, idx) => (
-                    <div key={idx} className="relative">
+                    <div key={idx} className="relative shrink-0">
                       <button
                         onClick={() => setSelectedImageIndex(idx)}
-                        className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
-                          idx === selectedImageIndex ? "border-purple-400" : "border-transparent"
+                        className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                          idx === selectedImageIndex ? "border-purple-400 ring-2 ring-purple-400/30" : "border-white/10 hover:border-white/30"
                         }`}
                       >
                         <img src={thumb.src} className="w-full h-full object-cover" />
@@ -478,8 +512,8 @@ const handleReplaceImage = (thumb, idx, file) => {
                         <button
                           title="Eliminar imagen"
                           onClick={() => openDeleteModalForThumb(thumb, idx)}
-                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white 
-                          rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg"
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white 
+                          rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-lg leading-none"
                         >
                           ×
                         </button>
@@ -489,9 +523,9 @@ const handleReplaceImage = (thumb, idx, file) => {
                         <>
                           <label
                             htmlFor={`edit-thumb-${idx}`}
-                            className="absolute -bottom-2 right-1 bg-blue-600 hover:bg-blue-700 
-                            text-white rounded-full w-6 h-6 flex items-center justify-center text-xs 
-                            shadow-lg cursor-pointer"
+                            className="absolute -bottom-1.5 -right-1.5 bg-blue-600 hover:bg-blue-700 
+                            text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] 
+                            shadow-lg cursor-pointer leading-none"
                             title="Editar imagen"
                           >
                             ✏️
@@ -500,7 +534,7 @@ const handleReplaceImage = (thumb, idx, file) => {
                           <input
                             id={`edit-thumb-${idx}`}
                             type="file"
-                            accept="image/*"
+                            accept={IMAGE_ACCEPT}
                             className="hidden"
                             onChange={(e) =>
                               handleReplaceImage(thumb, idx, e.target.files[0])
@@ -512,17 +546,17 @@ const handleReplaceImage = (thumb, idx, file) => {
                   ))}
 
                   {isAdmin && (
-                    <label className="w-20 h-20 rounded-md flex items-center justify-center border-2 
-                    border-dashed border-purple-600 text-purple-300 cursor-pointer hover:bg-purple-800/30">
+                    <label className="w-16 h-16 sm:w-[72px] sm:h-[72px] shrink-0 rounded-xl flex items-center justify-center border-2 
+                    border-dashed border-purple-600/60 text-purple-300 cursor-pointer hover:bg-purple-800/20 hover:border-purple-500 transition-colors">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept={IMAGE_ACCEPT}
                         multiple
                         onChange={handleChange}
                         className="hidden"
                         name="newImages"
                       />
-                      <span className="text-2xl">＋</span>
+                      <span className="text-2xl leading-none">＋</span>
                     </label>
                   )}
                 </div>
@@ -530,45 +564,65 @@ const handleReplaceImage = (thumb, idx, file) => {
 
 
             
-            <div className="flex flex-col space-y-6">
+            <div className="flex flex-col gap-5 lg:pt-2">
               {isEditing ? (
                 <>
-                  <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
-                    placeholder="Nombre del producto"
-                  />
-                  <input
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
-                    placeholder="Precio"
-                  />
-                  <input
-                    name="oldPrice"
-                    type="number"
-                    step="0.01"
-                    value={formData.oldPrice}
-                    onChange={handleChange}
-                    className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
-                    placeholder="Precio anterior"
-                  />
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="px-4 py-2 rounded-lg w-full bg-white/10 text-white"
-                    placeholder="Descripción"
-                  />
-                  <div className="flex flex-wrap gap-4">
+                  <div className="flex flex-col gap-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-purple-300 mb-1.5">Nombre</label>
+                      <input
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="px-4 py-2.5 rounded-xl w-full bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition"
+                        placeholder="Nombre del producto"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-purple-300 mb-1.5">Precio</label>
+                        <input
+                          name="price"
+                          type="number"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={handleChange}
+                          className="px-4 py-2.5 rounded-xl w-full bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition"
+                          placeholder="Precio"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-purple-300 mb-1.5">Precio anterior</label>
+                        <input
+                          name="oldPrice"
+                          type="number"
+                          step="0.01"
+                          value={formData.oldPrice}
+                          onChange={handleChange}
+                          className="px-4 py-2.5 rounded-xl w-full bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition"
+                          placeholder="Precio anterior"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-purple-300 mb-1.5">Descripción</label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows={5}
+                        className="px-4 py-2.5 rounded-xl w-full bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition resize-none"
+                        placeholder="Descripción"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleSave}
-                      className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-700 rounded-lg font-bold shadow-md hover:scale-105 transition-transform"
+                      className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl font-bold shadow-lg shadow-emerald-900/30 hover:scale-[1.02] active:scale-[0.98] transition-transform"
                     >
                       Guardar cambios
                     </button>
@@ -577,7 +631,7 @@ const handleReplaceImage = (thumb, idx, file) => {
                         setIsEditing(false);
                         refetch();
                       }}
-                      className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg font-bold hover:scale-105 transition-transform"
+                      className="px-6 py-2.5 bg-white/10 border border-white/10 rounded-xl font-bold hover:bg-white/15 transition-colors"
                     >
                       Cancelar
                     </button>
@@ -586,18 +640,34 @@ const handleReplaceImage = (thumb, idx, file) => {
                 </>
               ) : (
                 <>
-                  <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 drop-shadow-lg">
-                    {product.name}
-                  </h1>
-                  <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="text-4xl font-bold text-purple-300 drop-shadow-md">{formatCurrency(product.price)}</span>
-                    {product.oldPrice && <span className="text-2xl text-gray-500 line-through">{formatCurrency(product.oldPrice)}</span>}
+                  <div>
+                    {hasPromoBadge(product) && (
+                      <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-[0.7rem] font-extrabold uppercase tracking-wide text-white shadow-sm mb-3">
+                        Promo
+                      </span>
+                    )}
+                    <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-400 to-purple-200">
+                      {product.name}
+                    </h1>
                   </div>
-                  {savings > 0 && <p className="text-green-400 font-semibold text-lg">¡Ahorras {formatCurrency(savings)}!</p>}
-                  <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-line">{product.description}</p>
+
+                  <div className="flex flex-wrap items-end gap-3">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-white">{formatCurrency(product.price)}</span>
+                    {product.oldPrice && <span className="text-lg sm:text-xl text-gray-500 line-through">{formatCurrency(product.oldPrice)}</span>}
+                  </div>
+
+                  {savings > 0 && (
+                    <span className="inline-flex w-fit items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 text-sm font-semibold text-emerald-400">
+                      Ahorras {formatCurrency(savings)}
+                    </span>
+                  )}
+
+                  <div className="h-px bg-white/10" />
+
+                  <p className="text-gray-300 leading-relaxed text-base sm:text-lg whitespace-pre-line">{product.description}</p>
 
                   {isAdmin && (
-                    <button onClick={() => setIsEditing(true)} className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg font-semibold text-white hover:scale-105 transition-transform">
+                    <button onClick={() => setIsEditing(true)} className="self-start px-5 py-2 bg-white/5 border border-white/10 rounded-xl font-semibold text-white hover:bg-white/10 transition-colors text-sm">
                       Editar producto ✏️
                     </button>
                   )}
@@ -606,40 +676,58 @@ const handleReplaceImage = (thumb, idx, file) => {
 
               {!isEditing && (
                 <>
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => handleQuantityChange(-1)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
-                      −
-                    </button>
-                    <span className="text-2xl font-semibold">{quantity}</span>
-                    <button onClick={() => handleQuantityChange(1)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
-                      +
+                  <div className="h-px bg-white/10" />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-1 w-fit">
+                      <button onClick={() => handleQuantityChange(-1)} className="w-9 h-9 flex items-center justify-center text-lg rounded-lg hover:bg-white/10 transition">
+                        −
+                      </button>
+                      <span className="text-lg font-semibold w-8 text-center">{quantity}</span>
+                      <button onClick={() => handleQuantityChange(1)} className="w-9 h-9 flex items-center justify-center text-lg rounded-lg hover:bg-white/10 transition">
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={product.agotado}
+                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 ${
+                        product.agotado
+                          ? "bg-gray-700 cursor-not-allowed opacity-60"
+                          : addedToCart
+                            ? "bg-emerald-500 shadow-emerald-900/30"
+                            : "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-purple-900/30 active:scale-[0.98]"
+                      }`}
+                    >
+                      {product.agotado ? (
+                        "Producto agotado"
+                      ) : addedToCart ? (
+                        <>
+                          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                          ¡Agregado!
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+                          Agregar al carrito
+                        </>
+                      )}
                     </button>
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={product.agotado}
-                    className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition ${
-                      product.agotado
-                        ? "bg-gray-500 cursor-not-allowed opacity-70"
-                        : "bg-purple-600 hover:bg-purple-700"
-                    }`}
-                  >
-                    {product.agotado ? "Producto agotado" : "Agregar al carrito"}
-                  </button>
-
-                  <button
                     onClick={handleAdd}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold shadow-lg"
+                    className="w-full px-6 py-3 bg-white text-purple-900 hover:bg-purple-50 rounded-xl font-bold shadow-lg shadow-black/20 transition-colors"
                   >
                     Finalizar compra
                   </button>
-                  {emptyWarning && (
-                  <p className="text-red-400 text-lg font-semibold mt-3 animate-pulse">
-                    🛒 Tu carrito está vacío — agrega un producto para continuar.
-                  </p>
-                )}
 
+                  {emptyWarning && (
+                    <p className="text-red-400 text-sm font-semibold animate-pulse text-center">
+                      🛒 Tu carrito está vacío — agrega un producto para continuar.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -648,14 +736,17 @@ const handleReplaceImage = (thumb, idx, file) => {
 
           {/* RECOMENDADOS */}
           {recommended.length > 0 && (
-            <div className="mt-20">
-              <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-300 mb-12">
-                Productos Recomendados
-              </h2>
+            <div className="mt-16 sm:mt-20">
+              <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white whitespace-nowrap">
+                  Productos Recomendados
+                </h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-purple-500/40 to-transparent" />
+              </div>
 
               {/* 🔥 Scroll horizontal – tarjetas siempre en fila */}
               <div
-                className="flex gap-6 overflow-x-auto px-2 pb-4 scrollbar-thin scrollbar-thumb-purple-700/60 scrollbar-track-transparent"
+                className="flex gap-5 overflow-x-auto px-1 pb-4 scrollbar-thin scrollbar-thumb-purple-700/60 scrollbar-track-transparent"
                 style={{ scrollSnapType: "x mandatory" }}
               >
                 {recommended.map((item) => {
@@ -675,11 +766,11 @@ const handleReplaceImage = (thumb, idx, file) => {
                         const scrollToTop = () => window.scrollTo({ top: 0 });
                         [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
                       }}
-                      className="flex-shrink-0 w-[200px] sm:w-[230px] cursor-pointer transform transition-transform hover:scale-105"
+                      className="flex-shrink-0 w-[170px] sm:w-[210px] cursor-pointer group"
                       style={{ scrollSnapAlign: "start" }}
                     >
-                      <div className="bg-gradient-to-br from-purple-900/40 via-black/80 to-gray-900/80 backdrop-blur-xl border border-purple-800/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-purple-800/50 transition-all duration-500">
-                        <div className="relative w-full h-[220px] overflow-hidden group">
+                      <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 group-hover:border-purple-400/40 group-hover:bg-white/[0.06] group-hover:-translate-y-1">
+                        <div className="relative w-full aspect-square overflow-hidden">
                           <img
                             src={imgSrc}
                             alt={item.name}
@@ -687,34 +778,34 @@ const handleReplaceImage = (thumb, idx, file) => {
                             onError={(e) => (e.target.src = "/img/default.jpg")}
                           />
                           {hasPromo && (
-                            <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-600 px-3 py-1 rounded-full text-xs font-bold">
-                              ¡PROMO!
+                            <div className="absolute top-2.5 left-2.5">
+                              <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-wide text-white shadow-sm">
+                                Promo
+                              </span>
                             </div>
                           )}
                         </div>
-                        <div className="p-4 flex flex-col">
-                          <h3 className="font-semibold text-gray-100 uppercase tracking-wide mb-2 text-sm line-clamp-1">
+                        <div className="p-3.5 flex flex-col gap-1.5">
+                          <h3 className="font-bold text-gray-100 uppercase tracking-wide text-xs leading-tight line-clamp-2 min-h-[2rem]">
                             {item.name}
                           </h3>
 
-                          <div className=" items-center justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-green-400 font-bold text-lg">
-                                {formatCurrency(item.price)}
-                              </span>
-                              {item.oldPrice && (
-                                <span className="text-gray-400 line-through text-sm">
-                                  {formatCurrency(item.oldPrice)}
-                                </span>
-                              )}
-                            </div>
-
-                            {ahorro && (
-                              <span className="bg-purple-800/40 text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">
-                                -{formatCurrency(ahorro)}
+                          <div className="flex flex-col gap-0.5 mt-auto">
+                            <span className="text-emerald-400 font-extrabold text-base leading-none">
+                              {formatCurrency(item.price)}
+                            </span>
+                            {item.oldPrice && (
+                              <span className="text-gray-500 line-through text-xs leading-none">
+                                {formatCurrency(item.oldPrice)}
                               </span>
                             )}
                           </div>
+
+                          {ahorro && (
+                            <span className="self-start mt-1 bg-purple-500/15 text-purple-300 text-[0.65rem] font-semibold px-2 py-0.5 rounded-full">
+                              Ahorras {formatCurrency(ahorro)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -727,14 +818,14 @@ const handleReplaceImage = (thumb, idx, file) => {
 
         {/* Modal eliminar y Toast aquí (idéntico a tu original, usando handleConfirmDelete) */}
         {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="bg-black/80 border border-purple-700 rounded-2xl p-6 max-w-lg w-full mx-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-gradient-to-br from-purple-950 to-black border border-purple-700/60 rounded-2xl p-6 max-w-lg w-full shadow-2xl">
               <h3 className="text-xl font-bold mb-2 text-white">
                 {deleteKindPending === "local" ? "Eliminar imagen agregada (previsualización)" :
                  deleteKindPending === "main" ? "Eliminar imagen principal" :
                  "Eliminar imagen existente"}
               </h3>
-              <p className="text-gray-300 mb-4">
+              <p className="text-gray-300 mb-5 text-sm leading-relaxed">
                 {deleteKindPending === "local"
                   ? "Esta imagen fue añadida como previsualización y se quitará localmente."
                   : deleteKindPending === "main"
@@ -749,12 +840,12 @@ const handleReplaceImage = (thumb, idx, file) => {
                     setDeleteIsNewPreview(false);
                     setDeleteKindPending(null);
                   }}
-                  className="px-4 py-2 bg-gray-700 rounded-md"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-sm font-semibold transition-colors"
                 >
                   Cancelar
                 </button>
                 <button onClick={handleConfirmDelete} 
-                className="px-4 py-2 bg-red-600 rounded-md">
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-sm font-semibold transition-colors">
                   Eliminar
                 </button>
               </div>
@@ -762,10 +853,23 @@ const handleReplaceImage = (thumb, idx, file) => {
           </div>
         )}
 
-        {toastUploadVisible && <div className="fixed right-6 bottom-6 bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-50">Miniatura(s) agregada(s) correctamente</div>}
+        {toastUploadVisible && (
+          <div className="fixed right-4 sm:right-6 bottom-4 sm:bottom-6 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 text-sm font-medium">
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            Miniatura(s) agregada(s) correctamente
+          </div>
+        )}
       
       </div>
       
     </div>
+  );
+}
+
+function hasPromoBadge(product) {
+  return (
+    product.oldPrice !== null &&
+    product.oldPrice !== undefined &&
+    Number(product.price) < Number(product.oldPrice)
   );
 }
