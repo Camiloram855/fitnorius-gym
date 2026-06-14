@@ -179,13 +179,16 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             />
           </div>
            {/* Badge PROMO — cinta lado derecho */}
-          {hasPromo && (
-            <div className="absolute bottom-3 left-3 z-10">
-              <span className="rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1 text-[0.6rem] font-black uppercase tracking-widest text-white shadow-md">
-                Promo
-              </span>
-            </div>
-          )}
+{hasPromo && (
+  <div className="absolute bottom-3 left-3 z-10">
+    <span
+      className="rounded-full px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-wide text-white shadow-lg"
+      style={{ background: "linear-gradient(135deg, #dba100 0%, #d89400 50%, #9b5c03 100%)" }}
+    >
+      Promo
+    </span>
+  </div>
+)}
 
           {/* Badge AGOTADO */}
           {product.agotado && (
