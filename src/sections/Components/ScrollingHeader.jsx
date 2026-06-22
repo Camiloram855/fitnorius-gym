@@ -143,7 +143,7 @@ const ScrollingHeader = () => {
 
   const addMessage = () => {
     if (!isAdmin) return;
-    setEditValue("");   // Campo vacÃ­o
+    setEditValue("");   // Campo vaci­o
     setEditIndex(messages.length); // Se agrega al final
     setIsEditing(true); // Abrir modal
   };
@@ -267,7 +267,7 @@ const ScrollingHeader = () => {
                   : "translateX(100%)",
             }}
           >
-            {/* CLICK SOLO AQUÃƒÂ */}
+            {/* CLICK SOLO AQUi */}
             <span
               className="inline-block px-2 cursor-pointer pointer-events-auto"
               onClick={() => handleEdit(index)}
@@ -334,7 +334,7 @@ const ScrollingHeader = () => {
 
             {cartItems.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                Tu carrito estÃ¡ vacÃ­o Ã°Å¸â€ºâ€™
+                Tu carrito esta vacio.
               </p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-3">
@@ -352,7 +352,7 @@ const ScrollingHeader = () => {
                     <div className="flex-1">
                       <p className="text-sm font-semibold">{item.name}</p>
                       <p className="text-xs text-gray-600">
-                        {item.quantity} Ãƒâ€” ${item.price.toLocaleString()}
+                        {item.quantity} x ${item.price.toLocaleString()}
                       </p>
                     </div>
 
@@ -475,7 +475,7 @@ const ScrollingHeader = () => {
                       />
                     ) : (
                       <span className="px-4 text-center text-sm text-gray-400">
-                        TodavÃ­a no hay imagen cargada
+                        Todavía no hay imagen cargada
                       </span>
                     )}
                   </div>
