@@ -447,7 +447,7 @@ const ScrollingHeader = () => {
                 </label>
 
                 <p className="mt-3 text-xs leading-5 text-gray-500">
-                  Si el popup estÃ¡ oculto, no se mostrarÃ¡ a los usuarios aunque la imagen estÃ© guardada.
+                  Si el popup esta oculto, no se mostrara a los usuarios aunque la imagen este guardada.
                 </p>
 
                 <button
