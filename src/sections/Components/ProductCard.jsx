@@ -185,7 +185,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
       className="rounded-full px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-wide text-white shadow-lg"
       style={{ background: "linear-gradient(135deg, #dba100 0%, #d89400 50%, #9b5c03 100%)" }}
     >
-      Promo
+      ¡Promo!
     </span>
   </div>
 )}

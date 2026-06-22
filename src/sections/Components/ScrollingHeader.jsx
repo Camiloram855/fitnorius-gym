@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
+import API_URL from "../../config";
 
-const API_URL = "https://fitnorius-backend-production.up.railway.app/header-messages";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const HEADER_MESSAGES_API = "https://fitnorius-backend-production.up.railway.app/header-messages";
 
 
 const ScrollingHeader = () => {
@@ -25,12 +25,13 @@ const ScrollingHeader = () => {
   const [promoActive, setPromoActive] = useState(true);
   const [promoCurrent, setPromoCurrent] = useState(null);
   const [promoSaving, setPromoSaving] = useState(false);
+  const [promoDeleting, setPromoDeleting] = useState(false);
 
   const { cartItems, removeFromCart } = useCart();
   const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL)
+    fetch(HEADER_MESSAGES_API)
       .then((res) => res.json())
       .then((data) => setMessages(data.messages || []))
       .catch(() => setMessages([]));
@@ -39,7 +40,7 @@ const ScrollingHeader = () => {
   useEffect(() => {
     if (!isAdmin || !showPromoModal) return;
 
-    fetch(`${API_BASE_URL}/api/promotion-popup`)
+    fetch(`${API_URL}/api/promotion-popup`)
       .then((res) => res.json())
       .then((data) => {
         if (!data) {
@@ -73,6 +74,19 @@ const ScrollingHeader = () => {
   }, [promoFile]);
 
   useEffect(() => {
+    if (!showPromoModal) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closePromoModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showPromoModal]);
+
+  useEffect(() => {
     if (messages.length === 0) return;
 
     let timer;
@@ -96,7 +110,7 @@ const ScrollingHeader = () => {
   }, [phase, messages.length]);
 
   const updateMessagesInBackend = async (newMsgs) => {
-    await fetch(API_URL, {
+    await fetch(HEADER_MESSAGES_API, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: newMsgs }),
@@ -129,7 +143,7 @@ const ScrollingHeader = () => {
 
   const addMessage = () => {
     if (!isAdmin) return;
-    setEditValue("");   // Campo vacío
+    setEditValue("");   // Campo vacÃ­o
     setEditIndex(messages.length); // Se agrega al final
     setIsEditing(true); // Abrir modal
   };
@@ -153,6 +167,15 @@ const ScrollingHeader = () => {
     event.target.value = "";
   };
 
+  const handlePromoAction = () => {
+    if (!promoFile && !promoCurrent?.imageUrl) {
+      document.getElementById("promo-popup-upload")?.click();
+      return;
+    }
+
+    handleSavePromo();
+  };
+
   const handleSavePromo = async () => {
     if (!isAdmin) return;
 
@@ -166,7 +189,7 @@ const ScrollingHeader = () => {
 
       formData.append("active", String(promoActive));
 
-      const response = await fetch(`${API_BASE_URL}/api/promotion-popup/save`, {
+      const response = await fetch(`${API_URL}/api/promotion-popup/save`, {
         method: "POST",
         body: formData,
       });
@@ -187,7 +210,30 @@ const ScrollingHeader = () => {
     }
   };
 
-  const canSavePromo = promoSaving || (!promoFile && !promoCurrent?.imageUrl);
+  const handleDeletePromo = async () => {
+    if (!isAdmin || promoDeleting) return;
+
+    try {
+      setPromoDeleting(true);
+      const response = await fetch(`${API_URL}/api/promotion-popup`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo eliminar el popup promocional");
+      }
+
+      setPromoCurrent(null);
+      setPromoPreview("");
+      setPromoFile(null);
+      setPromoActive(true);
+      window.dispatchEvent(new Event("promotion-popup-updated"));
+    } catch (error) {
+      console.error("Error eliminando popup promocional:", error);
+    } finally {
+      setPromoDeleting(false);
+    }
+  };
 
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -197,7 +243,7 @@ const ScrollingHeader = () => {
   const getImageUrl = (path) => {
     if (!path) return "/placeholder.jpg";
     if (path.startsWith("http")) return path;
-    return `http://localhost:8080/${path}`;
+    return `${API_URL}/${path}`;
   };
 
   return (
@@ -221,7 +267,7 @@ const ScrollingHeader = () => {
                   : "translateX(100%)",
             }}
           >
-            {/* CLICK SOLO AQUÍ */}
+            {/* CLICK SOLO AQUÃƒÂ */}
             <span
               className="inline-block px-2 cursor-pointer pointer-events-auto"
               onClick={() => handleEdit(index)}
@@ -288,7 +334,7 @@ const ScrollingHeader = () => {
 
             {cartItems.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                Tu carrito está vacío 🛒
+                Tu carrito estÃ¡ vacÃ­o Ã°Å¸â€ºâ€™
               </p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-3">
@@ -306,7 +352,7 @@ const ScrollingHeader = () => {
                     <div className="flex-1">
                       <p className="text-sm font-semibold">{item.name}</p>
                       <p className="text-xs text-gray-600">
-                        {item.quantity} × ${item.price.toLocaleString()}
+                        {item.quantity} Ãƒâ€” ${item.price.toLocaleString()}
                       </p>
                     </div>
 
@@ -339,9 +385,15 @@ const ScrollingHeader = () => {
         )}
       </div>
 
-      {isAdmin && showPromoModal && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm">
-          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300">
+            {isAdmin && showPromoModal && (
+        <div
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm"
+          onClick={closePromoModal}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-600">
@@ -351,8 +403,9 @@ const ScrollingHeader = () => {
               </div>
 
               <button
+                type="button"
                 onClick={closePromoModal}
-                className="rounded-full bg-black/5 p-2 text-gray-600 transition hover:bg-black/10 hover:text-black"
+                className="rounded-full bg-black/5 p-2 text-gray-600 transition hover:bg-black/10 hover:text-black cursor-pointer"
                 aria-label="Cerrar modal"
               >
                 <X size={18} />
@@ -361,18 +414,23 @@ const ScrollingHeader = () => {
 
             <div className="grid gap-0 md:grid-cols-[1fr_1fr]">
               <div className="border-b bg-gradient-to-br from-purple-50 to-pink-50 p-4 md:border-b-0 md:border-r">
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-purple-200 bg-white px-4 py-8 text-center transition hover:border-purple-400">
+                <input
+                  id="promo-popup-upload"
+                  type="file"
+                  accept="image/*,.gif,image/gif"
+                  className="sr-only"
+                  onChange={handlePromoFileChange}
+                />
+
+                <label
+                  htmlFor="promo-popup-upload"
+                  className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-purple-200 bg-white px-4 py-8 text-center transition hover:border-purple-400"
+                >
                   <Upload size={28} className="text-purple-600" />
                   <span className="mt-3 text-sm font-semibold text-gray-800">
                     Subir o reemplazar imagen
                   </span>
                   <span className="mt-1 text-xs text-gray-500">PNG, JPG, WEBP o GIF</span>
-                  <input
-                    type="file"
-                    accept="image/*,.gif,image/gif"
-                    className="hidden"
-                    onChange={handlePromoFileChange}
-                  />
                 </label>
 
                 <label className="mt-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
@@ -389,16 +447,19 @@ const ScrollingHeader = () => {
                 </label>
 
                 <p className="mt-3 text-xs leading-5 text-gray-500">
-                  Si el popup está oculto, no se mostrará a los usuarios aunque la imagen esté guardada.
+                  Si el popup estÃ¡ oculto, no se mostrarÃ¡ a los usuarios aunque la imagen estÃ© guardada.
                 </p>
 
                 <button
-                  onClick={handleSavePromo}
-                  disabled={canSavePromo}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-purple-700 hover:to-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  type="button"
+                  onClick={handlePromoAction}
+                  disabled={promoSaving}
+                  className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-purple-700 hover:to-fuchsia-700 ${
+                    promoSaving ? "cursor-wait opacity-80" : "cursor-pointer"
+                  }`}
                 >
                   <Check size={18} />
-                  {promoSaving ? "Guardando..." : promoCurrent?.imageUrl || promoFile ? "Guardar popup" : "Sube una imagen primero"}
+                  {promoSaving ? "Guardando..." : promoFile || promoCurrent?.imageUrl ? "Guardar popup" : "Seleccionar imagen"}
                 </button>
               </div>
 
@@ -414,7 +475,7 @@ const ScrollingHeader = () => {
                       />
                     ) : (
                       <span className="px-4 text-center text-sm text-gray-400">
-                        Todavía no hay imagen cargada
+                        TodavÃ­a no hay imagen cargada
                       </span>
                     )}
                   </div>
@@ -428,6 +489,16 @@ const ScrollingHeader = () => {
                   <p className="mt-2 text-xs text-gray-500">
                     {promoCurrent?.active ? "Está visible para los usuarios." : "Está oculto para los usuarios."}
                   </p>
+                  {promoCurrent?.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={handleDeletePromo}
+                      disabled={promoDeleting}
+                      className="mt-4 inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {promoDeleting ? "Eliminando..." : "Eliminar popup actual"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -436,27 +507,29 @@ const ScrollingHeader = () => {
       )}
 
       {isAdmin && isEditing && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-white text-black p-3 rounded-xl shadow-2xl w-[350px] flex flex-col gap-3 z-[9999]">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Editar mensaje</span>
-            <button onClick={() => setIsEditing(false)}>
-              <X size={18} />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md flex flex-col gap-3 rounded-2xl bg-white p-4 text-black shadow-2xl sm:p-5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">Editar mensaje</span>
+              <button onClick={() => setIsEditing(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <textarea
+              className="w-full h-20 rounded-md border p-2 text-sm"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+            />
+
+            <button
+              onClick={saveEdit}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-black py-2 text-white hover:bg-gray-900"
+            >
+              <Check size={18} />
+              Guardar
             </button>
           </div>
-
-          <textarea
-            className="w-full p-2 border rounded-md h-20 text-sm"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-          />
-
-          <button
-            onClick={saveEdit}
-            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-900 flex items-center justify-center gap-2"
-          >
-            <Check size={18} />
-            Guardar
-          </button>
         </div>
       )}
     </div>
@@ -464,3 +537,11 @@ const ScrollingHeader = () => {
 };
 
 export default ScrollingHeader;
+
+
+
+
+
+
+
+
