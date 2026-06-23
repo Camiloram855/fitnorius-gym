@@ -488,7 +488,7 @@ const ScrollingHeader = () => {
                     {promoCurrent?.imageUrl ? "Hay un popup configurado." : "AÃºn no existe un popup promocional."}
                   </p>
                   <p className="mt-2 text-xs text-gray-500">
-                    {promoCurrent?.active ? "EstÃ¡ visible para los usuarios." : "EstÃ¡ oculto para los usuarios."}
+                    {promoCurrent?.active ? "Esta visible para los usuarios." : "Esta oculto para los usuarios."}
                   </p>
                   {promoCurrent?.imageUrl && (
                     <button
