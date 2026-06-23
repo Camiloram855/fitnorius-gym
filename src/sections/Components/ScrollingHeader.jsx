@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
@@ -143,7 +144,7 @@ const ScrollingHeader = () => {
 
   const addMessage = () => {
     if (!isAdmin) return;
-    setEditValue("");   // Campo vaci­o
+    setEditValue("");   // Campo vaciÂ­o
     setEditIndex(messages.length); // Se agrega al final
     setIsEditing(true); // Abrir modal
   };
@@ -385,7 +386,7 @@ const ScrollingHeader = () => {
         )}
       </div>
 
-            {isAdmin && showPromoModal && (
+            {isAdmin && showPromoModal && createPortal((
         <div
           className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm"
           onClick={closePromoModal}
@@ -475,7 +476,7 @@ const ScrollingHeader = () => {
                       />
                     ) : (
                       <span className="px-4 text-center text-sm text-gray-400">
-                        Todavía no hay imagen cargada
+                        TodavÃ­a no hay imagen cargada
                       </span>
                     )}
                   </div>
@@ -484,10 +485,10 @@ const ScrollingHeader = () => {
                 <div className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
                   <p className="font-semibold text-gray-900">Estado actual</p>
                   <p className="mt-1">
-                    {promoCurrent?.imageUrl ? "Hay un popup configurado." : "Aún no existe un popup promocional."}
+                    {promoCurrent?.imageUrl ? "Hay un popup configurado." : "AÃºn no existe un popup promocional."}
                   </p>
                   <p className="mt-2 text-xs text-gray-500">
-                    {promoCurrent?.active ? "Está visible para los usuarios." : "Está oculto para los usuarios."}
+                    {promoCurrent?.active ? "EstÃ¡ visible para los usuarios." : "EstÃ¡ oculto para los usuarios."}
                   </p>
                   {promoCurrent?.imageUrl && (
                     <button
@@ -504,7 +505,7 @@ const ScrollingHeader = () => {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       {isAdmin && isEditing && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
