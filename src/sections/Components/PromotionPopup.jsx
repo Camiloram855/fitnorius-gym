@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from "react";
+import { apiFetch } from "../../api/client";
 import { X } from "lucide-react";
 import API_URL from "../../config";
 
@@ -11,7 +12,7 @@ export default function PromotionPopup() {
 
   const loadPopup = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/promotion-popup`);
+      const response = await apiFetch(`${API_URL}/api/promotion-popup`);
 
       if (!response.ok) {
         throw new Error("No se pudo cargar el popup");

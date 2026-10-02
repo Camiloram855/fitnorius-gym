@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from "react";
+import { apiFetch } from "../../api/client";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff } from "lucide-react";
@@ -6,7 +7,7 @@ import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
 import API_URL from "../../config";
 
-const HEADER_MESSAGES_API = "https://fitnorius-backend-production.up.railway.app/header-messages";
+const HEADER_MESSAGES_API = `${API_URL}/header-messages`;
 
 
 const ScrollingHeader = () => {
@@ -32,7 +33,7 @@ const ScrollingHeader = () => {
   const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
-    fetch(HEADER_MESSAGES_API)
+    apiFetch(HEADER_MESSAGES_API)
       .then((res) => res.json())
       .then((data) => setMessages(data.messages || []))
       .catch(() => setMessages([]));
@@ -41,7 +42,7 @@ const ScrollingHeader = () => {
   useEffect(() => {
     if (!isAdmin || !showPromoModal) return;
 
-    fetch(`${API_URL}/api/promotion-popup`)
+    apiFetch(`${API_URL}/api/promotion-popup`)
       .then((res) => res.json())
       .then((data) => {
         if (!data) {
@@ -111,7 +112,7 @@ const ScrollingHeader = () => {
   }, [phase, messages.length]);
 
   const updateMessagesInBackend = async (newMsgs) => {
-    await fetch(HEADER_MESSAGES_API, {
+    await apiFetch(HEADER_MESSAGES_API, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: newMsgs }),
@@ -190,7 +191,7 @@ const ScrollingHeader = () => {
 
       formData.append("active", String(promoActive));
 
-      const response = await fetch(`${API_URL}/api/promotion-popup/save`, {
+      const response = await apiFetch(`${API_URL}/api/promotion-popup/save`, {
         method: "POST",
         body: formData,
       });
@@ -216,7 +217,7 @@ const ScrollingHeader = () => {
 
     try {
       setPromoDeleting(true);
-      const response = await fetch(`${API_URL}/api/promotion-popup`, {
+      const response = await apiFetch(`${API_URL}/api/promotion-popup`, {
         method: "DELETE",
       });
 
@@ -485,7 +486,7 @@ const ScrollingHeader = () => {
                 <div className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
                   <p className="font-semibold text-gray-900">Estado actual</p>
                   <p className="mt-1">
-                    {promoCurrent?.imageUrl ? "Hay un popup configurado." : "AÃºn no existe un popup promocional."}
+                    {promoCurrent?.imageUrl ? "Hay un popup configurado." : "Aun no existe un popup promocional."}
                   </p>
                   <p className="mt-2 text-xs text-gray-500">
                     {promoCurrent?.active ? "Esta visible para los usuarios." : "Esta oculto para los usuarios."}

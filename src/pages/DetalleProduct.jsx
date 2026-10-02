@@ -1,22 +1,48 @@
 // ProductDetail.jsx (completo, Cloudinary-ready)
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../api/client";
+import API_URL from "../config";
 import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 import FAQDOS from "../sections/FAQDOS";
+import ProductImage from "../components/ProductImage";
+import { PLACEHOLDER_IMAGE, buildImageUrl } from "../utils/images";
 
 
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost"
-    ? "http://localhost:8080"
-    : "https://fitnoris-production.up.railway.app");
-
-// Cloudinary config
-const CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/<TU_CLOUD_NAME>/upload";
-const CLOUDINARY_UPLOAD_PRESET = "<TU_UPLOAD_PRESET>";
 const IMAGE_ACCEPT = "image/*,.gif,image/gif";
+
+/**
+ * Object URLs estables para los archivos locales pendientes de subir.
+ *
+ * Antes se generaban dentro de buildThumbs(), que se ejecutaba en cada render:
+ * eso devolvía una URL blob distinta en cada render, el navegador volvía a
+ * pedir la imagen y además se fugaba memoria porque nunca se revocaban.
+ */
+function usePreviewUrls(entries) {
+  const [urls, setUrls] = useState({});
+
+  useEffect(() => {
+    const created = {};
+    entries.forEach(({ key, file }) => {
+      if (file) created[key] = URL.createObjectURL(file);
+    });
+    setUrls(created);
+
+    return () => {
+      // Se revoca en el siguiente tick para no invalidar la URL mientras el
+      // <img> que la usa todavía está montado.
+      const pending = setTimeout(() => {
+        Object.values(created).forEach((url) => URL.revokeObjectURL(url));
+      }, 0);
+
+      return () => clearTimeout(pending);
+    };
+  }, [entries]);
+
+  return urls;
+}
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -30,26 +56,32 @@ export default function ProductDetail() {
     if ("scrollRestoration" in window.history) {
       try {
         window.history.scrollRestoration = "manual";
-      } catch {}
+      } catch (error) {
+        void error;
+      }
     }
     return () => {
       if ("scrollRestoration" in window.history) {
         try {
           window.history.scrollRestoration = "auto";
-        } catch {}
+        } catch (error) {
+          void error;
+        }
       }
     };
   }, []);
 
-const fetchProductData = async (silent = false) => {
+const fetchProductData = useCallback(async (silent = false) => {
   if (!silent) setLoading(true);
 
   try {
-    const res = await fetch(`${API_URL}/api/products/${id}`);
+    const res = await apiFetch(`${API_URL}/api/products/${id}`);
     const data = await res.json();
 
     const rawImages = Array.isArray(data.images)
-      ? data.images.map((img) => ({ id: img.id, url: img.url }))
+      ? data.images
+          .filter((img) => img && img.url)
+          .map((img) => ({ id: img.id, url: img.url }))
       : [];
 
     setProduct({
@@ -58,16 +90,14 @@ const fetchProductData = async (silent = false) => {
       oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
       discount: data.discount ? Number(data.discount) : 0,
       highlights: Array.isArray(data.highlights) ? data.highlights : [],
-      images: rawImages?.length
-        ? rawImages.map((img) => img?.url || "/img/default.jpg")
-        : ["/img/default.jpg"],
+      imageUrl: data.imageUrl || null,
       rawImages: rawImages,
 
       // 👉 Mantener saltos de línea tal como vienen
       description: data.description ? String(data.description) : "Sin descripción disponible",
     });
 
-    const recRes = await fetch(`${API_URL}/api/products`);
+    const recRes = await apiFetch(`${API_URL}/api/products`);
     const recData = await recRes.json();
 
     setRecommended(
@@ -79,7 +109,7 @@ const fetchProductData = async (silent = false) => {
   } finally {
     if (!silent) setLoading(false);
   }
-};
+}, [id]);
 
 
   useEffect(() => {
@@ -88,7 +118,7 @@ const fetchProductData = async (silent = false) => {
     scrollToTop();
     const timers = [100, 300, 600].map((t) => setTimeout(scrollToTop, t));
     return () => timers.forEach(clearTimeout);
-  }, [id]);
+  }, [id, fetchProductData]);
 
   if (loading)
     return (
@@ -140,15 +170,58 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     oldPrice: "",
     discount: "",
     description: "",
-    newImages: [], // archivos locales seleccionados
-    deleteImages: [], // IDs Cloudinary para eliminar
+    mainImage: null,      // archivo local que sustituirá la imagen principal
+    newImages: [],        // miniaturas nuevas, aún no subidas
+    replacedImages: {},   // { [existingIndex]: File } miniaturas reemplazadas
+    deleteImages: [],     // IDs de imágenes a eliminar al guardar
   });
 
   const [toastUploadVisible, setToastUploadVisible] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteIndexPending, setDeleteIndexPending] = useState(null);
-  const [deleteIsNewPreview, setDeleteIsNewPreview] = useState(false);
-  const [deleteKindPending, setDeleteKindPending] = useState(null); 
+  const [deleteKindPending, setDeleteKindPending] = useState(null);
+
+  // Previsualizaciones locales: URLs estables, revocadas al descartarlas.
+  const previewEntries = useMemo(
+    () => [
+      ...(formData.newImages || []).map((file, index) => ({ key: `new:${index}`, file })),
+      ...Object.keys(formData.replacedImages)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((index) => ({ key: `repl:${index}`, file: formData.replacedImages[index] })),
+      ...(formData.mainImage ? [{ key: "main", file: formData.mainImage }] : []),
+    ],
+    [formData.newImages, formData.replacedImages, formData.mainImage]
+  );
+  const previewUrls = usePreviewUrls(previewEntries);
+
+  // Lista de miniaturas del slider. Memoizada para no crear URLs nuevas en
+  // cada render (era lo que disparaba el bucle de peticiones).
+  const thumbs = useMemo(() => {
+    const list = [];
+    const mainSrc = previewUrls.main || buildImageUrl(product.imageUrl, API_URL);
+
+    if (product.imageUrl || previewUrls.main) {
+      list.push({ src: mainSrc, kind: "main" });
+    }
+
+    (product.rawImages || []).forEach((image, index) => {
+      const replacedSrc = previewUrls[`repl:${index}`];
+      list.push({
+        src: replacedSrc || buildImageUrl(image.url, API_URL),
+        kind: replacedSrc ? "replaced" : "existing",
+        existingIndex: index,
+        id: image.id,
+      });
+    });
+
+    (formData.newImages || []).forEach((_file, index) => {
+      const preview = previewUrls[`new:${index}`];
+      if (preview) list.push({ src: preview, kind: "local", localIndex: index });
+    });
+
+    return list;
+  }, [product.imageUrl, product.rawImages, formData.newImages, previewUrls, API_URL]);
+
   useEffect(() => {
     if (!product) return;
     setFormData((prev) => ({
@@ -159,8 +232,12 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
       discount: product.discount ?? "",
       description: product.description ?? "",
     }));
-    setSelectedImageIndex((idx) => (product.images && idx < product.images.length ? idx : 0));
   }, [product]);
+
+  // Si se quedan sin miniaturas, vuelve a la primera para no quedar fuera de rango.
+  useEffect(() => {
+    setSelectedImageIndex((index) => (index < thumbs.length ? index : 0));
+  }, [thumbs.length]);
 
   const formatCurrency = (value) =>
     Number(value).toLocaleString("es-CO", {
@@ -181,7 +258,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
       name: product.name,
       price: Number(product.price),
       quantity,
-      image: thumbs[selectedImageIndex]?.src || "/img/default.jpg",
+      image: thumbs[selectedImageIndex]?.src || PLACEHOLDER_IMAGE,
 
     });
     setAddedToCart(true);
@@ -198,33 +275,32 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+
     if (files) {
+      // Vaciar el input permite volver a elegir el mismo archivo después de quitarlo.
+      e.target.value = "";
       setFormData((prev) => ({ ...prev, [name]: [...(prev[name] || []), ...files] }));
-      const previews = Array.from(files).map((f) => URL.createObjectURL(f));
-      setProduct((prev) => ({ ...prev, images: [...prev.images, ...previews] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
     }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleRemoveNewImagePreview = (localIndex) => {
-    setProduct((prev) => {
-      const images = [...prev.images];
-      images.splice(product.rawImages.length + localIndex, 1);
-      return { ...prev, images };
-    });
     setFormData((prev) => {
-      const newImgs = [...prev.newImages];
-      newImgs.splice(localIndex, 1);
-      return { ...prev, newImages: newImgs };
+      const newImages = [...prev.newImages];
+      newImages.splice(localIndex, 1);
+      return { ...prev, newImages };
     });
   };
 
   const openDeleteModalForThumb = (thumb) => {
+    // La imagen principal vive en products.image_url y no tiene fila propia en
+    // la tabla images, así que no se puede borrar por ID: se sustituye.
+    if (thumb.kind === "main") return;
+
     setDeleteKindPending(thumb.kind);
-    if (thumb.kind === "local") setDeleteIndexPending(thumb.localIndex);
-    else if (thumb.kind === "existing") setDeleteIndexPending(thumb.existingIndex);
-    else setDeleteIndexPending(null);
+    setDeleteIndexPending(thumb.kind === "local" ? thumb.localIndex : thumb.existingIndex);
     setShowDeleteModal(true);
   };
 
@@ -232,50 +308,37 @@ const handleConfirmDelete = async () => {
   try {
     if (deleteKindPending === "local") {
       handleRemoveNewImagePreview(deleteIndexPending);
-    } else {
-      const imgToDelete =
-        deleteKindPending === "main"
-          ? product.imageUrl
-          : product.rawImages[deleteIndexPending]?.url;
-
-      const imgIdToDelete =
-        deleteKindPending === "main"
-          ? product.rawImages?.[0]?.id
-          : product.rawImages?.[deleteIndexPending]?.id;
-
-      if (imgToDelete) {
-        // 🔥 1️⃣ Borrar imagen de Cloudinary
-        await fetch(`${API_URL}/api/images/delete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: imgToDelete }),
-        });
-
-        // 🔥 2️⃣ Marcar imagen para eliminación en base de datos
-        setFormData((prev) => ({
-          ...prev,
-          deleteImages: [...(prev.deleteImages || []), imgIdToDelete],
-        }));
-
-        // 🔥 3️⃣ Actualizar estado local para quitarla de vista
-        setProduct((prev) => {
-          const images = [...prev.images];
-          const rawImages = [...prev.rawImages];
-
-          if (deleteKindPending === "main") {
-            images.splice(0, 1);
-            rawImages.splice(0, 1);
-          } else {
-            images.splice(deleteIndexPending, 1);
-            rawImages.splice(deleteIndexPending, 1);
-          }
-
-          return { ...prev, images, rawImages };
-        });
-      }
+      return;
     }
+
+    if (deleteKindPending !== "existing" && deleteKindPending !== "replaced") return;
+
+    const imageId = product.rawImages?.[deleteIndexPending]?.id;
+    if (!imageId) return;
+
+    const deleteResponse = await apiFetch(`${API_URL}/api/images/${imageId}`, {
+      method: "DELETE",
+    });
+    if (!deleteResponse.ok) throw new Error("No se pudo eliminar la imagen");
+
+    // Ya está borrada en el servidor: solo se quita de la vista. No se encola
+    // en deleteImages porque el PUT volvería a intentar eliminarla.
+    setProduct((prev) => ({
+      ...prev,
+      rawImages: prev.rawImages.filter((_, index) => index !== deleteIndexPending),
+    }));
+    setFormData((prev) => {
+      const replacedImages = { ...prev.replacedImages };
+      delete replacedImages[deleteIndexPending];
+
+      return {
+        ...prev,
+        replacedImages,
+        deleteImages: prev.deleteImages.filter((id) => id !== imageId),
+      };
+    });
   } catch (err) {
-    console.error("Error eliminando imagen Cloudinary:", err);
+    console.error("Error eliminando imagen:", err);
   } finally {
     setShowDeleteModal(false);
     setDeleteIndexPending(null);
@@ -284,71 +347,38 @@ const handleConfirmDelete = async () => {
 };
 
 // Cambiar imagen específica (miniatura)
-const handleReplaceImage = (thumb, idx, file) => {
+const handleReplaceImage = (thumb, file) => {
   if (!file) return;
 
-  const newUrl = URL.createObjectURL(file);
-
-  // Si es una imagen local (newImages)
   if (thumb.kind === "local") {
-    setProduct((prev) => {
-      const images = [...prev.images];
-      images[product.rawImages.length + thumb.localIndex] = newUrl;
-      return { ...prev, images };
-    });
-
     setFormData((prev) => {
-      const updated = [...prev.newImages];
-      updated[thumb.localIndex] = file;
-      return { ...prev, newImages: updated };
+      const newImages = [...prev.newImages];
+      newImages[thumb.localIndex] = file;
+      return { ...prev, newImages };
     });
+    return;
   }
 
-  // Si es una imagen existente en el servidor (rawImages)
-  if (thumb.kind === "existing") {
-    // Marcar imagen vieja para eliminar
-    const imgId = product.rawImages[thumb.existingIndex]?.id;
-
-    setFormData((prev) => ({
-      ...prev,
-      deleteImages: [...prev.deleteImages, imgId],
-      newImages: [...prev.newImages, file],
-    }));
-
-    setProduct((prev) => {
-      const images = [...prev.images];
-      images[idx] = newUrl;
-      return { ...prev, images };
-    });
-  }
-
-  // Si es la imagen principal (main)
   if (thumb.kind === "main") {
-    const imgId = product.rawImages?.[0]?.id;
-
-    setFormData((prev) => ({
-      ...prev,
-      deleteImages: [...prev.deleteImages, imgId],
-      newImages: [...prev.newImages, file],
-    }));
-
-    setProduct((prev) => {
-      const images = [...prev.images];
-      images[0] = newUrl;
-      return { ...prev, images };
-    });
+    setFormData((prev) => ({ ...prev, mainImage: file }));
+    return;
   }
+
+  // Miniatura existente: la antigua se marca para borrar al guardar y la
+  // replacement se sube en el mismo PUT. Antes se usaba rawImages[0].id, que
+  // terminaba borrando la primera de la galería al editar la principal.
+  const imageId = product.rawImages?.[thumb.existingIndex]?.id;
+
+  setFormData((prev) => ({
+    ...prev,
+    replacedImages: { ...prev.replacedImages, [thumb.existingIndex]: file },
+    deleteImages:
+      imageId && !prev.deleteImages.includes(imageId)
+        ? [...prev.deleteImages, imageId]
+        : prev.deleteImages,
+  }));
 };
 
-
-
- const buildThumbs = () => {
-    const thumbs = [];
-    if (product.imageUrl) thumbs.push({ src: product.imageUrl.startsWith("http") ? product.imageUrl : `${API_URL}${product.imageUrl}`, kind: "main" });
-    product.rawImages?.forEach((rawImg, idx) => thumbs.push({ src: rawImg.url.startsWith("http") ? rawImg.url : `${API_URL}${rawImg.url}`, kind: "existing", existingIndex: idx }));
-    formData.newImages?.forEach((file, idx) => thumbs.push({ src: URL.createObjectURL(file), kind: "local", localIndex: idx }));
-    return thumbs;
-  };
 
 
   const handleSave = async () => {
@@ -371,22 +401,26 @@ const handleReplaceImage = (thumb, idx, file) => {
         )
       );
 
+      if (formData.mainImage) payloadForm.append("image", formData.mainImage);
       formData.newImages?.forEach((file) => payloadForm.append("newImages", file));
+      Object.values(formData.replacedImages).forEach((file) => payloadForm.append("newImages", file));
       if (formData.deleteImages?.length) payloadForm.append("deleteImages", JSON.stringify(formData.deleteImages));
 
-      const res = await fetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
+      const res = await apiFetch(`${API_URL}/api/products/${product.id}`, { method: "PUT", body: payloadForm });
       if (!res.ok) throw new Error("Error al actualizar producto");
 
-      const updated = await res.json();
-
-      setProduct({
-        ...updated,
-        images: updated.images?.map((img) => (img.url ? `${API_URL}${img.url}` : "/img/default.jpg")) || ["/img/default.jpg"],
-        rawImages: updated.images || [],
-      });
-
-      setFormData((prev) => ({ ...prev, newImages: [], deleteImages: [] }));
+      // Se recarga desde el servidor en lugar de reconstruir el DTO a mano:
+      // así las URLs se normalizan igual que en la carga inicial.
+      setFormData((prev) => ({
+        ...prev,
+        mainImage: null,
+        newImages: [],
+        replacedImages: {},
+        deleteImages: [],
+      }));
       setIsEditing(false);
+      await refetch(true);
+
       setToastUploadVisible(true);
       setTimeout(() => setToastUploadVisible(false), 2000);
     } catch (err) {
@@ -395,7 +429,6 @@ const handleReplaceImage = (thumb, idx, file) => {
   };
 
 
-  const thumbs = buildThumbs();
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto text-white">
@@ -446,11 +479,11 @@ const handleReplaceImage = (thumb, idx, file) => {
                     setTouchEnd(null);
                   }}
                 >
-                  <img
-                  src={thumbs[selectedImageIndex]?.src || "/img/default.jpg"}
+                  <ProductImage
+                  src={thumbs[selectedImageIndex]?.src}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  onError={(e)=> (e.target.src = "/img/default.jpg")}
+                  eager
                 />
 
                 {product.agotado && (
@@ -505,13 +538,17 @@ const handleReplaceImage = (thumb, idx, file) => {
                           idx === selectedImageIndex ? "border-purple-400 ring-2 ring-purple-400/30" : "border-white/10 hover:border-white/30"
                         }`}
                       >
-                        <img src={thumb.src} className="w-full h-full object-cover" />
+                        <ProductImage
+                          src={thumb.src}
+                          alt={`${product.name} - vista ${idx + 1} de ${thumbs.length}`}
+                          className="w-full h-full object-cover"
+                        />
                       </button>
 
-                      {isAdmin && (
+                      {isAdmin && thumb.kind !== "main" && (
                         <button
                           title="Eliminar imagen"
-                          onClick={() => openDeleteModalForThumb(thumb, idx)}
+                          onClick={() => openDeleteModalForThumb(thumb)}
                           className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white 
                           rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-lg leading-none"
                         >
@@ -536,9 +573,11 @@ const handleReplaceImage = (thumb, idx, file) => {
                             type="file"
                             accept={IMAGE_ACCEPT}
                             className="hidden"
-                            onChange={(e) =>
-                              handleReplaceImage(thumb, idx, e.target.files[0])
-                            }
+                            onClick={(e) => {
+                              // Permite reelegir el mismo archivo.
+                              e.target.value = "";
+                            }}
+                            onChange={(e) => handleReplaceImage(thumb, e.target.files[0])}
                           />
                         </>
                       )}
@@ -752,11 +791,7 @@ const handleReplaceImage = (thumb, idx, file) => {
                 {recommended.map((item) => {
                   const hasPromo = item.oldPrice && Number(item.price) < Number(item.oldPrice);
                   const ahorro = hasPromo ? (Number(item.oldPrice) - Number(item.price)).toFixed(2) : null;
-                  const imgSrc = item.imageUrl
-                    ? item.imageUrl.startsWith("http")
-                      ? item.imageUrl
-                      : `${API_URL}${item.imageUrl}`
-                    : "/img/default.jpg";
+                  const imgSrc = buildImageUrl(item.imageUrl, API_URL);
 
                   return (
                     <div
@@ -771,11 +806,10 @@ const handleReplaceImage = (thumb, idx, file) => {
                     >
                       <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 group-hover:border-purple-400/40 group-hover:bg-white/[0.06] group-hover:-translate-y-1">
                         <div className="relative w-full aspect-square overflow-hidden">
-                          <img
+                          <ProductImage
                             src={imgSrc}
                             alt={item.name}
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => (e.target.src = "/img/default.jpg")}
                           />
                           {hasPromo && (
                             <div className="absolute top-2.5 left-2.5">
@@ -837,7 +871,6 @@ const handleReplaceImage = (thumb, idx, file) => {
                   onClick={() => {
                     setShowDeleteModal(false);
                     setDeleteIndexPending(null);
-                    setDeleteIsNewPreview(false);
                     setDeleteKindPending(null);
                   }}
                   className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-sm font-semibold transition-colors"

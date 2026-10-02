@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 import { useAuth } from "../../pages/AuthContext";
 import { useCart } from "../../pages/CartContext";
 import {
@@ -9,9 +11,8 @@ import {
   ShieldBadgeIcon,
 } from "../../components/SVG/ProductCardIcons";
 import ProductHighlightsEditor from "./ProductHighlightsEditor";
-
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
+import ProductImage from "../../components/ProductImage";
+import { buildImageUrl } from "../../utils/images";
 
 const formatCurrency = (value) =>
   Number(value).toLocaleString("es-CO", {
@@ -20,13 +21,6 @@ const formatCurrency = (value) =>
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
-
-const optimizeCloudinaryUrl = (url) => {
-  if (!url || typeof url !== "string") return url;
-  if (!url.includes("res.cloudinary.com")) return url;
-  if (url.includes("f_auto") || url.includes("q_auto")) return url;
-  return url.replace("/upload/", "/upload/f_auto,q_auto/");
-};
 
 const parseHighlights = (value) => {
   if (!value) return [];
@@ -44,6 +38,7 @@ const getInitialHighlights = (product) => {
   return parsed.length ? parsed : [];
 };
 
+// eslint-disable-next-line no-unused-vars
 const FeatureLine = ({ icon: Icon, label }) => (
   <li className="flex items-center gap-2 text-[0.78rem] leading-tight text-slate-500">
     <Icon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
@@ -66,13 +61,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   const ahorro = hasPromo ? Number(product.oldPrice) - Number(product.price) : null;
 
-  const rawImageUrl = product.imageUrl
-    ? product.imageUrl.startsWith("http")
-      ? product.imageUrl
-      : `${API_BASE_URL}${product.imageUrl.startsWith("/") ? "" : "/"}${product.imageUrl}`
-    : "/img/default.jpg";
-
-  const imageSrc = optimizeCloudinaryUrl(rawImageUrl);
+  const imageSrc = buildImageUrl(product.imageUrl, API_BASE_URL);
   const formattedPrice = product.price ? formatCurrency(product.price) : "$0";
   const formattedOldPrice = product.oldPrice ? formatCurrency(product.oldPrice) : null;
   const formattedAhorro = ahorro ? formatCurrency(ahorro) : null;
@@ -101,7 +90,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   const handleToggleAgotado = async (estado) => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/products/${product.id}/agotado?estado=${estado}`,
         { method: "PATCH", headers: { "Content-Type": "application/json" } }
       );
@@ -129,7 +118,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   const handleSaveHighlights = async () => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/products/${product.id}/highlights`,
         {
           method: "PUT",
@@ -199,11 +188,10 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
             </div>
           )}
 
-          <img
+          <ProductImage
             src={imageSrc}
             alt={product.name}
             className="relative z-[1] h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-            onError={(e) => (e.target.src = "/img/default.jpg")}
           />
 
           {/* Sombra difusa inferior */}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { apiFetch } from "../../api/client";
 import ProductCard from "./ProductCard";
 import { GripVertical, Plus } from "lucide-react";
 import ProductForm from "./ProductForm";
@@ -48,7 +49,7 @@ const ProductList = ({ category }) => {
     if (!category?.id) return;
     try {
       const endpoint = `${API_BASE_URL}/api/products/category/${category.id}`;
-      const res = await fetch(endpoint);
+      const res = await apiFetch(endpoint);
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
       setProducts(data);
@@ -66,7 +67,7 @@ const ProductList = ({ category }) => {
     const orderedIds = orderedProducts.map((p) => p.id);
     setSavingOrder(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/products/reorder`, {
+      const res = await apiFetch(`${API_BASE_URL}/api/products/reorder`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderedIds }),
@@ -241,7 +242,7 @@ const ProductList = ({ category }) => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/products/${id}`, {
         method: "DELETE",
       });
 

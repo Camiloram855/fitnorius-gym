@@ -1,17 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { apiFetch } from "../api/client"
+import API_BASE from "../config"
 
 // ─── Configuración ────────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080"
 const SCRATCH_THRESHOLD = 0.55  // 55% raspado para revelar el premio
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function getClientIP() {
-  // La IP real se obtiene en el backend; aquí solo como referencia
-  return null
-}
-
 function calcScratchedPercent(ctx, width, height) {
   const pixels = ctx.getImageData(0, 0, width, height)
   let transparent = 0
@@ -50,7 +46,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
   async function checkIfPlayed() {
     setStatus("loading")
     try {
-      const res = await fetch(`${API_BASE}/api/scratch/check`, {
+      const res = await apiFetch(`${API_BASE}/api/scratch/check`, {
         method: "GET",
         credentials: "include",   // envía cookies de sesión si las usas
       })
@@ -172,7 +168,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
     setStatus("revealed")
 
     try {
-      const res = await fetch(`${API_BASE}/api/scratch/play`, {
+      const res = await apiFetch(`${API_BASE}/api/scratch/play`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Plus, Trash2 } from "lucide-react";
 import { PRODUCT_FEATURE_ICON_OPTIONS } from "../../components/SVG/ProductCardIcons";
 
@@ -55,6 +56,7 @@ export default function ProductHighlightsEditor({ value = [], onChange }) {
             <div className="flex items-start gap-2">
               <div className="flex flex-1 flex-col gap-2">
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {/* eslint-disable-next-line no-unused-vars */}
                     {PRODUCT_FEATURE_ICON_OPTIONS.map(({ value: iconValue, Icon }) => {
                       const isSelected = (highlight.icon || "shield") === iconValue;
 

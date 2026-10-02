@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useCart } from "./CartContext"
 import { X } from "lucide-react"
 import ScratchCard from "./ScratchCard"
+import API_URL from "../config"
 
 export default function Checkout() {
   const { cartItems, removeFromCart } = useCart()
@@ -47,7 +48,7 @@ export default function Checkout() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/placeholder.jpg"
     if (imagePath.startsWith("http")) return imagePath
-    return `http://localhost:8080/${imagePath}`
+    return `${API_URL}/${imagePath}`
   }
 
   const handleSubmit = (e) => {

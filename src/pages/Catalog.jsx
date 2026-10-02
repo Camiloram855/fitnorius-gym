@@ -1,6 +1,5 @@
 // src/pages/Catalog.jsx
 import { Routes, Route, useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import HeroBanner from "../sections/Components/HeroBanner";
 import PromotionPopup from "../sections/Components/PromotionPopup";
 import { Footer } from "../Layout/Footer";

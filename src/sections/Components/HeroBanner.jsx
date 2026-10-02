@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../../api/client";
+import API_URL from "../../config";
 import SearchSection from "./SearchSection";
 import CategoryCarousel from "./CategoryCarousel";
 import { useAuth } from "../../pages/AuthContext";
@@ -29,14 +31,11 @@ export default function HeroBanner({ image }) {
   const [showManager, setShowManager] = useState(false);
   const { isAdmin } = useAuth();
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || "https://fitnorius-production.up.railway.app";
-
   const fallbackImage = getOptimizedImage(image) || null;
 
   const loadBanners = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/banner/all`);
+      const res = await apiFetch(`${API_URL}/api/banner/all`);
       if (!res.ok) throw new Error("Error al cargar banners");
       const data = await res.json();
 
@@ -84,7 +83,7 @@ export default function HeroBanner({ image }) {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${API_URL}/api/banner/upload`, {
+      const res = await apiFetch(`${API_URL}/api/banner/upload`, {
         method: "POST",
         body: formData,
       });
@@ -107,7 +106,7 @@ export default function HeroBanner({ image }) {
   const handleDeleteSingleBanner = async (itemId) => {
     if (!itemId) return;
     try {
-      const res = await fetch(`${API_URL}/api/banner/${itemId}`, {
+      const res = await apiFetch(`${API_URL}/api/banner/${itemId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("No se pudo eliminar la imagen");
@@ -125,7 +124,7 @@ export default function HeroBanner({ image }) {
 
   const handleResetBanner = async () => {
     try {
-      await fetch(`${API_URL}/api/banner/reset`, {
+      await apiFetch(`${API_URL}/api/banner/reset`, {
         method: "DELETE",
       });
       setBannerItems(fallbackImage ? [{ id: null, imageUrl: fallbackImage }] : []);

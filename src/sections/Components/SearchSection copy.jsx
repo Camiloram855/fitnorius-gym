@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 
 // Normalizador universal para imágenes con WebP automático
@@ -56,7 +55,7 @@ export default function SearchSection() {
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(
           trimmedQuery
         )}`

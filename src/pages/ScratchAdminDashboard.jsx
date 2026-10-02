@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { apiFetch } from "../api/client"
+import API_BASE from "../config"
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080"
 const API      = `${API_BASE}/api/admin/scratch`
 
 const TYPE_OPTIONS = [
@@ -53,22 +54,25 @@ export default function ScratchAdminDashboard() {
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchVisible = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/visible`)
+      const res = await apiFetch(`${API}/visible`)
+      if (!res.ok) throw new Error("No se pudo cargar la visibilidad")
       const data = await res.json()
       setScratchVisibleState(data.visible)
-    } catch {}
+    } catch (error) {
+      void error
+    }
   }, [])
 
   const fetchPrizes = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/prizes`)
+      const res = await apiFetch(`${API}/prizes`)
       setPrizes(await res.json())
     } catch { showToast("Error al cargar premios", "error") }
   }, [])
 
   const fetchResults = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/results`)
+      const res = await apiFetch(`${API}/results`)
       setResults(await res.json())
     } catch { showToast("Error al cargar participaciones", "error") }
   }, [])
@@ -82,7 +86,7 @@ export default function ScratchAdminDashboard() {
     const next = !scratchVisible
     setSavingVisible(true)
     try {
-      const res = await fetch(`${API}/visible`, {
+      const res = await apiFetch(`${API}/visible`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visible: next }),
@@ -117,7 +121,7 @@ export default function ScratchAdminDashboard() {
     const url     = editingId ? `${API}/prizes/${editingId}` : `${API}/prizes`
     const method  = editingId ? "PUT" : "POST"
     try {
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      const res = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
       if (!res.ok) throw new Error()
       await fetchPrizes(); setShowForm(false)
       showToast(editingId ? "Premio actualizado ✅" : "Premio creado ✅")
@@ -126,7 +130,7 @@ export default function ScratchAdminDashboard() {
 
   async function toggleActive(prize) {
     try {
-      await fetch(`${API}/prizes/${prize.id}`, {
+      await apiFetch(`${API}/prizes/${prize.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...prize, active: !prize.active }),
       })
@@ -137,7 +141,7 @@ export default function ScratchAdminDashboard() {
 
   async function deletePrize(id) {
     try {
-      await fetch(`${API}/prizes/${id}`, { method: "DELETE" })
+      await apiFetch(`${API}/prizes/${id}`, { method: "DELETE" })
       await fetchPrizes(); setConfirmDelete(null)
       showToast("Premio eliminado")
     } catch { showToast("Error al eliminar", "error") }
@@ -147,7 +151,7 @@ export default function ScratchAdminDashboard() {
     const ip = resetIP.trim()
     if (!ip) return showToast("Ingresa una IP válida", "error")
     try {
-      const res = await fetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, { method: "DELETE" })
+      const res = await apiFetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, { method: "DELETE" })
       const data = await res.json()
       await fetchResults(); setResetIP("")
       showToast(data.message || "IP reiniciada ✅")

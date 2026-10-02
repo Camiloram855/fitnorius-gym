@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 
 const PurchaseButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,8 +22,7 @@ const PurchaseButton = () => {
   });
 
   // 🔧 URL dinámica según entorno
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 
   // Abrir / cerrar modal
   const openModal = () => setIsModalOpen(true);
@@ -36,7 +37,7 @@ const PurchaseButton = () => {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/productos`);
+        const res = await apiFetch(`${API_BASE_URL}/api/productos`);
         if (!res.ok) throw new Error("Error al obtener productos");
 
         const data = await res.json();
@@ -102,7 +103,7 @@ const PurchaseButton = () => {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/ordenes`, {
+      const res = await apiFetch(`${API_BASE_URL}/api/ordenes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderRequest),
