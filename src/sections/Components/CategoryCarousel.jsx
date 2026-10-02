@@ -4,6 +4,7 @@ import API_BASE_URL from "../../config";
 import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
+import PromoBanner from "../../components/PromoBanner";
 import { useAuth } from "../../pages/AuthContext";
 import Swal from "sweetalert2";
 
@@ -355,6 +356,10 @@ useEffect(() => {
           )}
         </div>
       </div>
+
+      {/* ====== BANNER DE PROMOCIONES ======
+          Va entre el carrusel de categorías y el listado de productos. */}
+      <PromoBanner />
 
       {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (

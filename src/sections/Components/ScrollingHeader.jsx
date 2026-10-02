@@ -2,9 +2,10 @@
 import { apiFetch } from "../../api/client";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff } from "lucide-react";
+import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff, Tag } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
+import AdminPromoBanner from "../../components/AdminPromoBanner";
 import API_URL from "../../config";
 
 const HEADER_MESSAGES_API = `${API_URL}/header-messages`;
@@ -22,6 +23,7 @@ const ScrollingHeader = () => {
   const [editValue, setEditValue] = useState("");
   const [editIndex, setEditIndex] = useState(0);
   const [showPromoModal, setShowPromoModal] = useState(false);
+  const [showPromoBanner, setShowPromoBanner] = useState(false);
   const [promoFile, setPromoFile] = useState(null);
   const [promoPreview, setPromoPreview] = useState("");
   const [promoActive, setPromoActive] = useState(true);
@@ -305,13 +307,24 @@ const ScrollingHeader = () => {
         </button>
 
         {isAdmin && (
-          <button
-            onClick={openPromoModal}
-            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20 sm:px-4"
-          >
-            <ImagePlus size={18} />
-            <span className="hidden sm:inline">Promo</span>
-          </button>
+          <>
+            <button
+              onClick={openPromoModal}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20 sm:px-4"
+            >
+              <ImagePlus size={18} />
+              <span className="hidden sm:inline">Promo</span>
+            </button>
+
+            {/* Banner de promociones de la portada */}
+            <button
+              onClick={() => setShowPromoBanner(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20 sm:px-4"
+            >
+              <Tag size={18} />
+              <span className="hidden sm:inline">Banner</span>
+            </button>
+          </>
         )}
 
         <Link
@@ -503,6 +516,36 @@ const ScrollingHeader = () => {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
+
+      {isAdmin && showPromoBanner && createPortal((
+        <div
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm"
+          onClick={() => setShowPromoBanner(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-gray-900 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-400">
+                Banner de promociones
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowPromoBanner(false)}
+                className="rounded-full bg-white/5 p-2 text-gray-300 transition hover:bg-white/10"
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6">
+              <AdminPromoBanner />
             </div>
           </div>
         </div>
