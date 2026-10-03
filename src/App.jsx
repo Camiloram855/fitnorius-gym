@@ -16,6 +16,8 @@ import { Footer } from "./Layout/Footer";
 
 // Página independiente
 import Catalog from "./pages/Catalog";
+import Promociones from "./pages/Promociones";
+import { CartProvider } from "./pages/CartContext";
 
 // 🔄 Nuevo componente global para controlar el scroll en TODAS las rutas
 function ScrollToTopOnRouteChange() {
@@ -60,6 +62,16 @@ function AppContent() {
 
         {/* Ruta para el Catálogo */}
         <Route path="/catalog/*" element={<Catalog />} />
+
+        {/* Ruta de promociones: necesita carrito para "Añadir al carrito" */}
+        <Route
+          path="/promociones"
+          element={
+            <CartProvider>
+              <Promociones />
+            </CartProvider>
+          }
+        />
       </Routes>
     </>
   );

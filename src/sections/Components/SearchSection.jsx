@@ -1,27 +1,14 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ProductImage from "../../components/ProductImage";
+import { buildImageUrl } from "../../utils/images";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-
-// Normalizador universal para imágenes con WebP automático
-const normalizeImg = (url) => {
-  if (!url) return "/no-image.webp";
-
-  // Si es imagen de Cloudinary → convertir a WebP
-  if (url.startsWith("http") && url.includes("res.cloudinary.com")) {
-    return url.replace("/upload/", "/upload/f_webp,q_auto/");
-  }
-
-  // Si viene del backend (/uploads/xxx.png)
-  if (url.startsWith("/")) {
-    return `${API_BASE_URL}${url}`;
-  }
-
-  return url;
-};
+// Normalizador universal para imágenes (WebP/AVIF automático vía CDN)
+const normalizeImg = (url) => buildImageUrl(url, API_BASE_URL);
 
 
 export default function SearchSection() {
@@ -56,7 +43,7 @@ export default function SearchSection() {
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(
           trimmedQuery
         )}`
@@ -178,11 +165,10 @@ export default function SearchSection() {
                     "
 
                   >
-                    <img
+                    <ProductImage
                       src={imageSrc}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => (e.target.src = "/no-image.png")}
                     />
                   </div>
 

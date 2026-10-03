@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";  
-  
+
 const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
   const [newCategory, setNewCategory] = useState({ name: "", image: null });
   const [previewImage, setPreviewImage] = useState(null);
@@ -29,7 +29,7 @@ const CategoryForm = ({ setShowForm, onCategoryCreated }) => {
 
     try {
       console.log("📤 Enviando categoría a:", `${API_BASE_URL}/api/categories`);
-      const response = await fetch(`${API_BASE_URL}/api/categories`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/categories`, {
         method: "POST",
         body: formData,
       });

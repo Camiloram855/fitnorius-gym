@@ -1,7 +1,6 @@
 import { useState } from "react";
-
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL?.replace(/\/$/, "")) || "http://localhost:8080";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 
 const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated }) => {
   const [newProduct, setNewProduct] = useState({
@@ -71,7 +70,7 @@ const ProductForm = ({ setShowProductForm, selectedCategory, onProductCreated })
 
       if (newProduct.image) formData.append("image", newProduct.image);
 
-      const response = await fetch(`${API_BASE_URL}/api/products/upload`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
         body: formData,
       });

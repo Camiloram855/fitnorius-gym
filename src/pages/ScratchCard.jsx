@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { apiFetch } from "../api/client"
+import API_BASE from "../config"
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080"
 const SCRATCH_THRESHOLD = 0.55
 
 function calcScratchedPercent(ctx, width, height) {
@@ -33,7 +34,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
   async function checkIfPlayed() {
     setStatus("loading")
     try {
-      const res  = await fetch(`${API_BASE}/api/scratch/check`)
+      const res  = await apiFetch(`${API_BASE}/api/scratch/check`)
       const data = await res.json()
 
       // El admin lo ocultó → no mostrar nada
@@ -143,7 +144,7 @@ export default function ScratchCard({ onPrizeApplied, userId = null }) {
     if (status === "revealed") return
     setStatus("revealed")
     try {
-      const res  = await fetch(`${API_BASE}/api/scratch/play`, {
+      const res  = await apiFetch(`${API_BASE}/api/scratch/play`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),

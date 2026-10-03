@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { apiFetch } from "../api/client"
+import API_BASE_URL from "../config"
 import { useScratchVisible } from "./useScratchVisible"
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
 const API = `${API_BASE_URL}/api/admin/scratch`
 
 const TYPE_OPTIONS = [
@@ -58,14 +59,14 @@ export default function ScratchAdminDashboard() {
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchPrizes = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/prizes`, { credentials: "include" })
+      const res = await apiFetch(`${API}/prizes`, { credentials: "include" })
       setPrizes(await res.json())
     } catch { showToast("Error al cargar premios", "error") }
   }, [])
 
   const fetchResults = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/results`, { credentials: "include" })
+      const res = await apiFetch(`${API}/results`, { credentials: "include" })
       setResults(await res.json())
     } catch { showToast("Error al cargar participaciones", "error") }
   }, [])
@@ -105,7 +106,7 @@ export default function ScratchAdminDashboard() {
     const method  = editingId ? "PUT" : "POST"
 
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -120,7 +121,7 @@ export default function ScratchAdminDashboard() {
 
   async function toggleActive(prize) {
     try {
-      await fetch(`${API}/prizes/${prize.id}`, {
+      await apiFetch(`${API}/prizes/${prize.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -133,7 +134,7 @@ export default function ScratchAdminDashboard() {
 
   async function deletePrize(id) {
     try {
-      await fetch(`${API}/prizes/${id}`, { method: "DELETE", credentials: "include" })
+      await apiFetch(`${API}/prizes/${id}`, { method: "DELETE", credentials: "include" })
       await fetchPrizes()
       setConfirmDelete(null)
       showToast("Premio eliminado")
@@ -145,7 +146,7 @@ export default function ScratchAdminDashboard() {
     const ip = resetIP.trim()
     if (!ip) return showToast("Ingresa una IP válida", "error")
     try {
-      const res = await fetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, {
+      const res = await apiFetch(`${API}/results/ip?ip=${encodeURIComponent(ip)}`, {
         method: "DELETE",
         credentials: "include",
       })

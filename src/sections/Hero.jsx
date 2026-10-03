@@ -9,20 +9,6 @@ import PurchaseButton from "../components/ui/PurchaseButton"
 export default function Hero() {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Scroll directo al elemento con id "kits-section"
-  const handleScrollToKits = (offset = 0) => {
-    const el = document.getElementById("kits-section")
-    if (!el) return
-
-    // Si quieres un offset (por ejemplo navbar fijo), pon aquí el valor en px (ej: 80)
-    const top = el.getBoundingClientRect().top + window.pageYOffset - offset
-
-    window.scrollTo({
-      top,
-      behavior: "smooth",
-    })
-  }
-
   return (
     <section className="relative min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden">
       {/* Fondo decorativo */}

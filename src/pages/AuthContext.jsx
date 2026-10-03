@@ -1,40 +1,70 @@
-// src/pages/AuthContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  SESSION_EXPIRED_EVENT,
+  login as apiLogin,
+  logoutSession,
+  restoreSession,
+} from "../api/client";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Guardamos si está autenticado y si es admin
-  const [user, setUser] = useState(() => {
-    // Si ya inició sesión antes, lo cargamos del localStorage
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
-  // función para login (admin)
-  const login = (username, password) => {
-    // 👇 Aquí defines tus credenciales base (por ahora hardcodeadas)
-    if (username === "yeik" && password === "ahinara") {
-      const userData = { username, isAdmin: true };
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      return true;
-    }
+  useEffect(() => {
+    let active = true;
 
-    return false; // login fallido
+    const bootstrapSession = async () => {
+      try {
+        const restoredUser = await restoreSession();
+        if (active && restoredUser) {
+          setUser(restoredUser);
+        }
+      } finally {
+        if (active) {
+          setInitializing(false);
+        }
+      }
+    };
+
+    const handleExpiredSession = () => {
+      if (active) {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+    bootstrapSession();
+
+    return () => {
+      active = false;
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+    };
+  }, []);
+
+  const login = async (username, password) => {
+    const authenticatedUser = await apiLogin(username, password);
+    setUser(authenticatedUser);
+    return true;
   };
 
-  // logout
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await logoutSession();
+    } catch {
+      // El estado local se limpia aunque el backend no esté disponible.
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAdmin: user?.isAdmin || false,
+        isAdmin: user?.role === "ADMIN",
+        initializing,
         login,
         logout,
       }}
@@ -44,4 +74,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth debe utilizarse dentro de AuthProvider");
+  }
+  return context;
+};

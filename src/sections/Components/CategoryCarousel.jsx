@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { apiFetch } from "../../api/client";
+import API_BASE_URL from "../../config";
 import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import ProductList from "./ProductList";
+import PromoBanner from "../../components/PromoBanner";
 import { useAuth } from "../../pages/AuthContext";
 import Swal from "sweetalert2";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
@@ -22,7 +22,7 @@ const CategoryCarousel = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        const res = await apiFetch(`${API_BASE_URL}/api/categories`);
         if (!res.ok) throw new Error("Error al cargar categorías");
         const data = await res.json();
         setCategories(data);
@@ -128,13 +128,7 @@ useEffect(() => {
 
     const result = await Swal.fire({
       title: "¿Eliminar categoría?",
-      html: `
-        <p class="text-gray-200 mb-2">
-          ¿Seguro que deseas eliminar la categoría 
-          <b style="color:#a855f7;">${category?.name}</b>?
-        </p>
-        <p class="text-gray-400 text-sm">(Esto también eliminará sus productos asociados)</p>
-      `,
+      text: `¿Seguro que deseas eliminar la categoría "${category?.name || "sin nombre"}"? Esto también eliminará sus productos asociados.`,
       icon: "warning",
       background: "#1f1f1f",
       color: "#fff",
@@ -147,7 +141,7 @@ useEffect(() => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/categories/${id}`, {
           method: "DELETE",
         });
 
@@ -185,7 +179,7 @@ useEffect(() => {
       formData.append("name", editForm.name);
       if (editForm.image) formData.append("image", editForm.image);
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/categories/${categoryToEdit.id}`,
         {
           method: "PUT",
@@ -362,6 +356,10 @@ useEffect(() => {
           )}
         </div>
       </div>
+
+      {/* ====== BANNER DE PROMOCIONES ======
+          Va entre el carrusel de categorías y el listado de productos. */}
+      <PromoBanner />
 
       {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (

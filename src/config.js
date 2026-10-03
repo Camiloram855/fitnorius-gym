@@ -1,9 +1,5 @@
-// src/config.js
-
-const apiUrl = import.meta.env.VITE_API_URL;
-
-const API_URL = apiUrl && apiUrl.trim() !== ""
-  ? apiUrl.trim()
-  : "https://fitnorius-production.up.railway.app";
+// La URL del backend es pública por naturaleza; nunca colocar aquí secretos JWT.
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_URL = (configuredApiUrl || "http://localhost:8080").replace(/\/+$/, "");
 
 export default API_URL;
