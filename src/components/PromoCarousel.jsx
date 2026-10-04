@@ -449,13 +449,18 @@ function PromoCard({ product, onView, onAdd }) {
       <button
         type="button"
         onClick={onView}
-        className="group relative block aspect-[4/3] w-full overflow-hidden"
+        className="group relative block w-full overflow-hidden"
+        // Misma proporción que la tarjeta del catálogo. Con 4:3 las fotos de
+        // producto, que son cuadradas, quedaban recortadas por los lados.
+        style={{ aspectRatio: "1 / 1" }}
         aria-label={`Ver ${product.name}`}
       >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#2a2140_0%,#1a1626_60%,#141020_100%)]" />
+
         <ProductImage
           src={productImageUrl(product, API_URL)}
           alt={product.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="relative z-[1] h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
         />
 
         <span className="absolute bottom-3 left-3 z-10">
