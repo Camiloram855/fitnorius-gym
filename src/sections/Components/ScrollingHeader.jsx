@@ -1,11 +1,11 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { apiFetch } from "../../api/client";
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff, Tag } from "lucide-react";
 import { useCart } from "../../pages/CartContext";
 import { useAuth } from "../../pages/AuthContext";
 import AdminPromoBanner from "../../components/AdminPromoBanner";
+import ModalShell from "../../components/ModalShell";
 import API_URL from "../../config";
 
 const HEADER_MESSAGES_API = `${API_URL}/header-messages`;
@@ -400,182 +400,176 @@ const ScrollingHeader = () => {
         )}
       </div>
 
-            {isAdmin && showPromoModal && createPortal((
-        <div
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm"
-          onClick={closePromoModal}
+{isAdmin && (
+        <ModalShell
+          open={showPromoModal}
+          onClose={closePromoModal}
+          eyebrow="Popup promocional"
+          title="Configurar imagen emergente"
+          size="lg"
         >
-          <div
-            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-600">
-                  Popup promocional
-                </p>
-                <h3 className="text-lg font-black text-gray-900">Configurar imagen emergente</h3>
-              </div>
+          <div className="grid gap-0 md:grid-cols-[1fr_1fr]">
+            <div className="border-b bg-gradient-to-br from-purple-50 to-pink-50 p-4 md:border-b-0 md:border-r">
+              <input
+                id="promo-popup-upload"
+                type="file"
+                accept="image/*,.gif,image/gif"
+                className="sr-only"
+                onChange={handlePromoFileChange}
+              />
+
+              <label
+                htmlFor="promo-popup-upload"
+                className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-purple-200 bg-white px-4 py-8 text-center transition hover:border-purple-400"
+              >
+                <Upload size={28} className="text-purple-600" />
+                <span className="mt-3 text-sm font-semibold text-gray-800">
+                  Subir o reemplazar imagen
+                </span>
+                <span className="mt-1 text-xs text-gray-500">PNG, JPG, WEBP o GIF</span>
+              </label>
+
+              <label className="mt-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={!promoActive}
+                  onChange={(event) => setPromoActive(!event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <EyeOff size={16} className="text-purple-600" />
+                  Ocultar popup promocional
+                </span>
+              </label>
+
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                Si el popup esta oculto, no se mostrara a los usuarios aunque la
+                imagen este guardada.
+              </p>
 
               <button
                 type="button"
-                onClick={closePromoModal}
-                className="rounded-full bg-black/5 p-2 text-gray-600 transition hover:bg-black/10 hover:text-black cursor-pointer"
-                aria-label="Cerrar modal"
+                onClick={handlePromoAction}
+                disabled={promoSaving}
+                className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-purple-700 hover:to-fuchsia-700 ${
+                  promoSaving ? "cursor-wait opacity-80" : "cursor-pointer"
+                }`}
               >
-                <X size={18} />
+                <Check size={18} />
+                {promoSaving
+                  ? "Guardando..."
+                  : promoFile || promoCurrent?.imageUrl
+                    ? "Guardar popup"
+                    : "Seleccionar imagen"}
               </button>
             </div>
 
-            <div className="grid gap-0 md:grid-cols-[1fr_1fr]">
-              <div className="border-b bg-gradient-to-br from-purple-50 to-pink-50 p-4 md:border-b-0 md:border-r">
-                <input
-                  id="promo-popup-upload"
-                  type="file"
-                  accept="image/*,.gif,image/gif"
-                  className="sr-only"
-                  onChange={handlePromoFileChange}
-                />
-
-                <label
-                  htmlFor="promo-popup-upload"
-                  className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-purple-200 bg-white px-4 py-8 text-center transition hover:border-purple-400"
-                >
-                  <Upload size={28} className="text-purple-600" />
-                  <span className="mt-3 text-sm font-semibold text-gray-800">
-                    Subir o reemplazar imagen
-                  </span>
-                  <span className="mt-1 text-xs text-gray-500">PNG, JPG, WEBP o GIF</span>
-                </label>
-
-                <label className="mt-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <input
-                    type="checkbox"
-                    checked={!promoActive}
-                    onChange={(event) => setPromoActive(!event.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <EyeOff size={16} className="text-purple-600" />
-                    Ocultar popup promocional
-                  </span>
-                </label>
-
-                <p className="mt-3 text-xs leading-5 text-gray-500">
-                  Si el popup esta oculto, no se mostrara a los usuarios aunque la imagen este guardada.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={handlePromoAction}
-                  disabled={promoSaving}
-                  className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-purple-700 hover:to-fuchsia-700 ${
-                    promoSaving ? "cursor-wait opacity-80" : "cursor-pointer"
-                  }`}
-                >
-                  <Check size={18} />
-                  {promoSaving ? "Guardando..." : promoFile || promoCurrent?.imageUrl ? "Guardar popup" : "Seleccionar imagen"}
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4 p-4 sm:p-6">
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-                  <p className="mb-3 text-sm font-semibold text-gray-800">Vista previa</p>
-                  <div className="flex min-h-[240px] items-center justify-center overflow-hidden rounded-2xl bg-white">
-                    {promoPreview ? (
-                      <img
-                        src={promoPreview}
-                        alt="Vista previa popup"
-                        className="max-h-[320px] w-full object-contain"
-                      />
-                    ) : (
-                      <span className="px-4 text-center text-sm text-gray-400">
-                        TodavÃ­a no hay imagen cargada
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
-                  <p className="font-semibold text-gray-900">Estado actual</p>
-                  <p className="mt-1">
-                    {promoCurrent?.imageUrl ? "Hay un popup configurado." : "Aun no existe un popup promocional."}
-                  </p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {promoCurrent?.active ? "Esta visible para los usuarios." : "Esta oculto para los usuarios."}
-                  </p>
-                  {promoCurrent?.imageUrl && (
-                    <button
-                      type="button"
-                      onClick={handleDeletePromo}
-                      disabled={promoDeleting}
-                      className="mt-4 inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {promoDeleting ? "Eliminando..." : "Eliminar popup actual"}
-                    </button>
+            <div className="flex flex-col gap-4 p-4 sm:p-6">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                <p className="mb-3 text-sm font-semibold text-gray-800">Vista previa</p>
+                <div className="flex min-h-[200px] items-center justify-center overflow-hidden rounded-2xl bg-white sm:min-h-[240px]">
+                  {promoPreview ? (
+                    <img
+                      src={promoPreview}
+                      alt="Vista previa popup"
+                      className="max-h-[280px] w-full object-contain"
+                    />
+                  ) : (
+                    <span className="px-4 text-center text-sm text-gray-400">
+                      Todavia no hay imagen cargada
+                    </span>
                   )}
                 </div>
               </div>
+
+              <div className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
+                <p className="font-semibold text-gray-900">Estado actual</p>
+                <p className="mt-1">
+                  {promoCurrent?.imageUrl
+                    ? "Hay un popup configurado."
+                    : "Aun no existe un popup promocional."}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  {promoCurrent?.active
+                    ? "Esta visible para los usuarios."
+                    : "Esta oculto para los usuarios."}
+                </p>
+                {promoCurrent?.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleDeletePromo}
+                    disabled={promoDeleting}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {promoDeleting ? "Eliminando..." : "Eliminar popup actual"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ), document.body)}
+        </ModalShell>
+      )}
 
-      {isAdmin && showPromoBanner && createPortal((
-        <div
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-sm"
-          onClick={() => setShowPromoBanner(false)}
+      {isAdmin && (
+        <ModalShell
+          open={showPromoBanner}
+          onClose={() => setShowPromoBanner(false)}
+          eyebrow="Banner de promociones"
+          title="Configurar el banner de la portada"
+          size="md"
+          tone="dark"
         >
-          <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-gray-900 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6">
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-400">
-                Banner de promociones
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowPromoBanner(false)}
-                className="rounded-full bg-white/5 p-2 text-gray-300 transition hover:bg-white/10"
-                aria-label="Cerrar"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-4 sm:p-6">
-              <AdminPromoBanner />
-            </div>
+          <div className="p-4 sm:p-6">
+            <AdminPromoBanner />
           </div>
-        </div>
-      ), document.body)}
+        </ModalShell>
+      )}
 
-      {isAdmin && isEditing && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
-          <div className="w-full max-w-md flex flex-col gap-3 rounded-2xl bg-white p-4 text-black shadow-2xl sm:p-5">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Editar mensaje</span>
-              <button onClick={() => setIsEditing(false)}>
-                <X size={18} />
-              </button>
-            </div>
+      {isAdmin && (
+        <ModalShell
+          open={isEditing}
+          onClose={() => setIsEditing(false)}
+          eyebrow="Mensaje del carrusel"
+          title={editIndex === messages.length ? "Agregar mensaje" : "Editar mensaje"}
+          size="sm"
+        >
+          <div className="flex flex-col gap-4 p-4 sm:p-5">
+            <label className="text-sm font-medium text-gray-700">
+              Texto que se muestra en la barra superior
+            </label>
 
             <textarea
-              className="w-full h-20 rounded-md border p-2 text-sm"
+              className="h-24 w-full resize-y rounded-xl border border-gray-300 p-3 text-sm text-gray-900 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
+              placeholder="Escribe el mensaje"
+              maxLength={140}
+              autoFocus
             />
 
-            <button
-              onClick={saveEdit}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-black py-2 text-white hover:bg-gray-900"
-            >
-              <Check size={18} />
-              Guardar
-            </button>
+            <p className="text-xs text-gray-500">{editValue.length}/140</p>
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="rounded-xl bg-gray-100 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={!editValue.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Check size={18} />
+                Guardar
+              </button>
+            </div>
           </div>
-        </div>
+        </ModalShell>
       )}
     </div>
   );
