@@ -437,14 +437,25 @@ export default function PromoCarousel({ products, onSeeAll }) {
   );
 }
 
-function PromoCard({ product, onView, onAdd }) {
+/**
+ * Tarjeta de producto en promoción, reutilizada también por la rejilla de
+ * "todos los productos" de la página de promociones.
+ *
+ * `fluid` la adapta a una rejilla (ocupa el ancho de la columna) en lugar del
+ * ancho fijo que necesita el carrusel.
+ */
+export function PromoCard({ product, onView, onAdd, fluid = false }) {
   const percent = discountPercent(product);
   const savings = savingsAmount(product);
   const agotado = Boolean(product.agotado);
 
   return (
     <article
-      className="w-[250px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition-colors duration-300 hover:border-purple-400/40 hover:bg-white/[0.08] sm:w-[300px] sm:rounded-3xl"
+      className={
+        fluid
+          ? "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition-colors duration-300 hover:border-purple-400/40 hover:bg-white/[0.08] sm:rounded-3xl"
+          : "w-[250px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition-colors duration-300 hover:border-purple-400/40 hover:bg-white/[0.08] sm:w-[300px] sm:rounded-3xl"
+      }
     >
       <button
         type="button"
@@ -480,7 +491,7 @@ function PromoCard({ product, onView, onAdd }) {
         )}
       </button>
 
-      <div className="flex flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
+      <div className="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
         <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-bold uppercase leading-snug tracking-tight text-gray-100 sm:min-h-[2.5rem] sm:text-sm">
           {product.name}
         </h3>
