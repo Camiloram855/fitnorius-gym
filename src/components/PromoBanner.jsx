@@ -83,13 +83,15 @@ export default function PromoBanner() {
           {/* Solo un velo suave abajo, para que el botón se lea bien. */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-          <div className="relative flex h-full items-end p-5 sm:p-6">
+          <div className="relative flex h-full items-end p-4 sm:p-6">
             <Link
               to="/promociones"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-fuchsia-700 shadow-lg transition-transform hover:scale-105 active:scale-95"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-xs font-black text-fuchsia-700 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:gap-2 sm:px-6 sm:py-3 sm:text-sm"
             >
-              <Tag size={16} />
-              Ver todas las promociones
+              <Tag size={14} className="shrink-0 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Ver todas las </span>
+              <span className="hidden sm:inline">promociones</span>
+              <span className="sm:hidden">Promociones</span>
             </Link>
           </div>
         </div>
