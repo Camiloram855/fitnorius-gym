@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       await login(credentials.username, credentials.password);
-      navigate("/catalog", { replace: true });
+      navigate("/", { replace: true });
     } catch (requestError) {
       if (requestError?.status === 429) {
         setError("Demasiados intentos. Espera unos minutos antes de volver a intentarlo.");
@@ -32,7 +32,7 @@ export default function Login() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/catalog", { replace: true });
+    navigate("/", { replace: true });
   };
 
   if (initializing) {

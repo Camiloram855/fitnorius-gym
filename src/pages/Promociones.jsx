@@ -49,7 +49,7 @@ export default function Promociones() {
     loadPromos();
   }, [loadPromos]);
 
-  const openProduct = (id) => navigate(`/catalog/producto/${id}`);
+  const openProduct = (id) => navigate(`/producto/${id}`);
 
   const addItem = (product) =>
     addToCart({
@@ -69,7 +69,7 @@ export default function Promociones() {
     <main className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-fuchsia-950 pb-20">
       <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-10">
         <Link
-          to="/catalog"
+          to="/"
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/10"
         >
           <ArrowLeft size={16} />
@@ -128,7 +128,7 @@ export default function Promociones() {
                 esta sección en cuanto lancemos nuevas rebajas.
               </p>
               <Link
-                to="/catalog"
+                to="/"
                 className="mt-7 inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700"
               >
                 Ver todo el catálogo

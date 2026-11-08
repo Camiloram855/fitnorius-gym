@@ -42,9 +42,9 @@ function AppContent() {
       <ScrollToTopOnRouteChange /> {/* 👈 Aquí se aplica a TODA la app */}
 
       <Routes>
-        {/* Ruta principal (Home) */}
+        {/* Ruta de la landing page */}
         <Route
-          path="/"
+          path="/landing"
           element={
             <div className="App">
               <Hero />
@@ -60,8 +60,8 @@ function AppContent() {
           }
         />
 
-        {/* Ruta para el Catálogo */}
-        <Route path="/catalog/*" element={<Catalog />} />
+        {/* Ruta principal: el catálogo */}
+        <Route path="/*" element={<Catalog />} />
 
         {/* Ruta de promociones: necesita carrito para "Añadir al carrito" */}
         <Route

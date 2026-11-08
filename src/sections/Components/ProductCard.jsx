@@ -146,7 +146,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
         {/* ── Imagen ── */}
         <Link
-          to={`/catalog/producto/${product.id}`}
+          to={`/producto/${product.id}`}
           onClick={() => {
             sessionStorage.setItem("scrollPosition", window.scrollY);
             if ("scrollRestoration" in window.history)

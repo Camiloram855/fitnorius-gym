@@ -328,7 +328,7 @@ const ScrollingHeader = () => {
         )}
 
         <Link
-          to="/catalog/login"
+          to="/login"
           className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
         >
           <User size={20} />
@@ -388,7 +388,7 @@ const ScrollingHeader = () => {
                   Total: ${total.toLocaleString()}
                 </p>
                 <Link
-                  to="/catalog/checkout"
+                  to="/checkout"
                   onClick={() => setShowCart(false)}
                   className="mt-3 inline-block w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
                 >

@@ -50,7 +50,7 @@ export default function CatalogSection() {
         {/* CTA Button */}
         <div className="flex justify-center">
           <Link
-            to="/catalog"
+            to="/"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 rounded-2xl shadow-lg shadow-purple-900/25 transition-all duration-300 ease-out hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/40 hover:from-purple-500 hover:via-purple-600 hover:to-purple-700 active:scale-95"

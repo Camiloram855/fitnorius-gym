@@ -76,7 +76,7 @@ export default function SearchSection() {
   };
 
   const handleProductClick = (id) => {
-    navigate(`/catalog/producto/${id}`);
+    navigate(`/producto/${id}`);
   };
 
   return (

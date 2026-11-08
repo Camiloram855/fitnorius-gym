@@ -19,8 +19,8 @@ function CatalogContent() {
   const { isAdmin } = useAuth(); // ← igual que CategoryCarousel
 
   const isSpecialPage =
-    location.pathname === "/catalog/login" ||
-    location.pathname === "/catalog/checkout";
+    location.pathname === "/login" ||
+    location.pathname === "/checkout";
 
   return (
     <div className="App">
@@ -42,7 +42,7 @@ function CatalogContent() {
       </Routes>
 
       {/* Panel admin del Raspa y Gana — solo visible si isAdmin */}
-      {isAdmin && location.pathname === "/catalog/checkout" && (
+      {isAdmin && location.pathname === "/checkout" && (
         <div className="max-w-7xl mx-auto px-4 pb-10">
           <ScratchAdminDashboard />
         </div>

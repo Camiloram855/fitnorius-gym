@@ -270,7 +270,7 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     setTimeout(() => setEmptyWarning(false), 2500);
     return;
   }
-  navigate("/catalog/checkout");
+  navigate("/checkout");
 };
 
   const handleChange = (e) => {
@@ -435,7 +435,7 @@ const handleReplaceImage = (thumb, file) => {
 
         {/* Volver */}
         <button
-          onClick={() => navigate("/catalog")}
+          onClick={() => navigate("/")}
           className="mb-6 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm"
         >
           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -797,7 +797,7 @@ const handleReplaceImage = (thumb, file) => {
                     <div
                       key={item.id}
                       onClick={() => {
-                        navigate(`/catalog/producto/${item.id}`);
+                        navigate(`/producto/${item.id}`);
                         const scrollToTop = () => window.scrollTo({ top: 0 });
                         [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
                       }}

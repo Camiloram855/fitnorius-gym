@@ -387,7 +387,7 @@ export default function PromoCarousel({ products, onSeeAll }) {
             <PromoCard
               key={`${product.id}-${index}`}
               product={product}
-              onView={() => navigate(`/catalog/producto/${product.id}`)}
+              onView={() => navigate(`/producto/${product.id}`)}
               onAdd={() =>
                 addToCart({
                   id: product.id,
