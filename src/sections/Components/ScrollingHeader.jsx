@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../api/client";
 import { Link } from "react-router-dom";
-import { User, ShoppingCart, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff, Tag } from "lucide-react";
-import { useCart } from "../../pages/CartContext";
+import { User, X, Pencil, Check, Plus, ImagePlus, Upload, EyeOff, Tag } from "lucide-react";
+
 import { useAuth } from "../../pages/AuthContext";
 import AdminPromoBanner from "../../components/AdminPromoBanner";
 import ModalShell from "../../components/ModalShell";
@@ -31,8 +31,8 @@ const ScrollingHeader = () => {
   const [promoSaving, setPromoSaving] = useState(false);
   const [promoDeleting, setPromoDeleting] = useState(false);
 
-  const { cartItems, removeFromCart } = useCart();
-  const [showCart, setShowCart] = useState(false);
+
+
 
   useEffect(() => {
     apiFetch(HEADER_MESSAGES_API)
@@ -239,17 +239,6 @@ const ScrollingHeader = () => {
     }
   };
 
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  const getImageUrl = (path) => {
-    if (!path) return "/placeholder.jpg";
-    if (path.startsWith("http")) return path;
-    return `${API_URL}/${path}`;
-  };
-
   return (
       <div className="w-full sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-700 text-white font-medium text-sm md:text-base h-12 flex items-center justify-between px-6 shadow-lg">
 
@@ -294,17 +283,7 @@ const ScrollingHeader = () => {
 
       {/* ICONOS */}
       <div className="flex items-center gap-3 relative z-[300]">
-        <button
-          onClick={() => setShowCart(!showCart)}
-          className="relative p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
-        >
-          <ShoppingCart size={20} />
-          {cartItems.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
-              {cartItems.length}
-            </span>
-          )}
-        </button>
+
 
         {isAdmin && (
           <>
@@ -334,70 +313,6 @@ const ScrollingHeader = () => {
           <User size={20} />
         </Link>
 
-        {showCart && (
-          <div className="absolute right-0 top-10 w-80 bg-white text-gray-800 rounded-xl shadow-2xl p-4 z-[999] border border-gray-200">
-
-            <div className="flex justify-between items-center mb-3 border-b pb-2">
-              <h3 className="text-lg font-bold text-purple-700">Tu carrito</h3>
-              <button
-                onClick={() => setShowCart(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {cartItems.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Tu carrito esta vacio.
-              </p>
-            ) : (
-              <div className="max-h-64 overflow-y-auto space-y-3">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 bg-purple-50 rounded-lg p-2 shadow-sm"
-                  >
-                    <img
-                      src={getImageUrl(item.image || item.imageUrl)}
-                      alt={item.name}
-                      className="w-12 h-12 object-cover rounded-md"
-                    />
-
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{item.name}</p>
-                      <p className="text-xs text-gray-600">
-                        {item.quantity} x ${item.price.toLocaleString()}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {cartItems.length > 0 && (
-              <div className="mt-4 border-t pt-3 text-right">
-                <p className="font-semibold text-purple-700">
-                  Total: ${total.toLocaleString()}
-                </p>
-                <Link
-                  to="/checkout"
-                  onClick={() => setShowCart(false)}
-                  className="mt-3 inline-block w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
-                >
-                  Finalizar compra
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
 {isAdmin && (

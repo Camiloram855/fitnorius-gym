@@ -5,6 +5,7 @@ import PromotionPopup from "../sections/Components/PromotionPopup";
 import { Footer } from "../Layout/Footer";
 import ScrollingHeader from "../sections/Components/ScrollingHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
+import FloatingCart from "../components/FloatingCart";
 
 import DetalleProduct from "./DetalleProduct";
 import Login from "./Login";
@@ -48,6 +49,7 @@ function CatalogContent() {
         </div>
       )}
 
+      {!isSpecialPage && <FloatingCart />}
       {!isSpecialPage && <WhatsAppButton />}
       {!isSpecialPage && <Footer />}
     </div>
