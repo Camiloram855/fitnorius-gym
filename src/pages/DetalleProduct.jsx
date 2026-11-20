@@ -7,6 +7,7 @@ import { useCart } from "./CartContext";
 import { useAuth } from "../pages/AuthContext";
 import FAQDOS from "../sections/FAQDOS";
 import ProductImage from "../components/ProductImage";
+import ProductImageModal from "../components/ProductImageModal";
 import { PLACEHOLDER_IMAGE, buildImageUrl } from "../utils/images";
 
 
@@ -152,6 +153,7 @@ const fetchProductData = useCallback(async (silent = false) => {
 
 function ProductDetailContent({ product, setProduct, recommended, addToCart, navigate, API_URL, refetch }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -481,12 +483,20 @@ const handleReplaceImage = (thumb, file) => {
                     setTouchEnd(null);
                   }}
                 >
-                  <ProductImage
-                  src={thumbs[selectedImageIndex]?.src}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  eager
-                />
+                  <button
+                    type="button"
+                    aria-label="Ampliar imagen del producto"
+                    onClick={() => setImageModalOpen(true)}
+                    disabled={thumbs.length === 0}
+                    className="h-full w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
+                  >
+                    <ProductImage
+                      src={thumbs[selectedImageIndex]?.src}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      eager
+                    />
+                  </button>
 
                 {product.agotado && (
                   <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
@@ -851,6 +861,16 @@ const handleReplaceImage = (thumb, file) => {
             </div>
           )}
 
+
+        {imageModalOpen && thumbs.length > 0 && (
+          <ProductImageModal
+            key={product.id}
+            images={thumbs}
+            title={product.name}
+            initialIndex={selectedImageIndex}
+            onClose={() => setImageModalOpen(false)}
+          />
+        )}
 
         {/* Modal eliminar y Toast aquí (idéntico a tu original, usando handleConfirmDelete) */}
         {showDeleteModal && (
