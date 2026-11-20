@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, ArrowUpRight, Trash2, X } from "lucide-react";
+
 import { useCart } from "../pages/CartContext";
 import ProductImage from "./ProductImage";
 import { buildImageUrl } from "../utils/images";
@@ -38,7 +39,7 @@ export default function FloatingCart() {
   }, [showCart]);
 
   return (
-    <div ref={containerRef} className="fixed bottom-[5.5rem] right-3 z-50 sm:bottom-28 sm:right-4">
+    <div ref={containerRef} className="fixed bottom-14 right-3 z-50 sm:bottom-[4.5rem] sm:right-4">
       <div className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
         <button
           ref={buttonRef}
@@ -47,11 +48,19 @@ export default function FloatingCart() {
           aria-expanded={showCart}
           aria-controls={showCart ? "floating-cart-panel" : undefined}
           onClick={() => setShowCart((open) => !open)}
-          className="relative flex h-16 w-16 items-center justify-center rounded-full border border-purple-300/60 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-700 text-white shadow-[0_6px_24px_rgba(88,28,135,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] hover:border-purple-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400 sm:h-20 sm:w-20"
+          className="relative isolate flex h-[38px] w-[38px] items-center justify-center rounded-[34%] border border-[#c879ff]/70 bg-[linear-gradient(145deg,#bc4bff_0%,#9114ed_36%,#6500cf_72%,#7900ef_100%)] text-white shadow-[0_5px_12px_rgba(27,0,68,0.5),0_0_18px_rgba(134,30,255,0.38),inset_0_1px_2px_rgba(255,255,255,0.65),inset_0_-1px_2px_rgba(189,82,255,0.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400 sm:h-[46px] sm:w-[46px]"
         >
-          <ShoppingCart className="h-8 w-8 sm:h-10 sm:w-10" strokeWidth={1.8} />
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"
+            className="h-7 w-7 drop-shadow-[0_2px_2px_rgba(48,0,110,0.25)] sm:h-8 sm:w-8">
+            <path d="M8 12h16c2.1 0 3.2 1.3 3.5 3.3l1.4 10.1C29.3 28 27.8 30 25 30H7c-2.8 0-4.3-2-3.9-4.6l1.4-10.1C4.8 13.3 5.9 12 8 12Z"
+              stroke="white" strokeWidth="2.6" strokeLinejoin="round" />
+            <path d="M10.5 16.5V9a5.5 5.5 0 0 1 11 0v7.5"
+              stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="10.5" cy="16.8" r="1.85" fill="white" />
+            <circle cx="21.5" cy="16.8" r="1.85" fill="white" />
+          </svg>
           {count > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-purple-600 bg-purple-100 px-1 text-[10px] font-extrabold tabular-nums text-purple-900">
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-[#ff7777]/70 bg-gradient-to-br from-[#ff3737] via-[#ff1010] to-[#dc0000] px-0.5 text-[10px] font-bold leading-none tabular-nums text-white shadow-[0_2px_5px_rgba(70,0,40,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] sm:h-[18px] sm:min-w-[18px] sm:text-[11px]">
               {count > 99 ? "99+" : count}
             </span>
           )}
