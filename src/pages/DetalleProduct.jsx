@@ -277,9 +277,11 @@ function ProductDetailContent({ product, setProduct, recommended, addToCart, nav
     const { name, value, files } = e.target;
 
     if (files) {
+      const selectedFiles = Array.from(files);
+      if (selectedFiles.length === 0) return;
       // Vaciar el input permite volver a elegir el mismo archivo después de quitarlo.
       e.target.value = "";
-      setFormData((prev) => ({ ...prev, [name]: [...(prev[name] || []), ...files] }));
+      setFormData((prev) => ({ ...prev, [name]: [...(prev[name] || []), ...selectedFiles] }));
       return;
     }
 
