@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, ArrowUpRight, Trash2, X } from "lucide-react";
+import { ShoppingCart, ArrowUpRight, ChevronUp, ChevronDown, Trash2, X } from "lucide-react";
 
 import { useCart } from "../pages/CartContext";
 import ProductImage from "./ProductImage";
@@ -12,7 +12,7 @@ const currency = (value) => Number(value).toLocaleString("es-CO", {
 });
 
 export default function FloatingCart() {
-  const { cartItems, removeFromCart } = useCart();
+  const { cartItems, removeFromCart, changeQuantity } = useCart();
   const [showCart, setShowCart] = useState(false);
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
@@ -108,7 +108,28 @@ export default function FloatingCart() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 break-words text-sm font-medium leading-snug text-white/90">{item.name}</p>
-                      <p className="mt-1 text-xs text-purple-200/80">{item.quantity} × {currency(item.price)}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <div role="group" aria-label={`Cantidad de ${item.name}`}
+                          className="inline-flex items-center overflow-hidden rounded-lg border border-purple-300/30 bg-purple-500/15">
+                          <span aria-live="polite" aria-atomic="true" className="min-w-8 px-2 text-center text-sm font-semibold tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <div className="flex flex-col border-l border-purple-300/20">
+                            <button type="button" aria-label={`Aumentar cantidad de ${item.name}`}
+                              onClick={() => changeQuantity(item.id, 1)}
+                              className="flex h-7 w-8 items-center justify-center text-purple-100 hover:bg-purple-400/25 focus-visible:bg-purple-400/30">
+                              <ChevronUp size={16} aria-hidden="true" />
+                            </button>
+                            <button type="button" aria-label={`Disminuir cantidad de ${item.name}`}
+                              disabled={item.quantity <= 1}
+                              onClick={() => changeQuantity(item.id, -1)}
+                              className="flex h-7 w-8 items-center justify-center border-t border-purple-300/20 text-purple-100 hover:bg-purple-400/25 focus-visible:bg-purple-400/30 disabled:cursor-not-allowed disabled:opacity-30">
+                              <ChevronDown size={16} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                        <span className="text-xs text-purple-200/80">× {currency(item.price)}</span>
+                      </div>
                       <p className="mt-1 text-sm font-semibold tabular-nums text-purple-200">{currency(item.price * item.quantity)}</p>
                     </div>
                     <button type="button" aria-label={`Eliminar ${item.name} del carrito`}
