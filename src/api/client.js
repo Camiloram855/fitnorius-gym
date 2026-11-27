@@ -1,4 +1,5 @@
 import API_URL from "../config";
+import { beginLoading, endLoading } from "./loadingBus";
 
 const API_BASE = API_URL.replace(/\/+$/, "");
 const REFRESH_HEADER = "X-Refresh-Request";
@@ -67,6 +68,7 @@ async function rawFetch(input, init = {}) {
 
   const requestInit = { ...init };
   delete requestInit.__authRetried;
+  delete requestInit.loading;
   return fetch(url, {
     ...requestInit,
     headers,
@@ -130,32 +132,45 @@ async function refreshSession() {
  * El access token nunca se guarda en localStorage/sessionStorage.
  */
 export async function apiFetch(input, init = {}) {
-  const hadAccessToken = Boolean(accessToken);
-  const response = await rawFetch(input, init);
+  // El loader global solo responde a lecturas de contenido. Las mutaciones
+  // (guardar, subir imágenes, login) ya muestran su propio estado en la UI.
+  const trackLoading =
+    String(init.method || "GET").toUpperCase() === "GET"
+    && init.loading !== false
+    && !isAuthEndpoint(input);
 
-  const canRetry = response.status === 401
-    && hadAccessToken
-    && isApiUrl(input)
-    && !isAuthEndpoint(input)
-    && !init.__authRetried;
-
-  if (!canRetry) {
-    return response;
-  }
+  if (trackLoading) beginLoading();
 
   try {
-    const refreshedUser = await refreshSession();
-    if (!refreshedUser && !getAccessToken()) {
-      notifySessionExpired();
+    const hadAccessToken = Boolean(accessToken);
+    const response = await rawFetch(input, init);
+
+    const canRetry = response.status === 401
+      && hadAccessToken
+      && isApiUrl(input)
+      && !isAuthEndpoint(input)
+      && !init.__authRetried;
+
+    if (!canRetry) {
       return response;
     }
-  } catch {
-    return response;
-  }
 
-  const retryHeaders = new Headers(init.headers || {});
-  addAuthorization(retryHeaders);
-  return rawFetch(input, { ...init, headers: retryHeaders, __authRetried: true });
+    try {
+      const refreshedUser = await refreshSession();
+      if (!refreshedUser && !getAccessToken()) {
+        notifySessionExpired();
+        return response;
+      }
+    } catch {
+      return response;
+    }
+
+    const retryHeaders = new Headers(init.headers || {});
+    addAuthorization(retryHeaders);
+    return rawFetch(input, { ...init, headers: retryHeaders, __authRetried: true });
+  } finally {
+    if (trackLoading) endLoading();
+  }
 }
 
 export async function login(username, password) {

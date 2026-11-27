@@ -12,6 +12,7 @@ import FeaturesSection from "./sections/FeaturesSection";
 import FAQ from "./sections/FAQ";
 import CatalogSection from "./sections/CatalogSection";
 import WhatsAppButton from "./components/WhatsAppButton";
+import { LoadingProvider } from "./components/GlobalLoader";
 import { Footer } from "./Layout/Footer";
 
 // Página independiente
@@ -80,7 +81,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <LoadingProvider>
+        <AppContent />
+      </LoadingProvider>
     </Router>
   );
 }

@@ -38,3 +38,38 @@ html, body {
     top: 80%;
   }
 }
+
+/* ====== LOADER GLOBAL CON EL LOGO ====== */
+@keyframes fitnorios-logo-pulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes fitnorios-loader-shimmer {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(330%); }
+}
+
+.fitnorios-loader-logo {
+  animation: fitnorios-logo-pulse 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.35));
+  will-change: transform, opacity;
+}
+
+.fitnorios-loader-bar {
+  animation: fitnorios-loader-shimmer 1.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fitnorios-loader-logo,
+  .fitnorios-loader-bar {
+    animation: none;
+  }
+}

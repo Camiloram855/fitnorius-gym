@@ -1,6 +1,7 @@
 import React, { useState, Suspense, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import PurchaseButton from "../components/ui/PurchaseButton";
+import { LoaderLogo } from "../components/GlobalLoader";
 
 // ✅ Carga diferida de CatalogSection
 const CatalogSection = React.lazy(() => import("../sections/CatalogSection"));
@@ -297,7 +298,7 @@ export function KitsSection() {
         <PurchaseButton />
         <br />
 
-        <Suspense fallback={<div className="text-white text-center">Cargando catálogo...</div>}>
+        <Suspense fallback={<LoaderLogo compact />}>
           <CatalogSection />
         </Suspense>
       </section>
