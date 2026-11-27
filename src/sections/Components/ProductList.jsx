@@ -49,7 +49,8 @@ const ProductList = ({ category }) => {
     if (!category?.id) return;
     try {
       const endpoint = `${API_BASE_URL}/api/products/category/${category.id}`;
-      const res = await apiFetch(endpoint);
+      // Cambio de categoría: la lista se actualiza sola, sin loader global.
+      const res = await apiFetch(endpoint, { loading: false });
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
       setProducts(data);

@@ -43,10 +43,12 @@ export default function SearchSection() {
     setError(null);
 
     try {
+      // La búsqueda tiene su propio indicador; no debe tapar toda la página.
       const response = await apiFetch(
         `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(
           trimmedQuery
-        )}`
+        )}`,
+        { loading: false }
       );
 
       if (!response.ok) throw new Error("Error al buscar productos");
