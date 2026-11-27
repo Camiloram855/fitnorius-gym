@@ -1,3 +1,4 @@
+import BannerCrossfade from "../../components/BannerCrossfade";
 import GradientBlinds from "../../components/backgrounds/GradientBlinds";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../api/client";
@@ -141,11 +142,7 @@ export default function HeroBanner({ image }) {
       <section className="relative overflow-hidden w-full bg-neutral-950">
         <div className="relative w-full aspect-[8/3] bg-neutral-950">
           {finalImage && (
-            <img
-              src={finalImage}
-              alt={`Banner ${currentIndex + 1}`}
-              className="absolute inset-0 w-full h-full object-contain"
-            />
+            <BannerCrossfade src={finalImage} alt={`Banner ${currentIndex + 1}`} />
           )}
 
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent" />

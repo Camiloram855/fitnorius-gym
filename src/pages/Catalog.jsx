@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+import { LoaderLogo } from "../components/GlobalLoader";
 // src/pages/Catalog.jsx
 import { Routes, Route, useLocation } from "react-router-dom";
 import HeroBanner from "../sections/Components/HeroBanner";
@@ -7,12 +9,12 @@ import ScrollingHeader from "../sections/Components/ScrollingHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
 import FloatingCart from "../components/FloatingCart";
 
-import DetalleProduct from "./DetalleProduct";
-import Login from "./Login";
-import Checkout from "./Checkout";
+const DetalleProduct = lazy(() => import("./DetalleProduct"));
+const Login = lazy(() => import("./Login"));
+const Checkout = lazy(() => import("./Checkout"));
 import { CartProvider } from "./CartContext";
 import { AuthProvider, useAuth } from "./AuthContext";
-import ScratchAdminDashboard from "./ScratchAdminDashboard"; // ← nuevo
+const ScratchAdminDashboard = lazy(() => import("./ScratchAdminDashboard"));
 
 // Componente interno que ya tiene acceso al AuthContext
 function CatalogContent() {
@@ -28,6 +30,7 @@ function CatalogContent() {
       {!isSpecialPage && <ScrollingHeader />}
       {!isSpecialPage && <PromotionPopup />}
 
+      <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><LoaderLogo /></div>}>
       <Routes>
         <Route
           path="/"
@@ -41,11 +44,12 @@ function CatalogContent() {
         <Route path="login" element={<Login />} />
         <Route path="checkout" element={<Checkout />} />
       </Routes>
+      </Suspense>
 
       {/* Panel admin del Raspa y Gana — solo visible si isAdmin */}
       {isAdmin && location.pathname === "/checkout" && (
         <div className="max-w-7xl mx-auto px-4 pb-10">
-          <ScratchAdminDashboard />
+          <Suspense fallback={<LoaderLogo compact />}><ScratchAdminDashboard /></Suspense>
         </div>
       )}
 

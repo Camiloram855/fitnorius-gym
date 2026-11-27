@@ -2,10 +2,8 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 import {
   beginLoading,
   endLoading,
@@ -13,13 +11,6 @@ import {
 } from "../api/loadingBus";
 
 const LoadingContext = createContext(null);
-
-// Anti-parpadeo mínimo: si la petición termina antes, el loader no se ve.
-const SHOW_DELAY_MS = 60;
-
-// Tope de permanencia: aunque queden peticiones secundarias pendientes, el
-// loader se retira para no retrasar la interacción del usuario.
-const MAX_VISIBLE_MS = 700;
 
 /**
  * Vista del loader. Se usa a pantalla completa y también dentro de una
@@ -53,78 +44,19 @@ export function LoaderLogo({ compact = false }) {
 export function LoadingProvider({ children }) {
   const [activeCount, setActiveCount] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const delayRef = useRef(null);
-  const capRef = useRef(null);
-  const suppressedRef = useRef(false);
-
+  const busy = activeCount > 0;
   useEffect(() => subscribeToLoading(setActiveCount), []);
-
   useEffect(() => {
-    if (activeCount > 0) {
-      // Ya se mostró en esta tanda: una petición secundaria lenta no debe
-      // volver a tapar la página.
-      if (suppressedRef.current) return;
-
-      if (delayRef.current === null) {
-        delayRef.current = window.setTimeout(() => {
-          delayRef.current = null;
-          setVisible(true);
-          capRef.current = window.setTimeout(() => {
-            capRef.current = null;
-            suppressedRef.current = true;
-            setVisible(false);
-          }, MAX_VISIBLE_MS);
-        }, SHOW_DELAY_MS);
-      }
-      return;
-    }
-
-    suppressedRef.current = false;
-    if (delayRef.current !== null) {
-      window.clearTimeout(delayRef.current);
-      delayRef.current = null;
-    }
-    if (capRef.current !== null) {
-      window.clearTimeout(capRef.current);
-      capRef.current = null;
-    }
-    setVisible(false);
-  }, [activeCount]);
-
-  useEffect(() => {
-    if (visible) {
-      setMounted(true);
-    }
-  }, [visible]);
-
-  useEffect(() => () => {
-    if (delayRef.current !== null) window.clearTimeout(delayRef.current);
-    if (capRef.current !== null) window.clearTimeout(capRef.current);
-  }, []);
-
+    const timer = window.setTimeout(() => setVisible(busy), busy ? 180 : 120);
+    return () => window.clearTimeout(timer);
+  }, [busy]);
   return (
-    <LoadingContext.Provider value={{ isLoading: visible }}>
+    <LoadingContext.Provider value={{ isLoading: busy }}>
       {children}
-
-      {mounted && createPortal(
-        <div
-          role="status"
-          aria-live="polite"
-          aria-label="Cargando FitnoriosGYM"
-          aria-hidden={!visible}
-          onTransitionEnd={(event) => {
-            if (event.target === event.currentTarget && !visible) {
-              setMounted(false);
-            }
-          }}
-          className={`pointer-events-none fixed inset-0 z-[10000] flex items-center justify-center bg-gradient-to-br from-black via-gray-950 to-purple-950 transition-opacity duration-150 ease-out motion-reduce:transition-none motion-reduce:duration-0 ${
-            visible ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <LoaderLogo />
-        </div>,
-        document.body
+      {visible && (
+        <div role="status" aria-label="Cargando contenido" className="pointer-events-none fixed inset-x-0 top-0 z-[10000] h-1 overflow-hidden bg-purple-950/30">
+          <div className="h-full w-1/3 rounded-full bg-purple-400 fitnorios-loader-bar motion-reduce:animate-none" />
+        </div>
       )}
     </LoadingContext.Provider>
   );

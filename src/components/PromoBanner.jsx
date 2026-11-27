@@ -66,8 +66,8 @@ export default function PromoBanner() {
   return (
     <section className="w-full px-4 pb-10 pt-1 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <div
-          className="relative isolate min-h-[120px] overflow-hidden rounded-3xl border border-fuchsia-500/25 bg-gradient-to-br from-purple-800 via-fuchsia-700 to-rose-700 shadow-2xl shadow-fuchsia-950/40"
+        <Link to="/promociones" aria-label="Ver todas las promociones"
+          className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-300 relative isolate min-h-[120px] overflow-hidden rounded-3xl border border-fuchsia-500/25 bg-gradient-to-br from-purple-800 via-fuchsia-700 to-rose-700 shadow-2xl shadow-fuchsia-950/40"
           style={{ aspectRatio: ratio }}
         >
           {imageSrc && (
@@ -84,17 +84,16 @@ export default function PromoBanner() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
           <div className="relative flex h-full items-end p-4 sm:p-6">
-            <Link
-              to="/promociones"
+            <span
               className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-xs font-black text-fuchsia-700 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:gap-2 sm:px-6 sm:py-3 sm:text-sm"
             >
               <Tag size={14} className="shrink-0 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Ver todas las </span>
               <span className="hidden sm:inline">promociones</span>
               <span className="sm:hidden">Promociones</span>
-            </Link>
+            </span>
           </div>
-        </div>
+        </Link>
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../api/client";
 import ProductCard from "./ProductCard";
 import { GripVertical, Plus } from "lucide-react";
@@ -20,6 +20,9 @@ const moveItem = (list, from, to) => {
 
 const ProductList = ({ category }) => {
   const [products, setProducts] = useState([]);
+  const [loadState, setLoadState] = useState({ categoryId: null, status: "loading" });
+  const requestRef = useRef(0);
+  const categoryId = category?.id;
   const [showProductForm, setShowProductForm] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [overId, setOverId] = useState(null);
@@ -45,24 +48,31 @@ const ProductList = ({ category }) => {
     setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
   };
 
-  const loadProducts = async () => {
-    if (!category?.id) return;
+  const loadProducts = useCallback(async () => {
+    if (!categoryId) return;
+    const request = ++requestRef.current;
+    setLoadState({ categoryId, status: "loading" });
     try {
-      const endpoint = `${API_BASE_URL}/api/products/category/${category.id}`;
+      const endpoint = `${API_BASE_URL}/api/products/category/${categoryId}`;
       // Cambio de categoría: la lista se actualiza sola, sin loader global.
       const res = await apiFetch(endpoint, { loading: false });
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Respuesta de productos inválida");
+      if (request !== requestRef.current) return;
       setProducts(data);
+      setLoadState({ categoryId, status: "ready" });
     } catch (err) {
       console.error("Error cargando productos:", err);
-      Swal.fire("Error", "No se pudieron cargar los productos.", "error");
+      if (request !== requestRef.current) return;
+      setLoadState({ categoryId, status: "error" });
     }
-  };
+  }, [categoryId]);
 
   useEffect(() => {
     loadProducts();
-  }, [category]);
+    return () => { requestRef.current += 1; };
+  }, [loadProducts]);
 
   const persistOrder = async (orderedProducts) => {
     const orderedIds = orderedProducts.map((p) => p.id);
@@ -267,6 +277,27 @@ const ProductList = ({ category }) => {
   useEffect(() => {
     return () => stopAutoScroll();
   }, []);
+
+  if (loadState.categoryId !== categoryId || loadState.status === "loading") {
+    return (
+      <div className="mt-6" role="status" aria-label="Cargando productos" aria-busy="true">
+        <p className="mb-4 text-sm text-purple-200">Cargando productos…</p>
+        <div aria-hidden="true" className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => <div key={item} className="min-h-[300px] rounded-2xl border border-white/10 bg-white/5 animate-pulse motion-reduce:animate-none">
+            <div className="aspect-square rounded-t-2xl bg-white/10" />
+            <div className="m-4 h-4 w-2/3 rounded bg-white/10" />
+            <div className="m-4 h-8 rounded bg-purple-400/10" />
+          </div>)}
+        </div>
+      </div>
+    );
+  }
+  if (loadState.status === "error") {
+    return <div role="alert" className="my-8 rounded-2xl border border-purple-300/20 p-8 text-center">
+      <p>No pudimos cargar los productos.</p>
+      <button type="button" onClick={loadProducts} className="mt-4 rounded-full bg-purple-600 px-5 py-2 text-white">Reintentar</button>
+    </div>;
+  }
 
   return (
     <div className="mt-6">

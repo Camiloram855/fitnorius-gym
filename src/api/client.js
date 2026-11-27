@@ -1,3 +1,4 @@
+import { createRequestPool } from "./requestPool.js";
 import API_URL from "../config";
 import { beginLoading, endLoading } from "./loadingBus";
 
@@ -5,6 +6,7 @@ const API_BASE = API_URL.replace(/\/+$/, "");
 const REFRESH_HEADER = "X-Refresh-Request";
 const SESSION_EXPIRED_EVENT = "fitnorius:session-expired";
 
+const requestPool = createRequestPool();
 let accessToken = null;
 let refreshPromise = null;
 
@@ -39,6 +41,7 @@ function notifySessionExpired() {
 }
 
 function setAccessToken(token) {
+  requestPool.clear();
   accessToken = typeof token === "string" && token.length > 0 ? token : null;
 }
 
@@ -131,42 +134,36 @@ async function refreshSession() {
  * cuando existe y renueva una sola vez ante un 401 de una petición protegida.
  * El access token nunca se guarda en localStorage/sessionStorage.
  */
-// Peticiones GET en vuelo. Varios componentes piden lo mismo al montarse
-// (por ejemplo /api/promotion-popup); compartir la petición evita duplicar
-// trabajo en el backend y acorta la espera. No se guarda ninguna respuesta:
-// en cuanto termina, se olvida.
-const inFlightGets = new Map();
+// Only presentation metadata is cached; prices, stock and account data stay fresh.
+const PRESENTATION_PATHS = new Set(["/api/categories", "/api/banner/all", "/api/promo-banner", "/api/promotion-popup"]);
 
-export function apiFetch(input, init = {}) {
+export async function apiFetch(input, init = {}) {
   const method = String(init.method || "GET").toUpperCase();
-  const key = `${method}:${resolveUrl(input)}:${init.loading === false ? "silent" : ""}`;
-
-  let shared = inFlightGets.get(key);
-  if (!shared) {
-    shared = performApiFetch(input, init);
-    if (method === "GET") {
-      inFlightGets.set(key, shared);
-      const forget = () => inFlightGets.delete(key);
-      shared.then(forget, forget);
+  const isGet = method === "GET";
+  const track = isGet && init.loading !== false && !isAuthEndpoint(input);
+  if (track) beginLoading();
+  const mutation = !isGet && method !== "HEAD";
+  if (mutation) requestPool.clear();
+  try {
+    // Aborted requests belong to their caller and must never cancel a shared fetch.
+    if (!isGet || init.signal || typeof input !== "string" || (init.cache && init.cache !== "default")) {
+      return await performApiFetch(input, init);
     }
+    const { loading: _loading, ...options } = init;
+    void _loading;
+    const headers = [...new Headers(init.headers).entries()].sort(([a], [b]) => a.localeCompare(b));
+    const key = JSON.stringify([resolveUrl(input), options, headers, accessToken]);
+    const path = String(resolveUrl(input)).slice(API_BASE.length);
+    const ttl = !accessToken && !init.headers && init.credentials !== "include"
+      && isApiUrl(input) && PRESENTATION_PATHS.has(path) ? 30000 : 0;
+    return await requestPool.get(key, () => performApiFetch(input, init), ttl);
+  } finally {
+    if (mutation) requestPool.clear();
+    if (track) endLoading();
   }
-
-  // Cada llamador necesita su propia Response: si dos hicieran json() sobre
-  // la misma, el segundo fallaría porque el cuerpo ya fue consumido.
-  return method === "GET" ? shared.then((response) => response.clone()) : shared;
 }
 
 async function performApiFetch(input, init = {}) {
-  // El loader global solo responde a lecturas de contenido. Las mutaciones
-  // (guardar, subir imágenes, login) ya muestran su propio estado en la UI.
-  const trackLoading =
-    String(init.method || "GET").toUpperCase() === "GET"
-    && init.loading !== false
-    && !isAuthEndpoint(input);
-
-  if (trackLoading) beginLoading();
-
-  try {
     const hadAccessToken = Boolean(accessToken);
     const response = await rawFetch(input, init);
 
@@ -193,9 +190,6 @@ async function performApiFetch(input, init = {}) {
     const retryHeaders = new Headers(init.headers || {});
     addAuthorization(retryHeaders);
     return rawFetch(input, { ...init, headers: retryHeaders, __authRetried: true });
-  } finally {
-    if (trackLoading) endLoading();
-  }
 }
 
 export async function login(username, password) {

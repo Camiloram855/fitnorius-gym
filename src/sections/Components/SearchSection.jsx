@@ -82,14 +82,14 @@ export default function SearchSection() {
   };
 
   return (
-    <section className="py-16">
+    <section className="py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             ¿Qué estás buscando?
           </h2>
           <p className="text-gray-300 text-lg">
-            Encuentra exactamente lo que necesitas en nuestra amplia selección
+            Encuentra lo que necesitas en nuestra amplia selección
           </p>
         </div>
 
