@@ -131,7 +131,32 @@ async function refreshSession() {
  * cuando existe y renueva una sola vez ante un 401 de una petición protegida.
  * El access token nunca se guarda en localStorage/sessionStorage.
  */
-export async function apiFetch(input, init = {}) {
+// Peticiones GET en vuelo. Varios componentes piden lo mismo al montarse
+// (por ejemplo /api/promotion-popup); compartir la petición evita duplicar
+// trabajo en el backend y acorta la espera. No se guarda ninguna respuesta:
+// en cuanto termina, se olvida.
+const inFlightGets = new Map();
+
+export function apiFetch(input, init = {}) {
+  const method = String(init.method || "GET").toUpperCase();
+  const key = `${method}:${resolveUrl(input)}:${init.loading === false ? "silent" : ""}`;
+
+  let shared = inFlightGets.get(key);
+  if (!shared) {
+    shared = performApiFetch(input, init);
+    if (method === "GET") {
+      inFlightGets.set(key, shared);
+      const forget = () => inFlightGets.delete(key);
+      shared.then(forget, forget);
+    }
+  }
+
+  // Cada llamador necesita su propia Response: si dos hicieran json() sobre
+  // la misma, el segundo fallaría porque el cuerpo ya fue consumido.
+  return method === "GET" ? shared.then((response) => response.clone()) : shared;
+}
+
+async function performApiFetch(input, init = {}) {
   // El loader global solo responde a lecturas de contenido. Las mutaciones
   // (guardar, subir imágenes, login) ya muestran su propio estado en la UI.
   const trackLoading =
