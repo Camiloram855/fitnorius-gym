@@ -1,6 +1,6 @@
 // ProductDetail.jsx (completo, Cloudinary-ready)
 import { useParams, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "../api/client";
 import API_URL from "../config";
 import { useCart } from "./CartContext";
@@ -51,35 +51,22 @@ export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [recommended, setRecommended] = useState([]);
+  const [recommendationsReadyFor, setRecommendationsReadyFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      try {
-        window.history.scrollRestoration = "manual";
-      } catch (error) {
-        void error;
-      }
-    }
-    return () => {
-      if ("scrollRestoration" in window.history) {
-        try {
-          window.history.scrollRestoration = "auto";
-        } catch (error) {
-          void error;
-        }
-      }
-    };
-  }, []);
+  const requestRef = useRef(0);
 
 const fetchProductData = useCallback(async (silent = false) => {
+  const request = ++requestRef.current;
   if (!silent) setLoading(true);
 
   try {
-    const res = await apiFetch(`${API_URL}/api/products/${id}`);
+    const res = await apiFetch(`${API_URL}/api/products/${id}`, { loading: false });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
     const data = await res.json();
+    if (request !== requestRef.current) return;
 
     const rawImages = Array.isArray(data.images)
       ? data.images
@@ -100,32 +87,39 @@ const fetchProductData = useCallback(async (silent = false) => {
       description: data.description ? String(data.description) : "Sin descripción disponible",
     });
 
-    const recRes = await apiFetch(`${API_URL}/api/products`);
-    const recData = await recRes.json();
-
-    setRecommended(
-      recData.filter((p) => p.id !== parseInt(id)).slice(0, 5)
-    );
 
   } catch (err) {
+    if (request !== requestRef.current) return;
+    if (!silent) setProduct(null);
     console.error("Error cargando datos:", err);
   } finally {
-    if (!silent) setLoading(false);
+    if (!silent && request === requestRef.current) setLoading(false);
   }
 }, [id]);
 
 
   useEffect(() => {
     fetchProductData();
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
-    scrollToTop();
-    const timers = [100, 300, 600].map((t) => setTimeout(scrollToTop, t));
-    return () => timers.forEach(clearTimeout);
+    return () => { requestRef.current += 1; };
   }, [id, fetchProductData]);
 
-  // Mismo loader que el global: cuando la capa global se desvanece, aquí
-  // continúa el idéntico logo pulsando, sin cambio de efecto.
-  if (loading)
+  useEffect(() => {
+    let cancelled = false;
+    setRecommended([]);
+    apiFetch(`${API_URL}/api/products`, { loading: false })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        if (!cancelled) setRecommended(Array.isArray(data) ? data.filter((item) => String(item.id) !== String(id)).slice(0, 5) : []);
+      })
+      .catch((error) => { if (!cancelled) console.error("Error cargando recomendaciones:", error); })
+      .finally(() => { if (!cancelled) setRecommendationsReadyFor(id); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (loading || recommendationsReadyFor !== id || (product && String(product.id) !== String(id)))
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
         <LoaderLogo />
@@ -141,6 +135,7 @@ const fetchProductData = useCallback(async (silent = false) => {
 
   return (
     <ProductDetailContent
+      key={product.id}
       product={product}
       setProduct={setProduct}
       recommended={recommended}
@@ -811,8 +806,6 @@ const handleReplaceImage = (thumb, file) => {
                       key={item.id}
                       onClick={() => {
                         navigate(`/producto/${item.id}`);
-                        const scrollToTop = () => window.scrollTo({ top: 0 });
-                        [50, 200, 400].forEach((t) => setTimeout(scrollToTop, t));
                       }}
                       className="flex-shrink-0 w-[170px] sm:w-[210px] cursor-pointer group"
                       style={{ scrollSnapAlign: "start" }}

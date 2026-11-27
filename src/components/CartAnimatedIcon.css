@@ -1,8 +1,20 @@
-.cart-animated-icon { display: block; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; background: white; }
-.cart-animated-icon__gif, .cart-animated-icon__still { display: block; width: 100%; height: 100%; object-fit: contain; }
-.cart-animated-icon__gif { filter: hue-rotate(100deg) saturate(1.5); }
-.cart-animated-icon__still--hidden { display: none; }
+.cart-animated-icon { display: block; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; overflow: hidden; }
+.cart-animated-icon svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 2px #30006e40); }
+.cart-falling-weight { opacity: 0; }
+.cart-animated-icon--added .cart-falling-weight { animation: cart-weight-drop 850ms cubic-bezier(.45,0,.7,.5) both; }
+.cart-animated-icon--added .cart-falling-weight--1 { animation-delay: 380ms; }
+.cart-animated-icon--added .cart-bag-body { transform-origin: 24px 40px; animation: cart-bag-catch 1350ms ease-out both; }
+@keyframes cart-weight-drop {
+  0% { opacity: 0; transform: translateY(-7px) rotate(-25deg); }
+  14% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(33px) rotate(18deg); }
+}
+@keyframes cart-bag-catch {
+  0%, 35%, 64%, 100% { transform: translateY(0) scale(1); }
+  47%, 79% { transform: translateY(1.5px) scale(1.04,.94); }
+  56%, 91% { transform: translateY(-.6px) scale(.99,1.02); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .cart-animated-icon__gif { display: none; }
-  .cart-animated-icon__still--hidden { display: block; }
+  .cart-animated-icon--added .cart-falling-weight, .cart-animated-icon--added .cart-bag-body { animation: none; }
 }

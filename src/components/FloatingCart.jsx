@@ -50,11 +50,11 @@ export default function FloatingCart() {
           aria-expanded={showCart}
           aria-controls={showCart ? "floating-cart-panel" : undefined}
           onClick={() => setShowCart((open) => !open)}
-          className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-300 bg-white shadow-[0_4px_18px_rgba(147,51,234,0.4)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400 sm:h-14 sm:w-14"
+          className="relative isolate flex h-[42px] w-[42px] items-center justify-center rounded-[34%] border border-[#d89aff]/80 bg-[linear-gradient(145deg,#bc4bff_0%,#9114ed_36%,#6500cf_72%,#7900ef_100%)] text-white shadow-[0_5px_12px_rgba(27,0,68,0.5),0_0_18px_rgba(134,30,255,0.38),inset_0_1px_2px_rgba(255,255,255,0.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400 sm:h-[48px] sm:w-[48px]"
         >
           <CartAnimatedIcon key={`cart-icon-${cartAddition}`} addition={cartAddition} />
           {count > 0 && (
-            <span key={`cart-count-${cartAddition}`} aria-hidden="true" className="floating-cart-count pointer-events-none absolute -right-2 -top-2 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border border-[#ff7777]/70 bg-gradient-to-br from-[#ff3737] via-[#ff1010] to-[#dc0000] px-1 text-xs font-bold leading-none tabular-nums text-white shadow-[0_2px_5px_rgba(70,0,40,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] sm:h-[26px] sm:min-w-[26px] sm:text-sm">
+            <span key={`cart-count-${cartAddition}`} aria-hidden="true" className="floating-cart-count pointer-events-none absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#ff7777]/70 bg-gradient-to-br from-[#ff3737] via-[#ff1010] to-[#dc0000] px-1 text-[11px] font-bold leading-none tabular-nums text-white shadow-[0_2px_5px_rgba(70,0,40,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] sm:h-[22px] sm:min-w-[22px] sm:text-xs">
               {count > 99 ? "99+" : count}
             </span>
           )}

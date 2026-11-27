@@ -1,6 +1,6 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 // Secciones
 import Hero from "./sections/Hero";
@@ -10,7 +10,6 @@ import { PaymentMethods } from "./Layout/PaymentMethods";
 import ShippingSection from "./sections/ShippingSection";
 import FeaturesSection from "./sections/FeaturesSection";
 import FAQ from "./sections/FAQ";
-import CatalogSection from "./sections/CatalogSection";
 import WhatsAppButton from "./components/WhatsAppButton";
 import { LoadingProvider } from "./components/GlobalLoader";
 import { Footer } from "./Layout/Footer";
@@ -25,12 +24,12 @@ function ScrollToTopOnRouteChange() {
   
   const { pathname } = useLocation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
 
   return null;
