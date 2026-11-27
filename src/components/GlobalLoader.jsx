@@ -118,7 +118,7 @@ export function LoadingProvider({ children }) {
               setMounted(false);
             }
           }}
-          className={`pointer-events-none fixed inset-0 z-[10000] flex items-center justify-center bg-gradient-to-br from-black via-gray-950 to-purple-950 backdrop-blur-sm transition-opacity duration-150 ease-out motion-reduce:transition-none motion-reduce:duration-0 ${
+          className={`pointer-events-none fixed inset-0 z-[10000] flex items-center justify-center bg-gradient-to-br from-black via-gray-950 to-purple-950 transition-opacity duration-150 ease-out motion-reduce:transition-none motion-reduce:duration-0 ${
             visible ? "opacity-100" : "opacity-0"
           }`}
         >
