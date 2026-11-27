@@ -1,3 +1,4 @@
+import GradientBlinds from "../../components/backgrounds/GradientBlinds";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../api/client";
 import API_URL from "../../config";
@@ -147,10 +148,15 @@ export default function HeroBanner({ image }) {
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20 pointer-events-none" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent" />
+          {/* Shared black edge joins the image to the animated catalog background. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[20%] bg-gradient-to-b from-black/0 via-black/20 to-black sm:h-[18%]"
+          />
 
           {bannerItems.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 flex gap-2">
               {bannerItems.map((_, idx) => (
                 <button
                   key={idx}
@@ -253,7 +259,29 @@ export default function HeroBanner({ image }) {
         </div>
       )}
 
-      <section className="relative z-10 bg-gradient-to-br from-purple-700 to-black-900 to-black">
+      <section className="relative isolate z-10 min-h-[600px] bg-gradient-to-br from-purple-950 to-black">
+        {/* El fondo ocupa toda la sección hasta el inicio del footer. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0">
+            <GradientBlinds
+              gradientColors={['#FF9FFC', '#5227FF']}
+              angle={20}
+              blindCount={16}
+              blindMinWidth={60}
+              spotlightRadius={0.5}
+              shine={0.4}
+              relief={0.5}
+              glow={0.4}
+              sway={0.35}
+              hoverTilt={0.6}
+              clickEffect="ripple"
+              noise={0.3}
+              dpr={1}
+            />
+            <div className="absolute inset-0 bg-black/25" />
+            <div className="absolute inset-x-0 top-0 h-[7.5vw] bg-gradient-to-b from-black via-black/80 to-black/0 sm:h-[6.75vw]" />
+          </div>
+        </div>
         <div>
           <SearchSection />
           <div>

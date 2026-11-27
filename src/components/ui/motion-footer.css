@@ -1,0 +1,19 @@
+.motion-footer { position: relative; width: 100%; isolation: isolate; }
+.motion-footer--curtain { clip-path: inset(0); }
+.motion-footer__panel { position: relative; overflow: hidden; min-height: 600px; width: 100%; padding: 100px 0 32px; background: #10091d; color: white; }
+.motion-footer--curtain .motion-footer__panel { position: fixed; bottom: 0; left: 0; }
+.motion-footer__glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, #7e22ce50, transparent 65%); }
+.motion-footer__grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg,#ffffff05 1px,transparent 1px); background-size: 60px 60px; }
+.motion-footer__word { position: absolute; bottom: -15px; left: 0; width: 100%; text-align: center; font-size: 17vw; font-weight: 900; line-height: 1; letter-spacing: -.06em; color: #ffffff05; -webkit-text-stroke: 1px #c084fc18; pointer-events: none; }
+.motion-footer__content { position: relative; z-index: 1; }
+.motion-footer__heading { margin: 0 auto 48px; padding: 0 24px; max-width: 960px; text-align: center; font-size: clamp(2rem, 4.5vw, 4.5rem); font-weight: 900; letter-spacing: -.04em; line-height: 1.1; text-wrap: balance; }
+.motion-footer__marquee { position: absolute; top: 24px; left: -5%; width: 110%; transform: rotate(-2deg); overflow: hidden; border-block: 1px solid #c084fc30; padding: 12px 0; background: #170d26; color: #d8b4fe; font-size: 12px; font-weight: 700; letter-spacing: .2em; }
+.motion-footer__marquee > div { display: flex; width: max-content; animation: motion-footer-marquee 35s linear infinite; }
+.motion-footer__marquee span { flex: none; padding-right: 40px; white-space: nowrap; }
+.motion-footer__bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; max-width: 1280px; margin: 40px auto 0; padding: 0 24px; color: #c4b5d4; font-size: 12px; }
+.motion-footer__top { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c084fc50; background: #ffffff08; border-radius: 999px; padding: 12px 20px; transition: background .2s, transform .2s; }
+.motion-footer__top:hover { background: #9333ea40; transform: translateY(-3px); }
+.motion-footer__top:focus-visible { outline: 2px solid #c084fc; outline-offset: 4px; }
+@keyframes motion-footer-marquee { to { transform: translateX(-50%); } }
+@media (max-width: 767px) { .motion-footer__heading { margin-bottom: 32px; } .motion-footer__bottom { padding-right: 100px; } }
+@media (prefers-reduced-motion: reduce) { .motion-footer *, .motion-footer *::before { animation: none !important; transition: none !important; } }

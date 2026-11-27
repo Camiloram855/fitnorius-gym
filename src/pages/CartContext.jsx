@@ -6,12 +6,14 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [cartAddition, setCartAddition] = useState(0);
 
   const addToCart = (product) => {
     if (!product || product.agotado) {
       return;
     }
 
+    setCartAddition((value) => value + 1);
     const quantity = Math.max(1, Math.trunc(Number(product.quantity) || 1));
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
@@ -38,7 +40,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => setCartItems([]);
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, changeQuantity, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cartItems, cartAddition, addToCart, changeQuantity, removeFromCart, clearCart }}>
       {children}
     </CartContext.Provider>
   );

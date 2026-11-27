@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { CinematicFooter } from "../components/ui/motion-footer";
 import { Instagram, Facebook, X } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 
@@ -144,7 +145,7 @@ export function Footer() {
 
   return (
     <>
-      <footer className="bg-gradient-to-r from-black via-purple-900 to-black py-12">
+      <CinematicFooter>
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             
@@ -242,7 +243,7 @@ export function Footer() {
 
           </div>
         </div>
-      </footer>
+      </CinematicFooter>
 
       {/* Modal */}
       {modalContent && (

@@ -8,6 +8,7 @@ import { useAuth } from "../pages/AuthContext";
 import FAQDOS from "../sections/FAQDOS";
 import ProductImage from "../components/ProductImage";
 import ProductImageModal from "../components/ProductImageModal";
+import ExpandableDescription from "../components/ExpandableDescription";
 import { PLACEHOLDER_IMAGE, buildImageUrl } from "../utils/images";
 
 
@@ -715,7 +716,7 @@ const handleReplaceImage = (thumb, file) => {
 
                   <div className="h-px bg-white/10" />
 
-                  <p className="text-gray-300 leading-relaxed text-base sm:text-lg whitespace-pre-line">{product.description}</p>
+                  <ExpandableDescription key={product.id ?? "producto"} text={product.description} />
 
                   {isAdmin && (
                     <button onClick={() => setIsEditing(true)} className="self-start px-5 py-2 bg-white/5 border border-white/10 rounded-xl font-semibold text-white hover:bg-white/10 transition-colors text-sm">

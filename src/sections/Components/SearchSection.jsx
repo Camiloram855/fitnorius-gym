@@ -101,7 +101,7 @@ export default function SearchSection() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Buscar productos, marcas, categorías..."
+              placeholder="Buscar productos o categorias"
               className="w-full pl-12 pr-24 py-4 bg-transparent border border-white/40 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200"
             />
 
