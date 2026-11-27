@@ -1,3 +1,5 @@
+import GradientBlinds from "../components/backgrounds/GradientBlinds";
+import ProductImageCrossfade from "../components/ProductImageCrossfade";
 // ProductDetail.jsx (completo, Cloudinary-ready)
 import { useParams, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -430,13 +432,21 @@ const handleReplaceImage = (thumb, file) => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-purple-950 py-8 px-4 sm:px-6 lg:px-10">
-      <div className="max-w-7xl mx-auto text-white">
+    <div className="relative isolate min-h-screen bg-[#0b0714] py-6 px-5 sm:py-10 sm:px-8 lg:px-12">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <GradientBlinds gradientColors={['#FF9FFC', '#5227FF']}
+          angle={20} blindCount={16} blindMinWidth={60}
+          spotlightRadius={0.5} shine={0.4} relief={0.5} glow={0.4}
+          sway={0.35} hoverTilt={0.6} clickEffect="ripple" noise={0.3} dpr={1} />
+        <div className="absolute inset-0 bg-[#0b0714]/65" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black to-transparent" />
+      </div>
+      <div className="max-w-[1180px] mx-auto text-white">
 
         {/* Volver */}
         <button
           onClick={() => navigate("/")}
-          className="mb-6 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm"
+          className="mb-8 sm:mb-10 inline-flex items-center gap-2 py-2 text-xs font-medium tracking-wide text-white/50 hover:text-purple-200 transition-colors focus-visible:outline focus-visible:outline-purple-300"
         >
           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -445,16 +455,16 @@ const handleReplaceImage = (thumb, file) => {
         </button>
 
         {/* PRODUCTO PRINCIPAL */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-4 sm:p-6 lg:p-10 backdrop-blur-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start">
+        <div className="relative">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-9 sm:gap-12 lg:gap-16 xl:gap-20 items-start">
 
               {/* SLIDER DE IMÁGENES */}
-              <div className="relative w-full flex flex-col items-center">
+              <div className="relative min-w-0 w-full flex flex-col items-center">
 
                 {/* Imagen principal con soporte táctil */}
                 <div
-                  className="relative w-full max-w-[420px] aspect-square bg-gradient-to-br from-purple-900/30 to-black/60
-                  rounded-2xl overflow-hidden shadow-2xl border border-purple-800/30 flex items-center justify-center select-none group"
+                  className="relative w-full aspect-[1/1.06] bg-[#15121b]
+                  rounded-[28px] overflow-hidden border border-white/10 flex items-center justify-center select-none group"
 
                   onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
                   onTouchMove={(e) => setTouchEnd(e.touches[0].clientX)}
@@ -484,13 +494,11 @@ const handleReplaceImage = (thumb, file) => {
                     aria-label="Ampliar imagen del producto"
                     onClick={() => setImageModalOpen(true)}
                     disabled={thumbs.length === 0}
-                    className="h-full w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
+                    className="relative h-full w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
                   >
-                    <ProductImage
+                    <ProductImageCrossfade
                       src={thumbs[selectedImageIndex]?.src}
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      eager
                     />
                   </button>
 
@@ -505,13 +513,13 @@ const handleReplaceImage = (thumb, file) => {
                   <>
                     <button
                       onClick={() => setSelectedImageIndex((prev) => (prev === 0 ? thumbs.length - 1 : prev - 1))}
-                      className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition-colors duration-300"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     </button>
                     <button
                       onClick={() => setSelectedImageIndex((prev) => (prev === thumbs.length - 1 ? 0 : prev + 1))}
-                      className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition-colors duration-300"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
                     </button>
@@ -537,13 +545,13 @@ const handleReplaceImage = (thumb, file) => {
                 )}
 
                 {/* Miniaturas debajo */}
-                <div className="mt-5 flex items-center gap-2.5 overflow-x-auto max-w-full px-1 pb-1">
+                <div className="mt-4 flex w-full items-center gap-3 overflow-x-auto max-w-full px-1 pt-2 pb-3">
                   {thumbs.map((thumb, idx) => (
                     <div key={idx} className="relative shrink-0">
                       <button
                         onClick={() => setSelectedImageIndex(idx)}
-                        className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                          idx === selectedImageIndex ? "border-purple-400 ring-2 ring-purple-400/30" : "border-white/10 hover:border-white/30"
+                        className={`w-[76px] h-[64px] sm:w-[104px] sm:h-[82px] rounded-2xl overflow-hidden border transition-all duration-200 ${
+                          idx === selectedImageIndex ? "border-purple-300 ring-1 ring-purple-300/60" : "border-white/10 hover:border-white/30"
                         }`}
                       >
                         <ProductImage
@@ -611,7 +619,7 @@ const handleReplaceImage = (thumb, file) => {
 
 
             
-            <div className="flex flex-col gap-5 lg:pt-2">
+            <div className="min-w-0 flex flex-col gap-6 lg:pt-5">
               {isEditing ? (
                 <>
                   <div className="flex flex-col gap-4 bg-white/5 border border-white/10 rounded-2xl p-5">
@@ -689,7 +697,7 @@ const handleReplaceImage = (thumb, file) => {
                 <>
                   <div>
                     {hasPromoBadge(product) && (
-                      <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-[0.7rem] font-extrabold uppercase tracking-wide text-white shadow-sm mb-3">
+                      <span className="inline-flex items-center rounded-full border border-purple-300/15 bg-purple-400/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-purple-200 mb-5">
                         Promo
                       </span>
                     )}
@@ -698,13 +706,13 @@ const handleReplaceImage = (thumb, file) => {
                     </h1>
                   </div>
 
-                  <div className="flex flex-wrap items-end gap-3">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-white">{formatCurrency(product.price)}</span>
-                    {product.oldPrice && <span className="text-lg sm:text-xl text-gray-500 line-through">{formatCurrency(product.oldPrice)}</span>}
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <span className="font-serif text-3xl sm:text-[2.1rem] font-normal tracking-tight text-white">{formatCurrency(product.price)}</span>
+                    {product.oldPrice && <span className="text-sm text-white/35 line-through">{formatCurrency(product.oldPrice)}</span>}
                   </div>
 
                   {savings > 0 && (
-                    <span className="inline-flex w-fit items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 text-sm font-semibold text-emerald-400">
+                    <span className="inline-flex w-fit items-center rounded-full bg-purple-400/10 border border-purple-300/10 px-3 py-1.5 text-xs font-medium text-purple-200">
                       Ahorras {formatCurrency(savings)}
                     </span>
                   )}
@@ -726,7 +734,7 @@ const handleReplaceImage = (thumb, file) => {
                   <div className="h-px bg-white/10" />
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-1 w-fit">
+                    <div className="flex shrink-0 items-center gap-1 bg-transparent border border-white/20 rounded-full p-1.5 w-fit">
                       <button onClick={() => handleQuantityChange(-1)} className="w-9 h-9 flex items-center justify-center text-lg rounded-lg hover:bg-white/10 transition">
                         −
                       </button>
@@ -739,12 +747,12 @@ const handleReplaceImage = (thumb, file) => {
                     <button
                       onClick={handleAddToCart}
                       disabled={product.agotado}
-                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 ${
+                      className={`flex-1 min-h-12 flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-xs uppercase tracking-[0.08em] font-semibold transition-all duration-200 ${
                         product.agotado
                           ? "bg-gray-700 cursor-not-allowed opacity-60"
                           : addedToCart
                             ? "bg-emerald-500 shadow-emerald-900/30"
-                            : "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-purple-900/30 active:scale-[0.98]"
+                            : "bg-[#9146ff] hover:bg-[#a264ff] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-300"
                       }`}
                     >
                       {product.agotado ? (
@@ -765,7 +773,7 @@ const handleReplaceImage = (thumb, file) => {
 
                   <button
                     onClick={handleAdd}
-                    className="w-full px-6 py-3 bg-white text-purple-900 hover:bg-purple-50 rounded-xl font-bold shadow-lg shadow-black/20 transition-colors"
+                    className="w-full px-6 py-3.5 border border-purple-300/30 text-purple-100 hover:bg-purple-400/10 rounded-full text-xs uppercase tracking-[0.08em] font-semibold transition-colors"
                   >
                     Finalizar compra
                   </button>
@@ -783,7 +791,7 @@ const handleReplaceImage = (thumb, file) => {
 
           {/* RECOMENDADOS */}
           {recommended.length > 0 && (
-            <div className="mt-16 sm:mt-20">
+            <div className="mt-20 sm:mt-28 border-t border-white/10 pt-10 sm:pt-14">
               <div className="flex items-center gap-4 mb-8">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white whitespace-nowrap">
                   Productos Recomendados

@@ -10,6 +10,8 @@ import Swal from "sweetalert2";
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
+  const [categoryStatus, setCategoryStatus] = useState("loading");
+  const [categoryRetry, setCategoryRetry] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
@@ -20,18 +22,25 @@ const CategoryCarousel = () => {
 
   // ✅ Cargar categorías
   useEffect(() => {
+    let cancelled = false;
+    setCategoryStatus("loading");
     const fetchCategories = async () => {
       try {
         const res = await apiFetch(`${API_BASE_URL}/api/categories`);
         if (!res.ok) throw new Error("Error al cargar categorías");
         const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("Respuesta de categorías inválida");
+        if (cancelled) return;
         setCategories(data);
+        setCategoryStatus("ready");
       } catch (err) {
+        if (!cancelled) setCategoryStatus("error");
         console.error("Error cargando categorías:", err);
       }
     };
     fetchCategories();
-  }, []);
+    return () => { cancelled = true; };
+  }, [categoryRetry]);
 
   // ✅ Restaurar categoría abierta al regresar
 useEffect(() => {
@@ -46,7 +55,7 @@ useEffect(() => {
   }
 
   // 🔥 Si no había una categoría guardada → abre la primera automáticamente
-  if (!savedCatId && categories.length > 0) {
+  if (categories.length > 0) {
     setSelectedCategory(categories[0]);
     sessionStorage.setItem("openCategoryId", categories[0].id);
   }
@@ -361,6 +370,12 @@ useEffect(() => {
           Va entre el carrusel de categorías y el listado de productos. */}
       <PromoBanner />
 
+      {categoryStatus === "loading" && <p role="status" className="min-h-[300px] p-8 text-center text-purple-200">Cargando catálogo…</p>}
+      {categoryStatus === "error" && <div role="alert" className="p-8 text-center">
+        <p>No pudimos cargar el catálogo.</p>
+        <button type="button" onClick={() => setCategoryRetry((value) => value + 1)} className="mt-4 rounded-full bg-purple-600 px-5 py-2">Reintentar</button>
+      </div>}
+      {categoryStatus === "ready" && categories.length === 0 && <p className="p-8 text-center">No hay categorías disponibles.</p>}
       {/* ====== PRODUCTOS ====== */}
       {selectedCategory && (
         <div className="mt-4 p-2">

@@ -1,23 +1,12 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { useLayoutEffect } from "react";
+import { lazy, Suspense, useLayoutEffect } from "react";
 
-// Secciones
-import Hero from "./sections/Hero";
-import { GallerySection } from "./sections/GallerySection";
-import { KitsSection } from "./sections/KitsSection";
-import { PaymentMethods } from "./Layout/PaymentMethods";
-import ShippingSection from "./sections/ShippingSection";
-import FeaturesSection from "./sections/FeaturesSection";
-import FAQ from "./sections/FAQ";
-import WhatsAppButton from "./components/WhatsAppButton";
-import { LoadingProvider } from "./components/GlobalLoader";
-import { Footer } from "./Layout/Footer";
-
-// Página independiente
+import { LoadingProvider, LoaderLogo } from "./components/GlobalLoader";
 import Catalog from "./pages/Catalog";
-import Promociones from "./pages/Promociones";
 import { CartProvider } from "./pages/CartContext";
+const Landing = lazy(() => import("./pages/Landing"));
+const Promociones = lazy(() => import("./pages/Promociones"));
 
 // 🔄 Nuevo componente global para controlar el scroll en TODAS las rutas
 function ScrollToTopOnRouteChange() {
@@ -41,22 +30,13 @@ function AppContent() {
     <>
       <ScrollToTopOnRouteChange /> {/* 👈 Aquí se aplica a TODA la app */}
 
+      <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><LoaderLogo /></div>}>
       <Routes>
         {/* Ruta de la landing page */}
         <Route
           path="/landing"
           element={
-            <div className="App">
-              <Hero />
-              <GallerySection />
-              <KitsSection />
-              <PaymentMethods />
-              <ShippingSection />
-              <FeaturesSection />
-              <FAQ />
-              <WhatsAppButton />
-              <Footer />
-            </div>
+            <Landing />
           }
         />
 
@@ -73,6 +53,7 @@ function AppContent() {
           }
         />
       </Routes>
+      </Suspense>
     </>
   );
 }
