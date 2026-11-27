@@ -9,6 +9,7 @@ import FAQDOS from "../sections/FAQDOS";
 import ProductImage from "../components/ProductImage";
 import ProductImageModal from "../components/ProductImageModal";
 import ExpandableDescription from "../components/ExpandableDescription";
+import { LoaderLogo } from "../components/GlobalLoader";
 import { PLACEHOLDER_IMAGE, buildImageUrl } from "../utils/images";
 
 
@@ -122,13 +123,12 @@ const fetchProductData = useCallback(async (silent = false) => {
     return () => timers.forEach(clearTimeout);
   }, [id, fetchProductData]);
 
+  // Mismo loader que el global: cuando la capa global se desvanece, aquí
+  // continúa el idéntico logo pulsando, sin cambio de efecto.
   if (loading)
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-purple-500/30 border-t-purple-400" />
-          <p className="text-purple-300 text-sm font-medium tracking-wide">Cargando producto...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
+        <LoaderLogo />
       </div>
     );
 

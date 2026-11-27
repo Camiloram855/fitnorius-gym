@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { apiFetch } from "../api/client"
 import API_BASE from "../config"
+import { LoaderLogo } from "../components/GlobalLoader"
 
 const API      = `${API_BASE}/api/admin/scratch`
 
@@ -160,7 +161,7 @@ export default function ScratchAdminDashboard() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      <LoaderLogo compact />
     </div>
   )
 

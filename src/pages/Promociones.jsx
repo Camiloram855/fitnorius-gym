@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronLeft, Sparkles, Tag } from "lucide-react";
 import { apiFetch } from "../api/client";
 import API_URL from "../config";
 import PromoCarousel, { PromoCard } from "../components/PromoCarousel";
+import { LoaderLogo } from "../components/GlobalLoader";
 import { filterPromos, productImageUrl } from "../utils/promo";
 import { useCart } from "./CartContext";
 
@@ -95,12 +96,7 @@ export default function Promociones() {
 
         {/* Contenido */}
         <section className="mt-10">
-          {status === "loading" && (
-            <div className="flex flex-col items-center gap-3 py-20">
-              <div className="h-10 w-10 animate-spin rounded-full border-2 border-fuchsia-500/30 border-t-fuchsia-400" />
-              <p className="text-sm text-purple-300">Buscando ofertas...</p>
-            </div>
-          )}
+          {status === "loading" && <LoaderLogo compact />}
 
           {status === "error" && (
             <div className="rounded-3xl border border-red-500/30 bg-red-500/5 p-10 text-center">
