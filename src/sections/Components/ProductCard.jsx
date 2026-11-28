@@ -1,3 +1,4 @@
+import PromoBadge from "../../components/PromoBadge";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../api/client";
@@ -142,7 +143,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   return (
     <div className="mx-auto block h-full w-full max-w-[268px]">
-      <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#160e29]/65 backdrop-blur-md ring-1 ring-white/20 shadow-[0_8px_28px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.12)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(109,40,217,0.25)]">
+      <article data-promo-gold={hasPromo ? "true" : undefined} className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#160e29]/65 backdrop-blur-md ring-1 ring-white/20 shadow-[0_8px_28px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.12)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(109,40,217,0.25)]">
 
         {/* ── Imagen ── */}
         <Link
@@ -169,13 +170,8 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           </div>
            {/* Badge PROMO — cinta lado derecho */}
 {hasPromo && (
-  <div className="absolute bottom-3 left-3 z-10">
-    <span
-      className="rounded-full px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-wide text-white shadow-lg"
-      style={{ background: "linear-gradient(135deg, #dba100 0%, #d89400 50%, #9b5c03 100%)" }}
-    >
-      ¡Promo!
-    </span>
+  <div className="absolute bottom-2 left-3 z-10">
+    <PromoBadge />
   </div>
 )}
 

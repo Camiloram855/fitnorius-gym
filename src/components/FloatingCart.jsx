@@ -1,3 +1,4 @@
+import "./FloatingActions.css";
 import "./FloatingCart.css";
 import CartAnimatedIcon from "./CartAnimatedIcon";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +19,22 @@ export default function FloatingCart() {
   const [showCart, setShowCart] = useState(false);
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
+  useEffect(() => {
+    if (!cartAddition || !buttonRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const animation = buttonRef.current.animate(
+      [
+        { transform: "scale(1)", offset: 0 },
+        { transform: "scale(1.12)", offset: 0.3 },
+        { transform: "scale(1.08)", offset: 0.6 },
+        { transform: "scale(1.12)", offset: 0.78 },
+        { transform: "scale(.99)", offset: 0.93 },
+        { transform: "scale(1)", offset: 1 },
+      ],
+      { duration: 1350, easing: "ease-in-out" },
+    );
+    return () => animation.cancel();
+  }, [cartAddition]);
   const count = cartItems.reduce((sum, item) => sum + Number(item.quantity), 0);
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -41,8 +58,8 @@ export default function FloatingCart() {
   }, [showCart]);
 
   return (
-    <div ref={containerRef} className="fixed bottom-20 right-3 z-50 sm:bottom-24 sm:right-4">
-      <div className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
+    <div ref={containerRef} className="floating-action floating-action--cart">
+      <div className="flex h-full w-full items-center justify-center">
         <button
           ref={buttonRef}
           type="button"
@@ -50,7 +67,7 @@ export default function FloatingCart() {
           aria-expanded={showCart}
           aria-controls={showCart ? "floating-cart-panel" : undefined}
           onClick={() => setShowCart((open) => !open)}
-          className="relative isolate flex h-[42px] w-[42px] items-center justify-center rounded-[34%] border border-[#d89aff]/80 bg-[linear-gradient(145deg,#bc4bff_0%,#9114ed_36%,#6500cf_72%,#7900ef_100%)] text-white shadow-[0_5px_12px_rgba(27,0,68,0.5),0_0_18px_rgba(134,30,255,0.38),inset_0_1px_2px_rgba(255,255,255,0.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400 sm:h-[48px] sm:w-[48px]"
+          className="floating-action__button relative isolate flex items-center justify-center rounded-[34%] border border-[#d89aff]/80 bg-[linear-gradient(145deg,#bc4bff_0%,#9114ed_36%,#6500cf_72%,#7900ef_100%)] text-white shadow-[0_5px_12px_rgba(27,0,68,0.5),0_0_18px_rgba(134,30,255,0.38),inset_0_1px_2px_rgba(255,255,255,0.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400"
         >
           <CartAnimatedIcon key={`cart-icon-${cartAddition}`} addition={cartAddition} />
           {count > 0 && (

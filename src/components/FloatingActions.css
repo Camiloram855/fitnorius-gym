@@ -1,0 +1,20 @@
+.floating-action {
+  --action-size: 44px;
+  --action-bottom: 28px;
+  --action-gap: 10px;
+  position: fixed;
+  right: 20px;
+  z-index: 50;
+  width: var(--action-size);
+  height: var(--action-size);
+}
+.floating-action--cart { bottom: calc(var(--action-bottom) + var(--action-size) + var(--action-gap)); }
+.floating-action--whatsapp { bottom: var(--action-bottom); }
+.floating-action__button { width: 100%; height: 100%; }
+.floating-action__whatsapp-art { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; border-radius: 28%; }
+/* Compensate the PNG's transparent padding without modifying the source asset. */
+.floating-action__whatsapp-art img { position: absolute; width: 200%; height: 200%; max-width: none; left: -56%; top: -52%; }
+.floating-action--whatsapp:focus-visible { outline: 2px solid #c084fc; outline-offset: 4px; border-radius: 28%; }
+@media (min-width: 640px) {
+  .floating-action { --action-size: 52px; --action-bottom: 36px; --action-gap: 12px; right: 28px; }
+}

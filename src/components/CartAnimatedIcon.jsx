@@ -12,6 +12,7 @@ export default function CartAnimatedIcon({ addition }) {
             <stop offset="1" stopColor="#6900cc" />
           </linearGradient>
         </defs>
+        <g className="cart-bag-interaction">
         <g className="cart-bag-handle" stroke="white" strokeWidth="2.1" strokeLinecap="round">
           <path d="M18.5 25V18a5.5 5.5 0 0 1 11 0v7" />
         </g>
@@ -31,6 +32,7 @@ export default function CartAnimatedIcon({ addition }) {
           <path d="M18.5 22v4.5M29.5 22v4.5" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
           <circle cx="18.5" cy="26.5" r="1.6" fill="white" />
           <circle cx="29.5" cy="26.5" r="1.6" fill="white" />
+        </g>
         </g>
       </svg>
     </span>

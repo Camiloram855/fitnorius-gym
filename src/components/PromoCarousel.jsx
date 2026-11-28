@@ -450,7 +450,7 @@ export function PromoCard({ product, onView, onAdd, fluid = false }) {
   const agotado = Boolean(product.agotado);
 
   return (
-    <article
+    <article data-promo-gold={savings > 0 ? "true" : undefined}
       className={
         fluid
           ? "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition-colors duration-300 hover:border-purple-400/40 hover:bg-white/[0.08] sm:rounded-3xl"
@@ -474,7 +474,7 @@ export function PromoCard({ product, onView, onAdd, fluid = false }) {
           className="relative z-[1] h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
         />
 
-        <span className="absolute bottom-3 left-3 z-10">
+        <span className="absolute bottom-2 left-3 z-10">
           <PromoBadge />
         </span>
 

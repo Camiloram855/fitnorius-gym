@@ -1,14 +1,29 @@
-.cart-animated-icon { display: block; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; overflow: hidden; }
+.cart-animated-icon { --cart-cycle: 1350ms; display: block; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; overflow: hidden; }
 .cart-animated-icon svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 2px #30006e40); }
 .cart-falling-weight { opacity: 0; }
-.cart-animated-icon--added .cart-falling-weight { animation: cart-weight-drop 850ms cubic-bezier(.45,0,.7,.5) both; }
-.cart-animated-icon--added .cart-falling-weight--1 { animation-delay: 380ms; }
-.cart-animated-icon--added .cart-bag-body { transform-origin: 24px 40px; animation: cart-bag-catch 1350ms ease-out both; }
-@keyframes cart-weight-drop {
+.cart-bag-interaction { transform-origin: 24px 26px; }
+.cart-animated-icon--added .cart-bag-interaction { animation: cart-bag-feedback var(--cart-cycle) ease-in-out both; }
+.cart-animated-icon--added .cart-falling-weight--0 { animation: cart-weight-first var(--cart-cycle) linear both; }
+.cart-animated-icon--added .cart-falling-weight--1 { animation: cart-weight-second var(--cart-cycle) linear both; }
+.cart-animated-icon--added .cart-bag-body { transform-origin: 24px 40px; animation: cart-bag-catch var(--cart-cycle) ease-out both; }
+@keyframes cart-bag-feedback {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.15); }
+  60% { transform: scale(1.1); }
+  78% { transform: scale(1.15); }
+  93% { transform: scale(.99); }
+}
+@keyframes cart-weight-first {
   0% { opacity: 0; transform: translateY(-7px) rotate(-25deg); }
-  14% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(33px) rotate(18deg); }
+  9% { opacity: 1; transform: translateY(-4px) rotate(-22deg); }
+  44% { opacity: 1; transform: translateY(18px) rotate(2deg); }
+  63%, 100% { opacity: 0; transform: translateY(33px) rotate(18deg); }
+}
+@keyframes cart-weight-second {
+  0%, 28% { opacity: 0; transform: translateY(-7px) rotate(-25deg); }
+  37% { opacity: 1; transform: translateY(-4px) rotate(-22deg); }
+  72% { opacity: 1; transform: translateY(18px) rotate(2deg); }
+  91%, 100% { opacity: 0; transform: translateY(33px) rotate(18deg); }
 }
 @keyframes cart-bag-catch {
   0%, 35%, 64%, 100% { transform: translateY(0) scale(1); }
@@ -16,5 +31,7 @@
   56%, 91% { transform: translateY(-.6px) scale(.99,1.02); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cart-animated-icon--added .cart-falling-weight, .cart-animated-icon--added .cart-bag-body { animation: none; }
+  .cart-animated-icon--added .cart-falling-weight,
+  .cart-animated-icon--added .cart-bag-body,
+  .cart-animated-icon--added .cart-bag-interaction { animation: none; }
 }
