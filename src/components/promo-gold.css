@@ -4,7 +4,7 @@
   display: inline-flex;
   align-items: center;
   overflow: hidden;
-  border: 1px solid #fff2c9;
+  border: 1px solid #ffe19a;
   border-radius: 999px;
   padding: .38rem .8rem;
   color: #30200b;
@@ -15,10 +15,10 @@
   text-transform: uppercase;
   white-space: nowrap;
   background:
-    linear-gradient(112deg, transparent 18%, #fff9e86b 28%, transparent 39%, #68421938 73%, transparent 90%),
-    linear-gradient(178deg, #fff0cb 0%, #d7af63 25%, #f6dfab 43%, #b5883e 49%, #c9a35b 65%, #ead29d 88%, #93672b 100%);
-  box-shadow: inset 0 1px 0 #fffdf0, inset 0 -1px 1px #70491899, 0 0 3px #fff2c9cc, 0 0 10px #e8bd68a6, 0 0 20px #c9924566, 0 2px 5px #100a0670;
-  text-shadow: 0 1px 0 #fff6d88c;
+    linear-gradient(112deg, transparent 18%, #fff0bd59 28%, transparent 39%, #783b1238 73%, transparent 90%),
+    linear-gradient(178deg, #ffe6a1 0%, #e9ad36 25%, #ffda76 43%, #b97918 49%, #dda12c 65%, #f7c654 88%, #99560e 100%);
+  box-shadow: inset 0 1px 0 #fff0bf, inset 0 -1px 1px #70491899, 0 0 3px #ffe19acc, 0 0 10px #ffbf3bb3, 0 0 20px #e3961973, 0 2px 5px #100a0670;
+  text-shadow: 0 1px 0 #ffe6a18c;
 }
 .promo-gold-badge::after {
   content: "";
@@ -27,22 +27,22 @@
   inset: -30% auto -30% -65%;
   width: 45%;
   transform: skewX(-22deg);
-  background: linear-gradient(90deg, transparent, #fffdf0a6, transparent);
+  background: linear-gradient(90deg, transparent, #fff0bfa6, transparent);
 }
-/* Bright champagne core with layered golden light; no animated blur filters. */
+/* Warm metallic gold core with layered amber light; no animated blur filters. */
 article[data-promo-gold="true"] {
-  border-color: #f6d999b3;
-  box-shadow: 0 0 0 1px #ffe8b3cc, inset 0 0 5px #f2cf8540,
-    0 0 5px #ffe2a48c, 0 0 14px #e0ad5566, 0 0 28px #bd86323d, 0 8px 28px #0003;
+  border-color: #f9c44ac7;
+  box-shadow: 0 0 0 1px #ffd46bcc, inset 0 0 5px #ffc34d40,
+    0 0 5px #ffcd598c, 0 0 14px #f4b12b73, 0 0 28px #d88c1547, 0 8px 28px #0003;
 }
 article[data-promo-gold="true"]:focus-within {
-  box-shadow: 0 0 0 1px #fff0c9e6, inset 0 0 6px #f2cf8559,
-    0 0 6px #ffe2a4b3, 0 0 18px #e0ad5580, 0 0 34px #bd863252, 0 8px 28px #0003;
+  box-shadow: 0 0 0 1px #ffdf8ae6, inset 0 0 6px #ffc34d59,
+    0 0 6px #ffcd59b3, 0 0 18px #f4b12b8c, 0 0 34px #d88c155c, 0 8px 28px #0003;
 }
 @media (hover: hover) and (pointer: fine) {
   article[data-promo-gold="true"]:hover {
-    box-shadow: 0 0 0 1px #fff0c9e6, inset 0 0 6px #f2cf8559,
-      0 0 6px #ffe2a4b3, 0 0 18px #e0ad5580, 0 0 34px #bd863252, 0 8px 28px #0003;
+    box-shadow: 0 0 0 1px #ffdf8ae6, inset 0 0 6px #ffc34d59,
+      0 0 6px #ffcd59b3, 0 0 18px #f4b12b8c, 0 0 34px #d88c155c, 0 8px 28px #0003;
   }
   article[data-promo-gold="true"]:hover .promo-gold-badge::after {
     animation: promo-gold-reflection 850ms ease-out;
