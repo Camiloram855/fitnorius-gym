@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { apiFetch } from "../../api/client";
 import API_BASE_URL from "../../config";
 import { ChevronLeft, ChevronRight, Plus, X, Pencil } from "lucide-react";
@@ -18,7 +18,15 @@ const CategoryCarousel = () => {
   const [editForm, setEditForm] = useState({ name: "", image: null });
 
   const scrollRef = useRef(null);
+  const inertiaFrameRef = useRef(null);
   const { isAdmin } = useAuth();
+
+  const stopInertia = useCallback(() => {
+    if (inertiaFrameRef.current !== null) {
+      cancelAnimationFrame(inertiaFrameRef.current);
+      inertiaFrameRef.current = null;
+    }
+  }, []);
 
   // ✅ Cargar categorías
   useEffect(() => {
@@ -79,57 +87,127 @@ useEffect(() => {
 
   const scroll = (direction) => {
     const container = scrollRef.current;
-    if (container) {
-      container.scrollBy({
-        left: direction === "left" ? -250 : 250,
-        behavior: "smooth",
-      });
-    }
+    if (!container) return;
+    stopInertia();
+    container.scrollBy({
+      left: direction === "left" ? -250 : 250,
+      behavior: "smooth",
+    });
   };
 
-  // ✅ Desplazamiento táctil rápido (para móviles)
+  // ✅ Arrastre suave con Pointer Events (ratón y móvil por igual).
+  // Antes había listeners de mouse/touch separados con un multiplicador de
+  // 2.2: la cinta corría el doble que el dedo y, con scroll-behavior:smooth
+  // activo, cada movimiento iniciaba una animación nueva y se "perdía".
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container) return;
+    if (!container) return undefined;
 
-    let isDown = false;
-    let startX;
-    let scrollLeft;
+    // Durante el arrastre el seguimiento es inmediato; la suavidad se aplica
+    // al soltar, con una inercia corta y limitada.
+    const previousBehavior = container.style.scrollBehavior;
+    container.style.scrollBehavior = "auto";
 
-    const start = (e) => {
-      isDown = true;
-      startX = e.pageX || e.touches[0].pageX;
-      scrollLeft = container.scrollLeft;
+    let drag = null;
+
+    const velocityOf = (samples) => {
+      if (!samples || samples.length < 2) return 0;
+      const last = samples[samples.length - 1];
+      let first = samples[0];
+      for (let i = samples.length - 1; i >= 0; i -= 1) {
+        if (last.t - samples[i].t <= 100) first = samples[i];
+        else break;
+      }
+      const elapsed = last.t - first.t;
+      if (elapsed <= 0) return 0;
+      return (last.x - first.x) / elapsed; // px por milisegundo
     };
 
-    const end = () => (isDown = false);
-
-    const move = (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX || e.touches[0].pageX;
-      const walk = (x - startX) * 2.2;
-      container.scrollLeft = scrollLeft - walk;
+    const onPointerDown = (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      stopInertia();
+      drag = {
+        startX: event.clientX,
+        startY: event.clientY,
+        startScroll: container.scrollLeft,
+        samples: [{ x: event.clientX, t: performance.now() }],
+        moved: false,
+      };
     };
 
-    container.addEventListener("mousedown", start);
-    container.addEventListener("mouseleave", end);
-    container.addEventListener("mouseup", end);
-    container.addEventListener("mousemove", move);
-    container.addEventListener("touchstart", start);
-    container.addEventListener("touchend", end);
-    container.addEventListener("touchmove", move);
+    const onPointerMove = (event) => {
+      if (!drag) return;
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - drag.startY;
+
+      if (!drag.moved) {
+        // Gestos verticales: no los capturamos, la página sigue scrolleando.
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+          drag = null;
+          return;
+        }
+        if (Math.abs(dx) < 4) return;
+        drag.moved = true;
+        try {
+          container.setPointerCapture(event.pointerId);
+        } catch {
+          // Si el navegador no permite capturar, el arrastre continúa igual.
+        }
+      }
+
+      drag.samples.push({ x: event.clientX, t: performance.now() });
+      if (drag.samples.length > 6) drag.samples.shift();
+
+      // Seguimiento 1:1 (antes * 2.2): el contenido acompaña al dedo y el
+      // deslizamiento se percibe más lento, fluido y controlado.
+      container.scrollLeft = drag.startScroll - dx;
+    };
+
+    const endDrag = () => {
+      if (!drag) return;
+      const gesture = drag;
+      drag = null;
+      if (!gesture.moved) return;
+
+      const max = Math.max(0, container.scrollWidth - container.clientWidth);
+      // Inercia corta y con tope: un latigazo no puede sacar la cinta.
+      const velocity = Math.max(-1.4, Math.min(1.4, velocityOf(gesture.samples)));
+      const projected = container.scrollLeft - velocity * 130;
+      const target = Math.max(0, Math.min(max, projected));
+
+      const start = container.scrollLeft;
+      const distance = target - start;
+      if (Math.abs(distance) < 2) return;
+
+      const duration = Math.min(420, Math.max(180, Math.abs(distance) * 0.9));
+      const started = performance.now();
+
+      const tick = (now) => {
+        const t = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        container.scrollLeft = start + distance * eased;
+        if (t < 1) inertiaFrameRef.current = requestAnimationFrame(tick);
+        else inertiaFrameRef.current = null;
+      };
+      inertiaFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    container.addEventListener("pointerdown", onPointerDown);
+    container.addEventListener("pointermove", onPointerMove);
+    container.addEventListener("pointerup", endDrag);
+    container.addEventListener("pointercancel", endDrag);
+    container.addEventListener("lostpointercapture", endDrag);
 
     return () => {
-      container.removeEventListener("mousedown", start);
-      container.removeEventListener("mouseleave", end);
-      container.removeEventListener("mouseup", end);
-      container.removeEventListener("mousemove", move);
-      container.removeEventListener("touchstart", start);
-      container.removeEventListener("touchend", end);
-      container.removeEventListener("touchmove", move);
+      stopInertia();
+      container.style.scrollBehavior = previousBehavior;
+      container.removeEventListener("pointerdown", onPointerDown);
+      container.removeEventListener("pointermove", onPointerMove);
+      container.removeEventListener("pointerup", endDrag);
+      container.removeEventListener("pointercancel", endDrag);
+      container.removeEventListener("lostpointercapture", endDrag);
     };
-  }, []);
+  }, [stopInertia]);
 
   // ✅ Eliminar categoría
   const handleDeleteCategory = async (id) => {
@@ -278,7 +356,7 @@ useEffect(() => {
         {/* 🔹 Carrusel con márgenes reducidos */}
         <div
           ref={scrollRef}
-          className="flex gap-10 px-8 py-2 overflow-x-scroll scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide text-lg"
+          className="flex gap-10 px-8 py-2 overflow-x-scroll touch-pan-y cursor-grab active:cursor-grabbing scrollbar-hide text-lg"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",
