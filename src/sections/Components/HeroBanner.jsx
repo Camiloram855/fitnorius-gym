@@ -256,7 +256,7 @@ export default function HeroBanner({ image }) {
         </div>
       )}
 
-      <section className="relative isolate z-10 min-h-[600px] bg-gradient-to-br from-purple-950 to-black">
+      <section className="relative isolate z-10 min-h-[600px] bg-[#0b0714]">
         {/* El fondo ocupa toda la sección hasta el inicio del footer. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0">
@@ -275,7 +275,7 @@ export default function HeroBanner({ image }) {
               noise={0.3}
               dpr={1}
             />
-            <div className="absolute inset-0 bg-black/25" />
+            <div className="absolute inset-0 bg-[#0b0714]/65" />
             <div className="absolute inset-x-0 top-0 h-[7.5vw] bg-gradient-to-b from-black via-black/80 to-black/0 sm:h-[6.75vw]" />
           </div>
         </div>
