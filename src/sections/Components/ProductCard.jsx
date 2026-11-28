@@ -40,8 +40,8 @@ const getInitialHighlights = (product) => {
 
 // eslint-disable-next-line no-unused-vars
 const FeatureLine = ({ icon: Icon, label }) => (
-  <li className="flex items-center gap-2 text-[0.78rem] leading-tight text-slate-500">
-    <Icon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+  <li className="flex items-center gap-2 text-[0.78rem] leading-tight text-purple-100/80">
+    <Icon className="h-3.5 w-3.5 shrink-0 text-violet-300" />
     <span>{label}</span>
   </li>
 );
@@ -142,7 +142,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
   return (
     <div className="mx-auto block h-full w-full max-w-[268px]">
-      <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(109,40,217,0.10)] ring-1 ring-violet-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(109,40,217,0.18)]">
+      <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#160e29]/65 backdrop-blur-md ring-1 ring-white/20 shadow-[0_8px_28px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.12)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(109,40,217,0.25)]">
 
         {/* ── Imagen ── */}
         <Link
@@ -195,20 +195,20 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           />
 
           {/* Sombra difusa inferior */}
-          <div className="absolute inset-x-0 bottom-0 z-[2] h-10 bg-gradient-to-t from-white/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 z-[2] h-10 bg-gradient-to-t from-[#160e29]/60 to-transparent" />
         </Link>
 
         {/* ── Body ── */}
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
 
           {/* Nombre */}
-          <h3 className="text-[0.82rem] font-black uppercase leading-snug tracking-tight text-slate-800 line-clamp-2">
+          <h3 className="text-[0.82rem] font-black uppercase leading-snug tracking-tight text-white line-clamp-2">
             {product.name}
           </h3>
 
           {/* Separador delgado */}
           {featureItems.length > 0 && (
-            <div className="my-2.5 h-px bg-violet-100" />
+            <div className="my-2.5 h-px bg-white/15" />
           )}
 
           {/* Features */}
@@ -222,11 +222,11 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
 
           {/* Precios */}
           <div className="mt-3 flex flex-col gap-0.5">
-            <span className="text-[1.1rem] font-black leading-none text-emerald-600">
+            <span className="text-[1.1rem] font-black leading-none text-emerald-300">
               {formattedPrice}
             </span>
             {formattedOldPrice && (
-              <span className="text-[0.75rem] font-medium leading-none text-slate-400 line-through">
+              <span className="text-[0.75rem] font-medium leading-none text-purple-100/60 line-through">
                 {formattedOldPrice}
               </span>
             )}
@@ -235,7 +235,7 @@ export default function ProductCard({ product, onDelete, onUpdate }) {
           {/* Badge ahorra */}
           {formattedAhorro && (
             <div className="mt-2">
-              <span className="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-1 text-[0.7rem] font-semibold text-violet-700 ring-1 ring-violet-200/70">
+              <span className="inline-flex items-center rounded-full bg-violet-400/15 px-2.5 py-1 text-[0.7rem] font-semibold text-violet-100 ring-1 ring-violet-300/25">
                 Ahorras {formattedAhorro}
               </span>
             </div>

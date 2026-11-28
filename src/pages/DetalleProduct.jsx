@@ -707,7 +707,7 @@ const handleReplaceImage = (thumb, file) => {
                   </div>
 
                   <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="font-serif text-3xl sm:text-[2.1rem] font-normal tracking-tight text-white">{formatCurrency(product.price)}</span>
+                    <span className="font-normal text-3xl sm:text-[2.1rem] font-normal tracking-tight text-white">{formatCurrency(product.price)}</span>
                     {product.oldPrice && <span className="text-sm text-white/35 line-through">{formatCurrency(product.oldPrice)}</span>}
                   </div>
 
@@ -883,7 +883,7 @@ const handleReplaceImage = (thumb, file) => {
                  deleteKindPending === "main" ? "Eliminar imagen principal" :
                  "Eliminar imagen existente"}
               </h3>
-              <p className="text-gray-300 mb-5 text-sm leading-relaxed">
+              <p className="text-white mb-5 text-sm leading-relaxed">
                 {deleteKindPending === "local"
                   ? "Esta imagen fue añadida como previsualización y se quitará localmente."
                   : deleteKindPending === "main"
