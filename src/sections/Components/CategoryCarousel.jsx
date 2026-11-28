@@ -95,7 +95,7 @@ useEffect(() => {
     });
   };
 
-  // ✅ Arrastre suave con Pointer Events (ratón y móvil por igual).
+  // Mouse drag only; touch scrolling and momentum run natively in the browser.
   // Antes había listeners de mouse/touch separados con un multiplicador de
   // 2.2: la cinta corría el doble que el dedo y, con scroll-behavior:smooth
   // activo, cada movimiento iniciaba una animación nueva y se "perdía".
@@ -109,6 +109,7 @@ useEffect(() => {
     container.style.scrollBehavior = "auto";
 
     let drag = null;
+    let suppressClick = false;
 
     const velocityOf = (samples) => {
       if (!samples || samples.length < 2) return 0;
@@ -124,7 +125,8 @@ useEffect(() => {
     };
 
     const onPointerDown = (event) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      suppressClick = false;
       stopInertia();
       drag = {
         startX: event.clientX,
@@ -148,6 +150,7 @@ useEffect(() => {
         }
         if (Math.abs(dx) < 4) return;
         drag.moved = true;
+        suppressClick = true;
         try {
           container.setPointerCapture(event.pointerId);
         } catch {
@@ -171,7 +174,8 @@ useEffect(() => {
 
       const max = Math.max(0, container.scrollWidth - container.clientWidth);
       // Inercia corta y con tope: un latigazo no puede sacar la cinta.
-      const velocity = Math.max(-1.4, Math.min(1.4, velocityOf(gesture.samples)));
+      const recent = performance.now() - gesture.samples[gesture.samples.length - 1].t < 100;
+      const velocity = recent ? Math.max(-1.4, Math.min(1.4, velocityOf(gesture.samples))) : 0;
       const projected = container.scrollLeft - velocity * 130;
       const target = Math.max(0, Math.min(max, projected));
 
@@ -192,20 +196,32 @@ useEffect(() => {
       inertiaFrameRef.current = requestAnimationFrame(tick);
     };
 
+    const cancelDrag = () => { if (!drag) return; drag = null; stopInertia(); };
+    const onClick = (event) => {
+      if (!suppressClick || event.detail === 0) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const onNativeDrag = (event) => event.preventDefault();
+    container.addEventListener("click", onClick, true);
+    container.addEventListener("dragstart", onNativeDrag);
     container.addEventListener("pointerdown", onPointerDown);
     container.addEventListener("pointermove", onPointerMove);
     container.addEventListener("pointerup", endDrag);
-    container.addEventListener("pointercancel", endDrag);
-    container.addEventListener("lostpointercapture", endDrag);
+    container.addEventListener("pointercancel", cancelDrag);
+    container.addEventListener("lostpointercapture", cancelDrag);
 
     return () => {
       stopInertia();
       container.style.scrollBehavior = previousBehavior;
+      container.removeEventListener("click", onClick, true);
+      container.removeEventListener("dragstart", onNativeDrag);
       container.removeEventListener("pointerdown", onPointerDown);
       container.removeEventListener("pointermove", onPointerMove);
       container.removeEventListener("pointerup", endDrag);
-      container.removeEventListener("pointercancel", endDrag);
-      container.removeEventListener("lostpointercapture", endDrag);
+      container.removeEventListener("pointercancel", cancelDrag);
+      container.removeEventListener("lostpointercapture", cancelDrag);
     };
   }, [stopInertia]);
 
@@ -356,7 +372,7 @@ useEffect(() => {
         {/* 🔹 Carrusel con márgenes reducidos */}
         <div
           ref={scrollRef}
-          className="flex gap-10 px-8 py-2 overflow-x-scroll touch-pan-y cursor-grab active:cursor-grabbing scrollbar-hide text-lg"
+          className="flex gap-10 px-8 py-2 overflow-x-auto touch-auto snap-x snap-proximity overscroll-x-contain scroll-px-8 cursor-grab active:cursor-grabbing scrollbar-hide text-lg"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",
@@ -366,7 +382,7 @@ useEffect(() => {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="flex-shrink-0 group cursor-pointer px-2 py-2 transition-all duration-200 hover:bg-white/5 rounded-2xl"
+              className="snap-start flex-shrink-0 group cursor-pointer px-2 py-2 transition-all duration-200 hover:bg-white/5 rounded-2xl"
               onClick={() => {
               setSelectedCategory(category);
               sessionStorage.setItem("openCategoryId", category.id);
@@ -375,10 +391,10 @@ useEffect(() => {
             >
               <div className="relative mx-auto w-fit">
                 <div
-                  className={`relative rounded-full p-[3px] transition-all duration-200 ${
+                  className={`relative rounded-full border-[3px] p-[3px] transition-[border-color,transform] duration-200 ${
                     selectedCategory?.id === category.id
-                      ? "border-[4px] border-purple-400/90 p-[5px] scale-110"
-                      : "border-[2px] border-transparent"
+                      ? "border-purple-400/90 scale-105"
+                      : "border-transparent"
                   }`}
                 >
                 <img
